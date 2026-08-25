@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 420 96" role="img" aria-label="MSU-IIT IDS ONLINE WORKSPACE (MIOW)">
+  <title>MSU-IIT IDS ONLINE WORKSPACE (MIOW)</title>
+  <g transform="translate(8,16)">
+    <g transform="skewX(-5)">
+      <path d="M33 9 L54 55 H44 L32 28 L20 55 H10 Z" fill="#800000"/>
+      <path d="M33 9 L54 55 H49.5 L31.5 18 Z" fill="#9A1B1B"/>
+    </g>
+    <circle cx="32" cy="24" r="4" fill="#FFD700"/>
+    <path d="M23 33 a11 11 0 0 1 18 0" fill="none" stroke="#FFD700" stroke-width="2.4" stroke-linecap="round"/>
+    <path d="M17.5 39 a17 17 0 0 1 29 0" fill="none" stroke="#FFD700" stroke-width="2" stroke-linecap="round" opacity="0.45"/>
+  </g>
+  <text x="86" y="52" fill="#0D1B2A" font-family="Sora, Outfit, ui-sans-serif, system-ui, sans-serif" font-size="40" font-weight="800" letter-spacing="1.5">MIOW</text>
+  <text x="88" y="72" fill="#0D1B2A" font-family="Lexend, ui-sans-serif, system-ui, sans-serif" font-size="11.5" letter-spacing="1.6" opacity="0.75">MSU-IIT <tspan font-weight="700" fill="#800000">I D S</tspan> ONLINE WORKSPACE</text>
+</svg>
