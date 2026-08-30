@@ -1,10 +1,10 @@
-# G7-College LMS Enhancements Implementation Plan
+# MIOW — G7-College Feature Enhancements Implementation Plan (Brand: MIOW Retained)
 
 > **For Hermes:** Use subagent-driven-development skill to implement this plan task-by-task.
 
-**Goal:** Deliver G7-College rebrand (MIOW → G7-College LMS), pedagogical renames, remove Lovable credits, add Google Docs manual worksheets, upgrade course creation for G7-COLLEGE levels, enhance teacher/student dashboards, add drag-and-drop uploads, gate worksheet scores behind teacher release, give AI chatbot long-term memory, and scaffold optional facial recognition.
+**Goal:** Deliver G7-College feature coverage (Grades 7 to College), pedagogical renames, remove Lovable credits, add Google Docs manual worksheets, upgrade course creation for G7-COLLEGE levels, enhance teacher/student dashboards, add drag-and-drop uploads, gate worksheet scores behind teacher release, give AI chatbot long-term memory, and scaffold optional facial recognition — **while retaining the MIOW (MSU-IIT IDS ONLINE WORKSPACE) brand** (no rebrand).
 
-**Architecture:** Single-source rename via `src/lib/brand.ts` + token replacement, TanStack Start server functions (src/lib/lms.server.ts / lms.functions.ts) as auth boundary, Supabase (service_role client in src/integrations/supabase/client.server.ts) as data layer with RLS mirror, Storage buckets for attachments, AI Gateway (src/lib/ai-gateway.server.ts) + chat-tools.server.ts for chatbot, new tables: `worksheet_submissions` (file uploads), `chat_memories`, `announcement_attachments`, `course_grade_configs`. Google Docs: Picker API + Drive export. Facial rec: face-api.js / onnx pre-trained, client-side embedding + server verify.
+**Architecture:** Retain **MIOW** brand via `src/lib/brand.ts` (no rename; single source of truth), TanStack Start server functions (src/lib/lms.server.ts / lms.functions.ts) as auth boundary, Supabase (service_role client in src/integrations/supabase/client.server.ts) as data layer with RLS mirror, Storage buckets for attachments, AI Gateway (src/lib/ai-gateway.server.ts) + chat-tools.server.ts for chatbot, new tables: `worksheet_submissions` (file uploads), `chat_memories`, `announcement_attachments`, `course_grade_configs`. Google Docs: Picker API + Drive export. Facial rec: face-api.js / onnx pre-trained, client-side embedding + server verify. **Brand invariant:** `APP_NAME`, `APP_SHORT_NAME`, `NOTIFICATION_SIGNOFF` remain MIOW.
 
 **Tech Stack:** TanStack Start (Vite 8, Nitro), React 19, Supabase JS 2.112, TanStack Query 5, Tailwind 4, shadcn/ui, bcryptjs, zod, AI SDK 7, Google Picker + Drive API, optional face-api.js.
 
@@ -12,7 +12,7 @@
 
 ## Current Context / Assumptions
 
-- App currently branded MIOW (MSU-IIT IDS ONLINE WORKSPACE) via `src/lib/brand.ts:5-12` (APP_NAME, APP_SHORT_NAME, NOTIFICATION_SIGNOFF) and `src/components/brand.tsx` (MiowMark/MiowWordmark). `src/routes/__root.tsx:81` title hardcodes "MIOW". Need one-edit rebrand.
+- App currently branded **MIOW (MSU-IIT IDS ONLINE WORKSPACE)** via `src/lib/brand.ts:5-12` (APP_NAME, APP_SHORT_NAME, NOTIFICATION_SIGNOFF) and `src/components/brand.tsx` (MiowMark/MiowWordmark). `src/routes/__root.tsx:81` title is `MIOW`. **Keep as-is** — plan retains MIOW brand (G7-College refers to grade coverage, not a rename).
 - Assignment model = `assignments` table + `submissions` + `quizzes`/`quiz_questions` separate. User wants "rename assignment into appropriate name" — map to domain: Assignments → Activities / Tasks / Worksheets (choose). Must keep DB backward compat or migrate.
 - `NOTIFICATION_SIGNOFF` ready but unused — no email/push pipeline. Will leave signoff for later but add `src/lib/notifications.ts` stub.
 - Manual worksheet via Google Docs: currently `src/lib/worksheet-parser.ts` parses 4-section text; `src/routes/dashboard.admin.courses.tsx:59k` + `worksheet-context.ts` generates via AI. Need "Import from Google Docs" path.
@@ -25,7 +25,7 @@
 
 ## Proposed Approach
 
-1. **Rebrand + rename (no DB break)** — single brand.ts edit + codemod, alias types (Assignment → Activity) via type alias + UI labels, DB column keep `assignments` with comment. Remove Lovable strings from `vite.config.ts`, `src/lib/lovable-error-reporting.ts`, `src/integrations/supabase/client.ts` Lovable preview broker, package.json.
+1. **Brand retention + pedagogical rename (no DB break)** — keep `src/lib/brand.ts` as MIOW (verify no hardcoded alt names), alias types (Assignment → Activity) via type alias + UI labels, DB keeps `assignments`. Remove Lovable strings from `vite.config.ts`, `src/lib/lovable-error-reporting.ts`, `src/integrations/supabase/client.ts` Lovable preview broker, package.json.
 2. **Data extensions** — add migrations for `release_score` on quizzes/assignments, `announcement_attachments`, `worksheet_uploads`/`submission_files`, `chat_memories`, `google_docs_links`.
 3. **G7-College course** — extend grade_level to 7-12 + college 13-16, add `education_level: 'jhs'|'shs'|'college'` + `strand`/`program` fields, UI selector.
 4. **Worksheets: Google Docs import** — Picker → export docx/markdown → feed parser → preview → createQuizWithQuestions/createAssignment.
@@ -40,43 +40,45 @@ Each task = TDD where possible (failing test → fix → pass → commit). DRY: 
 
 ## Step-by-Step Plan
 
-### Task 1 — Rebrand single source (G7-College LMS)
+### Task 1 — Confirm MIOW brand (retain, no rebrand)
 
-**Objective:** One-edit rebrand, no hardcodes.
+**Objective:** Keep MIOW single source; verify no hardcodes or accidental G7-College brand leakage.
 
 **Files:**
-- Modify: `src/lib/brand.ts:5-26` (APP_NAME etc → G7-College)
-- Modify: `src/components/brand.tsx:44-91` (wordmark text)
-- Modify: `src/routes/__root.tsx:76-89` (title/meta)
-- Modify: `public/miow-logo.svg` → keep but add `public/g7-logo.svg` alias
-- Search: `grep -rn MIOW src --include="*.ts" --include="*.tsx"` ~12 hits
+- Verify (no change): `src/lib/brand.ts:5-26` stays `APP_NAME="MSU-IIT IDS ONLINE WORKSPACE (MIOW)"`, `APP_SHORT_NAME="MIOW"`, `NOTIFICATION_SIGNOFF="Sincerely,\nThe MIOW Administration Team"`
+- Verify: `src/components/brand.tsx:44-91` (MiowMark/MiowWordmark still MIOW)
+- Verify: `src/routes/__root.tsx:76-89` (title/meta still `MIOW - MSU-IIT IDS Online Workspace`)
+- Verify: `public/miow-logo.svg` remains canonical (no `/g7-logo.svg` switch)
+- Search: `grep -rn "G7-College.*LMS\|G7-COLLEGE" src --include="*.ts" --include="*.tsx"` must return 0 for brand strings (G7-College only allowed for grade-level feature, not brand)
 
 **Step 1 — Write failing test**
 ```ts
 // tests/brand.test.ts
-import { APP_NAME, APP_SHORT_NAME, NOTIFICATION_SIGNOFF } from "@/lib/brand";
-expect(APP_NAME).toBe("G7-COLLEGE LMS");
-expect(APP_SHORT_NAME).toBe("G7-College");
-expect(NOTIFICATION_SIGNOFF).toContain("G7-College");
+import { APP_NAME, APP_SHORT_NAME, APP_COMPACT_NAME, NOTIFICATION_SIGNOFF, BRAND_LOGO_SRC } from "@/lib/brand";
+expect(APP_NAME).toBe("MSU-IIT IDS ONLINE WORKSPACE (MIOW)");
+expect(APP_SHORT_NAME).toBe("MIOW");
+expect(APP_COMPACT_NAME).toBe("MSU-IIT IDS");
+expect(NOTIFICATION_SIGNOFF).toContain("MIOW Administration Team");
+expect(BRAND_LOGO_SRC).toBe("/miow-logo.svg");
 ```
 
-**Step 2 — Run** `bun run lint && bun run build` — expect fail.
+**Step 2 — Run** `bun run lint && bun run build` — expect pass (brand already MIOW).
 
-**Step 3 — Implement**
+**Step 3 — Implement (if needed)**
 ```ts
-// src/lib/brand.ts
-export const APP_NAME = "G7-COLLEGE LMS";
-export const APP_SHORT_NAME = "G7-COLLEGE";
-export const APP_COMPACT_NAME = "G7-College";
-export const APP_DESCRIPTOR = "G7 to College Learning Management System";
-export const APP_TAGLINE = "Grades 7 to College — One Workspace";
-export const KIOSK_TITLE = "G7-College Attendance Kiosk";
-export const KIOSK_EVENT_HEADER = "G7-COLLEGE ATTENDANCE";
-export const NOTIFICATION_SIGNOFF = "Sincerely,\nThe G7-College Administration Team";
-export const BRAND_LOGO_SRC = "/g7-logo.svg"; // fallback /miow-logo.svg
+// src/lib/brand.ts — keep as-is, do NOT change to G7-College:
+export const APP_NAME = "MSU-IIT IDS ONLINE WORKSPACE (MIOW)";
+export const APP_SHORT_NAME = "MIOW";
+export const APP_COMPACT_NAME = "MSU-IIT IDS";
+export const APP_DESCRIPTOR = "MSU-IIT IDS ONLINE WORKSPACE";
+export const APP_TAGLINE = "Integrated Development School – Online Workspace";
+export const KIOSK_TITLE = "MIOW Attendance Kiosk";
+export const KIOSK_EVENT_HEADER = "MIOW ATTENDANCE: MSU-IIT IDS ONLINE WORKSPACE";
+export const NOTIFICATION_SIGNOFF = "Sincerely,\nThe MIOW Administration Team";
+export const BRAND_LOGO_SRC = "/miow-logo.svg";
 ```
 
-**Step 4 — Pass + commit** `git commit -m "feat(brand): rebrand MIOW -> G7-College single source"`
+**Step 4 — Pass + commit** `git commit -m "chore(brand): confirm MIOW retained (no G7-College rebrand)"` (or no-op if already correct)
 
 ### Task 2 — Remove "Edit with Lovable" credits
 
@@ -114,13 +116,13 @@ export const BRAND_LOGO_SRC = "/g7-logo.svg"; // fallback /miow-logo.svg
 export const LABEL_ASSIGNMENT = "Activity";
 export const LABEL_ASSIGNMENTS = "Activities";
 export const LABEL_QUIZ = "Worksheet";
-// use in UI: `${LABEL_ASSIGNMENTS} | G7-College`
+// use in UI: `${LABEL_ASSIGNMENTS} | MIOW`
 // Keep DB: table `assignments` unchanged; add comment: -- pedagogical label: Activity
 ```
 
 **Test:** UI renders "Activities" not "Assignments"; `listAssignments()` still works; search `Assignment` in src → no UI misses.
 
-**Commit:** `feat(domain): rename Assignment -> Activity pedagogical label`
+**Commit:** `feat(domain): rename Assignment -> Activity pedagogical label (DB stays assignments)`
 
 ### Task 4 — Notification pipeline stub (sign-off ready)
 
@@ -321,12 +323,12 @@ create table public.submission_files (
 
 **Nav:**
 - Student: Dashboard | Activities | Worksheets | Grades | Attendance | Announcements
-- Teacher: Dashboard | Students Info | Courses (G7-College) | Worksheets | Announcements | Grades | Attendance
+- Teacher: Dashboard | Students Info | Courses (G7-COLLEGE) | Worksheets | Announcements | Grades | Attendance
 - Admin: all + Settings, Teachers
 
-Add `useProfile` gate already in place. Ensure `pageTitle()` uses brand.
+Add `useProfile` gate already in place. Ensure `pageTitle()` uses **MIOW** via `src/lib/brand.ts`.
 
-**Commit:** `feat(nav): G7-College dashboard menus`
+**Commit:** `feat(nav): MIOW dashboard menus with G7-College course grouping`
 
 ### Task 13 — Manual worksheet: Google Docs integration
 
@@ -382,10 +384,10 @@ export async function exportDocAsText(id:string, token:string) { /* Drive export
 
 ## Tests / Validation
 
-- Unit: `brand.test.ts` (rebrand), `domain-labels.test.ts` (Activity label), `notifications.test.ts` (stub), `parseWorksheet google docs` (paste export), `score release` (submit → hidden until released), `chat memory` (summary injection)
+- Unit: `brand.test.ts` (MIOW retained), `domain-labels.test.ts` (Activity label), `notifications.test.ts` (stub), `parseWorksheet google docs` (paste export), `score release` (submit → hidden until released), `chat memory` (summary injection)
 - Component: Dropzone (drag over, drop 2 files, formatFileSize), Course wizard (JHS 7 → SHS 12 → College Yr1), Announcements attachments, Students Info table
 - Integration: `bun run build` must stay green after each task; `bun run lint`; Supabase migrations `supabase db push --dry-run`; manual: create G7 course → student sees in dashboard → teacher creates worksheet via Google Docs import → student submits file drag-drop → teacher releases score → student sees score
-- Search verification: `grep -rn "MIOW\|Lovable\|lovableproject" src` → 0 after Task 2 (except ai-gateway if kept with env rename); `grep -rn "Assignment" src --include="*.tsx"` → only comments/DB
+- Search verification: `grep -rn "Lovable\\|lovableproject" src` → 0 after Task 2 (except ai-gateway if kept with env rename); `grep -rn "MIOW" src` should remain positive (brand); `grep -rn "Assignment" src --include="*.tsx"` → only comments/DB
 - Security check after: `check_index_coverage` on modified files (brand.ts, lms.server.ts, chat-tools.server.ts, announcements/quizzes routes)
 
 ## Risks, Tradeoffs, Open Questions
@@ -401,8 +403,8 @@ export async function exportDocAsText(id:string, token:string) { /* Drive export
 
 ## File Change Summary
 
-- **Modify:** `src/lib/brand.ts`, `src/components/brand.tsx`, `src/routes/__root.tsx`, `vite.config.ts`, `src/integrations/supabase/client.ts`, `client.server.ts`, `auth-middleware.ts`, `src/lib/lovable-error-reporting.ts`, `package.json`, `src/lib/lms.ts`, `src/integrations/supabase/types.ts`, `src/components/lms.tsx`, `src/routes/dashboard.admin.courses.tsx`, `dashboard.admin.announcements.tsx`, `dashboard.admin.students.tsx`, `dashboard.student.assignments.tsx`, `dashboard.student.quizzes.tsx`, `dashboard.student.index.tsx`, `dashboard.admin.index.tsx`, `dashboard.teacher.settings.tsx`, `src/lib/worksheet-parser.ts`, `src/lib/worksheet-context.ts`, `src/lib/chat-tools.server.ts`, `src/components/chat-widget.tsx`, `src/lib/ai-gateway.server.ts`
-- **Create:** `src/lib/domain-labels.ts`, `src/lib/notifications.ts`, `src/lib/google-docs.ts`, `src/lib/chat-memory.server.ts`, `src/lib/face-recognition.ts`, `src/components/dropzone.tsx`, `src/routes/dashboard.teacher.students.tsx`, `src/routes/kiosk.face-verify.tsx`, `public/g7-logo.svg`, `supabase/migrations/20260831_*.sql` ×5 (g7 college, score_release, announcement_attachments, chat_memories, worksheet_uploads + optional face index)
+- **Modify:** `src/lib/brand.ts` (verify retained), `src/components/brand.tsx` (verify), `src/routes/__root.tsx` (verify), `vite.config.ts`, `src/integrations/supabase/client.ts`, `client.server.ts`, `auth-middleware.ts`, `src/lib/lovable-error-reporting.ts`, `package.json`, `src/lib/lms.ts`, `src/integrations/supabase/types.ts`, `src/components/lms.tsx`, `src/routes/dashboard.admin.courses.tsx`, `dashboard.admin.announcements.tsx`, `dashboard.admin.students.tsx`, `dashboard.student.assignments.tsx`, `dashboard.student.quizzes.tsx`, `dashboard.student.index.tsx`, `dashboard.admin.index.tsx`, `dashboard.teacher.settings.tsx`, `src/lib/worksheet-parser.ts`, `src/lib/worksheet-context.ts`, `src/lib/chat-tools.server.ts`, `src/components/chat-widget.tsx`, `src/lib/ai-gateway.server.ts`
+- **Create:** `src/lib/domain-labels.ts`, `src/lib/notifications.ts`, `src/lib/google-docs.ts`, `src/lib/chat-memory.server.ts`, `src/lib/face-recognition.ts`, `src/components/dropzone.tsx`, `src/routes/dashboard.teacher.students.tsx`, `src/routes/kiosk.face-verify.tsx`, `supabase/migrations/20260831_*.sql` ×5 (g7 college, score_release, announcement_attachments, chat_memories, worksheet_uploads + optional face index) — **keep `public/miow-logo.svg` as brand logo (no g7-logo.svg)**
 
 ---
 
