@@ -46,8 +46,9 @@ async function unwrap<T>(p: PromiseLike<{ data: T | null; error: any }>): Promis
 const SESSION_TTL_MS = 12 * 60 * 60 * 1000;
 
 function sessionSecret(): string {
-  const key = process.env["SUPABASE_SERVICE_ROLE_KEY"];
-  if (!key) throw new Error("Missing SUPABASE_SERVICE_ROLE_KEY");
+  const key = process.env["SESSION_SECRET"] ?? process.env["SUPABASE_SERVICE_ROLE_KEY"];
+  if (!key) throw new Error("Missing SESSION_SECRET");
+  if (process.env["SESSION_SECRET"] && key === process.env["SUPABASE_SERVICE_ROLE_KEY"]) console.warn("[security] SESSION_SECRET equals service key");
   return key;
 }
 
@@ -62,10 +63,16 @@ export function createSessionToken(profileId: string): string {
 function verifySessionToken(token: string): string {
   const [payload, sig] = token.split(".");
   if (!payload || !sig) throw new Error("Unauthorized");
-  const expected = createHmac("sha256", sessionSecret()).update(payload).digest("base64url");
-  const a = Buffer.from(sig);
-  const b = Buffer.from(expected);
-  if (a.length !== b.length || !timingSafeEqual(a, b)) throw new Error("Unauthorized");
+  const tryKeys = [process.env["SESSION_SECRET"], process.env["SUPABASE_SERVICE_ROLE_KEY"]].filter(Boolean) as string[];
+  const useKeys = tryKeys.length ? tryKeys : [sessionSecret()];
+  let ok = false;
+  for (const k of useKeys) {
+    const expected = createHmac("sha256", k).update(payload).digest("base64url");
+    const a = Buffer.from(sig);
+    const b = Buffer.from(expected);
+    if (a.length === b.length && timingSafeEqual(a, b)) { ok = true; break; }
+  }
+  if (!ok) throw new Error("Unauthorized");
   let body: { sub?: unknown; exp?: unknown };
   try {
     body = JSON.parse(Buffer.from(payload, "base64url").toString());
