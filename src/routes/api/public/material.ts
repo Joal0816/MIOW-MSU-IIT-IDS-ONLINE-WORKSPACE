@@ -1,7 +1,8 @@
 // Streams course handouts from the private "course-materials" bucket.
 // The prefix is only "public" in the routing sense — every request must carry
-// a valid signed kiosk session token (?t=), and only paths matching the strict
-// material shape are served, never arbitrary bucket contents.
+// a valid signed kiosk session token. Token is read from Authorization: Bearer
+// header first (preferred — avoids token leakage in logs), fallback to ?t=
+// query is deprecated and kept only for backward compat.
 import { createFileRoute } from "@tanstack/react-router";
 
 const PATH_RE = /^[0-9a-f-]{36}\/material_\d+_[0-9a-f]{8}\.(pdf|docx?|png|jpe?g|zip)$/;
@@ -21,8 +22,11 @@ export const Route = createFileRoute("/api/public/material")({
       GET: async ({ request }) => {
         const url = new URL(request.url);
         const p = url.searchParams.get("p") ?? "";
-        const t = url.searchParams.get("t") ?? "";
+        // Prefer Authorization header; ?t= is deprecated fallback
+        const auth = (request.headers.get("authorization") ?? "").replace(/^Bearer\s+/i, "");
+        const t = (auth || url.searchParams.get("t")) ?? "";
         if (!PATH_RE.test(p)) return new Response("Not found", { status: 404 });
+        if (!t) return new Response("Unauthorized", { status: 401 });
         const server = await import("@/lib/lms.server");
         try {
           await server.requireSession(t);

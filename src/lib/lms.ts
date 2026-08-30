@@ -32,7 +32,6 @@ import {
   listTeacherDirectoryFn,
   createTeacherFn,
   enrollBiometricsFn,
-
   logAttendanceFn,
   myQuizSummariesFn,
   quizAttemptInfoFn,
@@ -46,7 +45,6 @@ import {
   updateCourseFn,
   updateProfileFn,
   updateTeacherSettingsFn,
-
   updateQuizRetakePolicyFn,
   updateQuizFn,
   updateAssignmentFn,
@@ -95,7 +93,6 @@ export interface Profile {
 export interface TeacherRecord extends Profile {
   courses: { id: string; title: string; code: string }[];
 }
-
 
 export interface Announcement {
   id: string;
@@ -183,7 +180,6 @@ export interface Assignment {
   /** Handouts uploaded by staff (PDF/DOCX/PNG/JPG/ZIP). */
   attachments?: Attachment[];
 }
-
 
 export interface Submission {
   id: string;
@@ -325,7 +321,10 @@ export interface QuizAttemptRosterEntry {
 }
 
 export interface QuizAttemptRoster {
-  quiz: Pick<Quiz, "id" | "title" | "course_id" | "allow_retake" | "max_attempts" | "retake_score_policy">;
+  quiz: Pick<
+    Quiz,
+    "id" | "title" | "course_id" | "allow_retake" | "max_attempts" | "retake_score_policy"
+  >;
   students: QuizAttemptRosterEntry[];
 }
 
@@ -340,13 +339,47 @@ export const WEIGHTS = {
 
 // DepEd transmutation table (DO 8, s. 2015): [minInitial, transmuted]
 export const TRANSMUTATION_TABLE: Array<[number, number]> = [
-  [100, 100], [98.4, 99], [96.8, 98], [95.2, 97], [93.6, 96], [92.0, 95],
-  [90.4, 94], [88.8, 93], [87.2, 92], [85.6, 91], [84.0, 90], [82.4, 89],
-  [80.8, 88], [79.2, 87], [77.6, 86], [76.0, 85], [74.4, 84], [72.8, 83],
-  [71.2, 82], [69.6, 81], [68.0, 80], [66.4, 79], [64.8, 78], [63.2, 77],
-  [61.6, 76], [60.0, 75], [56.0, 74], [52.0, 73], [48.0, 72], [44.0, 71],
-  [40.0, 70], [36.0, 69], [32.0, 68], [28.0, 67], [24.0, 66], [20.0, 65],
-  [16.0, 64], [12.0, 63], [8.0, 62], [4.0, 61], [0, 60],
+  [100, 100],
+  [98.4, 99],
+  [96.8, 98],
+  [95.2, 97],
+  [93.6, 96],
+  [92.0, 95],
+  [90.4, 94],
+  [88.8, 93],
+  [87.2, 92],
+  [85.6, 91],
+  [84.0, 90],
+  [82.4, 89],
+  [80.8, 88],
+  [79.2, 87],
+  [77.6, 86],
+  [76.0, 85],
+  [74.4, 84],
+  [72.8, 83],
+  [71.2, 82],
+  [69.6, 81],
+  [68.0, 80],
+  [66.4, 79],
+  [64.8, 78],
+  [63.2, 77],
+  [61.6, 76],
+  [60.0, 75],
+  [56.0, 74],
+  [52.0, 73],
+  [48.0, 72],
+  [44.0, 71],
+  [40.0, 70],
+  [36.0, 69],
+  [32.0, 68],
+  [28.0, 67],
+  [24.0, 66],
+  [20.0, 65],
+  [16.0, 64],
+  [12.0, 63],
+  [8.0, 62],
+  [4.0, 61],
+  [0, 60],
 ];
 
 export function transmute(initial: number): number {
@@ -400,7 +433,10 @@ export function initialOf(
 }
 
 export function transmutedOf(
-  g: Pick<Grade, "written_work_score" | "performance_task_score" | "exam_score" | "transmuted_final_grade">,
+  g: Pick<
+    Grade,
+    "written_work_score" | "performance_task_score" | "exam_score" | "transmuted_final_grade"
+  >,
   att: number | null = null,
 ) {
   const initial = initialOf(g, att);
@@ -523,7 +559,12 @@ export type PinLoginResult =
 export async function pinLogin(login: string, secret: string): Promise<PinLoginResult> {
   const res = (await pinLoginFn({ data: { login, secret } })) as
     | { ok: true; profile: Profile; token: string }
-    | { ok: false; reason: "invalid" | "locked"; retryAfterMinutes?: number; attemptsLeft?: number };
+    | {
+        ok: false;
+        reason: "invalid" | "locked";
+        retryAfterMinutes?: number;
+        attemptsLeft?: number;
+      };
   if (res.ok) return { ok: true, profile: { ...res.profile, session_token: res.token } };
   return res;
 }
@@ -533,7 +574,6 @@ export async function findProfileByCredential(login: string, pin: string): Promi
   const res = await pinLogin(login, pin);
   return res.ok ? res.profile : null;
 }
-
 
 export async function createProfile(input: Partial<Profile>): Promise<Profile> {
   return createProfileFn({ data: { ...(input as object), token: sessionToken() } as never });
@@ -599,11 +639,9 @@ export async function updateTeacherSettings(patch: {
     avatar_url: updated.avatar_url,
     has_pin: updated.has_pin ?? false,
     has_rfid: updated.has_rfid ?? false,
-
   });
   return updated;
 }
-
 
 /** Admin-only soft delete — returns how many course leads were unassigned. */
 export async function deleteProfile(id: string): Promise<{ unassignedCourses: number }> {
@@ -618,7 +656,10 @@ export async function listAnnouncements(): Promise<Announcement[]> {
 
 export async function createAnnouncement(input: Partial<Announcement>): Promise<void> {
   await createAnnouncementFn({ data: { ...(input as object), token: sessionToken() } as never });
-  logAudit("Announcement broadcast", `"${input.title ?? "Untitled"}" posted to ${input.target_audience ?? "all"}`);
+  logAudit(
+    "Announcement broadcast",
+    `"${input.title ?? "Untitled"}" posted to ${input.target_audience ?? "all"}`,
+  );
 }
 
 export async function updateAnnouncement(id: string, patch: Partial<Announcement>): Promise<void> {
@@ -666,7 +707,9 @@ export async function listQuizzes(): Promise<Quiz[]> {
   return listQuizzesFn({ data: { token: sessionToken() } });
 }
 
-export async function getQuiz(id: string): Promise<{ quiz: Quiz; questions: QuizQuestionPublic[] }> {
+export async function getQuiz(
+  id: string,
+): Promise<{ quiz: Quiz; questions: QuizQuestionPublic[] }> {
   return getQuizFn({ data: { id, token: sessionToken() } });
 }
 
@@ -701,12 +744,16 @@ export async function listQuizAttempts(quizId: string): Promise<QuizAttemptRoste
 
 /** Grant one extra attempt (stackable) to a student on a worksheet. */
 export async function grantQuizRetake(quizId: string, studentId: string): Promise<void> {
-  await grantQuizRetakeFn({ data: { quiz_id: quizId, student_id: studentId, token: sessionToken() } });
+  await grantQuizRetakeFn({
+    data: { quiz_id: quizId, student_id: studentId, token: sessionToken() },
+  });
 }
 
 /** Wipe a student's attempt history (and grant) so they can start fresh. */
 export async function resetQuizAttempts(quizId: string, studentId: string): Promise<void> {
-  await resetQuizAttemptsFn({ data: { quiz_id: quizId, student_id: studentId, token: sessionToken() } });
+  await resetQuizAttemptsFn({
+    data: { quiz_id: quizId, student_id: studentId, token: sessionToken() },
+  });
 }
 
 export async function createQuizWithQuestions(
@@ -774,8 +821,6 @@ export async function enrollBiometrics(
     data: { id, ...fields, token: sessionToken() } as never,
   })) as Profile;
 }
-
-
 
 /** Full user directory (admin-only) for the Users & Roles console. */
 export async function listAllUsers(): Promise<Profile[]> {
@@ -877,7 +922,11 @@ export function daysUntil(iso: string | null): string {
 
 export function fmtDate(iso: string | null): string {
   if (!iso) return "—";
-  return new Date(iso).toLocaleDateString("en-PH", { month: "short", day: "numeric", year: "numeric" });
+  return new Date(iso).toLocaleDateString("en-PH", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  });
 }
 
 export function fmtTime(iso: string): string {
@@ -894,10 +943,21 @@ export const COMPONENT_LABELS: Record<Assignment["component_type"], string> = {
 
 /**
  * Signed-in download link for a stored handout. The media route requires a
- * valid session token, so it is appended per request rather than persisted.
+ * valid session token — prefer `Authorization: Bearer <token>` header to avoid
+ * token leakage in logs. The `&t=` query is deprecated fallback kept only for
+ * backward compat (e.g. <a href> links); new fetch code should use
+ * `materialHeaders()` instead.
  */
 export function materialHref(a: Attachment): string {
+  // Deprecated query-param path — kept for <a href>/<img src> compat.
+  // Preferred: fetch(a.url, { headers: materialHeaders() })
   return `${a.url}&t=${encodeURIComponent(sessionToken())}`;
+}
+
+/** Headers for authenticated material fetch (preferred over ?t= query). */
+export function materialHeaders(): Record<string, string> {
+  const t = sessionToken();
+  return t ? { Authorization: `Bearer ${t}` } : {};
 }
 
 /** Human-readable file size for attachment chips. */
@@ -964,7 +1024,12 @@ export async function deleteQuiz(id: string, mode: "soft" | "hard" = "soft"): Pr
 
 export async function updateAssignment(
   id: string,
-  patch: Partial<Pick<Assignment, "title" | "description" | "due_date" | "total_points" | "component_type" | "attachments">>,
+  patch: Partial<
+    Pick<
+      Assignment,
+      "title" | "description" | "due_date" | "total_points" | "component_type" | "attachments"
+    >
+  >,
 ): Promise<void> {
   await updateAssignmentFn({ data: { id, patch: patch as never, token: sessionToken() } });
 }

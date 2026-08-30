@@ -30,7 +30,10 @@ async function unwrap<T>(p: PromiseLike<{ data: T | null; error: any }>): Promis
     if (!RETRYABLE_DB_CODES.has(error.code) || attempt === 2) break;
     await sleep(400 * (attempt + 1));
   }
-  console.error("[lms] database error:", { code: (error as any)?.code, message: (error as any)?.message });
+  console.error("[lms] database error:", {
+    code: (error as any)?.code,
+    message: (error as any)?.message,
+  });
   throw new Error("Database request failed");
 }
 
@@ -45,7 +48,8 @@ const SESSION_TTL_MS = 12 * 60 * 60 * 1000;
 function sessionSecret(): string {
   const key = process.env["SESSION_SECRET"] ?? process.env["SUPABASE_SERVICE_ROLE_KEY"];
   if (!key) throw new Error("Missing SESSION_SECRET");
-  if (process.env["SESSION_SECRET"] && key === process.env["SUPABASE_SERVICE_ROLE_KEY"]) console.warn("[security] SESSION_SECRET equals service key");
+  if (process.env["SESSION_SECRET"] && key === process.env["SUPABASE_SERVICE_ROLE_KEY"])
+    console.warn("[security] SESSION_SECRET equals service key");
   return key;
 }
 
@@ -56,7 +60,11 @@ export function createSessionToken(profileId: string, jti: string = randomUUID()
   const row = { jti, profile_id: profileId, expires_at: new Date(exp).toISOString() } as any;
   try {
     const pending: any = db.from("sessions").insert(row);
-    if (pending && typeof pending.then === "function") void pending.then(() => {}, () => {});
+    if (pending && typeof pending.then === "function")
+      void pending.then(
+        () => {},
+        () => {},
+      );
     else void pending;
   } catch {
     // ignore sync errors (e.g., sessions table not yet migrated in tests)
@@ -68,14 +76,19 @@ export function createSessionToken(profileId: string, jti: string = randomUUID()
 export function verifySessionToken(token: string): string {
   const [payload, sig] = token.split(".");
   if (!payload || !sig) throw new Error("Unauthorized");
-  const tryKeys = [process.env["SESSION_SECRET"], process.env["SUPABASE_SERVICE_ROLE_KEY"]].filter(Boolean) as string[];
+  const tryKeys = [process.env["SESSION_SECRET"], process.env["SUPABASE_SERVICE_ROLE_KEY"]].filter(
+    Boolean,
+  ) as string[];
   const useKeys = tryKeys.length ? tryKeys : [sessionSecret()];
   let ok = false;
   for (const k of useKeys) {
     const expected = createHmac("sha256", k).update(payload).digest("base64url");
     const a = Buffer.from(sig);
     const b = Buffer.from(expected);
-    if (a.length === b.length && timingSafeEqual(a, b)) { ok = true; break; }
+    if (a.length === b.length && timingSafeEqual(a, b)) {
+      ok = true;
+      break;
+    }
   }
   if (!ok) throw new Error("Unauthorized");
   let body: { sub?: unknown; jti?: unknown; exp?: unknown };
@@ -94,7 +107,11 @@ export function verifySessionToken(token: string): string {
 /** Revoke all active sessions for a profile (best-effort). */
 async function revokeSessions(profileId: string): Promise<void> {
   try {
-    await (db.from("sessions").update({ revoked_at: new Date().toISOString() }).eq("profile_id", profileId).is("revoked_at", null) as any);
+    await (db
+      .from("sessions")
+      .update({ revoked_at: new Date().toISOString() })
+      .eq("profile_id", profileId)
+      .is("revoked_at", null) as any);
   } catch {
     // ignore — sessions table may not exist in test env
   }
@@ -107,10 +124,14 @@ export async function requireSession(token: string) {
   try {
     const payloadPart = token.split(".")[0];
     if (payloadPart) {
-      const body = JSON.parse(Buffer.from(payloadPart, "base64url").toString()) as { jti?: unknown };
+      const body = JSON.parse(Buffer.from(payloadPart, "base64url").toString()) as {
+        jti?: unknown;
+      };
       const jti = body?.jti;
       if (typeof jti === "string" && jti) {
-        const row = await unwrap<any>(db.from("sessions").select("revoked_at").eq("jti", jti).maybeSingle());
+        const row = await unwrap<any>(
+          db.from("sessions").select("revoked_at").eq("jti", jti).maybeSingle(),
+        );
         if (!row || (row as any).revoked_at) throw new Error("Unauthorized");
       }
     }
@@ -258,14 +279,22 @@ export const schemas = {
     employee_id: z.string().min(1).max(50),
     department: z.string().min(1).max(100),
     pin: z.string().regex(/^\d{4,6}$/),
-    rfid_uid: z.string().regex(/^\d{6,20}$/).nullable().optional(),
+    rfid_uid: z
+      .string()
+      .regex(/^\d{6,20}$/)
+      .nullable()
+      .optional(),
     ...token,
   }),
   // Admin-assisted / self-service biometric enrolment.
   biometrics: z.object({
     id: uuid,
     face_embedding: z.string().max(20000).nullable().optional(),
-    rfid_uid: z.string().regex(/^\d{6,20}$/).nullable().optional(),
+    rfid_uid: z
+      .string()
+      .regex(/^\d{6,20}$/)
+      .nullable()
+      .optional(),
     ...token,
   }),
   profilePatch: z.object({
@@ -280,8 +309,14 @@ export const schemas = {
         employee_id: z.string().max(50).nullable(),
         prefix: z.string().max(20).nullable(),
         department: z.string().max(100).nullable(),
-        pin: z.string().regex(/^\d{4,8}$/).nullable(),
-        rfid_uid: z.string().regex(/^\d{6,20}$/).nullable(),
+        pin: z
+          .string()
+          .regex(/^\d{4,8}$/)
+          .nullable(),
+        rfid_uid: z
+          .string()
+          .regex(/^\d{6,20}$/)
+          .nullable(),
         avatar_url: avatarUrl.nullable(),
       })
       .partial(),
@@ -297,8 +332,14 @@ export const schemas = {
         full_name: z.string().min(1).max(200),
         email: z.string().max(320).nullable(),
         avatar_url: avatarUrl.nullable(),
-        pin: z.string().regex(/^\d{4,6}$/).nullable(),
-        rfid_uid: z.string().regex(/^\d{6,20}$/).nullable(),
+        pin: z
+          .string()
+          .regex(/^\d{4,6}$/)
+          .nullable(),
+        rfid_uid: z
+          .string()
+          .regex(/^\d{6,20}$/)
+          .nullable(),
         face_embedding: z.string().max(20000).nullable(),
       })
       .partial(),
@@ -532,7 +573,6 @@ export function safeProfile(p: any) {
   };
 }
 
-
 /**
  * Strip the session token from a validated payload before it hits PostgREST —
  * no table has a `token` column, so passing it through breaks inserts/updates.
@@ -621,7 +661,6 @@ export async function verifyPinLogin(login: string, secret: string) {
   // the endpoint can't be used to enumerate accounts.
   if (!p) return { ok: false as const, reason: "invalid" as const };
 
-
   const now = Date.now();
   const lockedUntil = typeof p.locked_until === "string" ? Date.parse(p.locked_until) : 0;
   if (lockedUntil > now) {
@@ -633,7 +672,8 @@ export async function verifyPinLogin(login: string, secret: string) {
   }
 
   if (!(await verifySecret(p, secret))) {
-    const attempts = (typeof p.failed_login_attempts === "number" ? p.failed_login_attempts : 0) + 1;
+    const attempts =
+      (typeof p.failed_login_attempts === "number" ? p.failed_login_attempts : 0) + 1;
     const lock = attempts >= LOGIN_MAX_ATTEMPTS;
     await db
       .from("profiles")
@@ -672,7 +712,8 @@ export async function getProfileById(id: string) {
 
 export async function createProfile(input: z.infer<typeof schemas.profileInput>) {
   const row: Record<string, unknown> = withoutToken(input);
-  if (typeof row["email"] === "string") row["email"] = (row["email"] as string).trim().toLowerCase();
+  if (typeof row["email"] === "string")
+    row["email"] = (row["email"] as string).trim().toLowerCase();
   // Friendly, pre-flight duplicate detection so a re-registration never
   // surfaces a raw database constraint error.
   await assertUniqueIdentity({
@@ -687,7 +728,6 @@ export async function createProfile(input: z.infer<typeof schemas.profileInput>)
   const p = await unwrap<any>(db.from("profiles").insert(row).select().single());
   return safeProfile(p);
 }
-
 
 // Fields a signed-in user may change on their own profile. Everything else
 // (role, grade level, section, student id) stays staff-only.
@@ -769,8 +809,6 @@ export async function updateProfile(id: string, patch: Record<string, unknown>) 
   }
 }
 
-
-
 /**
  * Teacher self-service settings mutation. The teacher id comes from the
  * verified session token (never the request body), so a teacher can only
@@ -778,18 +816,13 @@ export async function updateProfile(id: string, patch: Record<string, unknown>) 
  * updateProfile(); the fresh, credential-stripped profile is returned so the
  * client can refresh its global session store.
  */
-export async function updateTeacherSettings(
-  teacherId: string,
-  patch: Record<string, unknown>,
-) {
+export async function updateTeacherSettings(teacherId: string, patch: Record<string, unknown>) {
   if (Object.keys(patch).length === 0) throw new Error("Nothing to update");
   await updateProfile(teacherId, patch);
   const fresh = await getProfileById(teacherId);
   if (!fresh) throw new Error("Unauthorized");
   return fresh;
 }
-
-
 
 /**
  * Admin-only user removal — SOFT DELETE. The row is stamped with
@@ -831,9 +864,13 @@ export async function deleteUser(adminId: string, id: string) {
   const tombstone = (value: unknown) =>
     typeof value === "string" && value && !value.startsWith("deleted:")
       ? `deleted:${stamp}:${value}`.slice(0, 300)
-      : value ?? null;
+      : (value ?? null);
   const archived = await unwrap<any>(
-    db.from("profiles").select("email, student_id, username, employee_id").eq("id", id).maybeSingle(),
+    db
+      .from("profiles")
+      .select("email, student_id, username, employee_id")
+      .eq("id", id)
+      .maybeSingle(),
   );
   await unwrap(
     db
@@ -854,6 +891,77 @@ export async function deleteUser(adminId: string, id: string) {
   await revokeSessions(id);
 
   return { unassignedCourses: cleared.length };
+}
+
+/* ---------- File-type sniff (file-type pkg or magic-byte fallback) ---------- */
+
+const AVATAR_ALLOWED_MIMES = new Set(["image/png", "image/jpeg", "image/webp", "image/gif"]);
+const MATERIAL_ALLOWED_MIMES = new Set([
+  "image/png",
+  "image/jpeg",
+  "image/webp",
+  "image/gif",
+  "application/pdf",
+  "application/msword",
+  "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+  "application/zip",
+  "application/x-zip-compressed",
+]);
+
+function detectMimeByMagic(buf: Buffer): string | null {
+  if (buf.length < 4) return null;
+  if (
+    buf.length >= 8 &&
+    buf[0] === 0x89 &&
+    buf[1] === 0x50 &&
+    buf[2] === 0x4e &&
+    buf[3] === 0x47 &&
+    buf[4] === 0x0d &&
+    buf[5] === 0x0a &&
+    buf[6] === 0x1a &&
+    buf[7] === 0x0a
+  )
+    return "image/png";
+  if (buf[0] === 0xff && buf[1] === 0xd8 && buf[2] === 0xff) return "image/jpeg";
+  if (buf[0] === 0x47 && buf[1] === 0x49 && buf[2] === 0x46 && buf[3] === 0x38) return "image/gif";
+  if (
+    buf.length >= 12 &&
+    buf[0] === 0x52 &&
+    buf[1] === 0x49 &&
+    buf[2] === 0x46 &&
+    buf[3] === 0x46 &&
+    buf[8] === 0x57 &&
+    buf[9] === 0x45 &&
+    buf[10] === 0x42 &&
+    buf[11] === 0x50
+  )
+    return "image/webp";
+  if (buf[0] === 0x25 && buf[1] === 0x50 && buf[2] === 0x44 && buf[3] === 0x46)
+    return "application/pdf";
+  if (buf[0] === 0xd0 && buf[1] === 0xcf && buf[2] === 0x11 && buf[3] === 0xe0)
+    return "application/msword";
+  if (
+    buf[0] === 0x50 &&
+    buf[1] === 0x4b &&
+    (buf[2] === 0x03 || buf[2] === 0x05 || buf[2] === 0x07) &&
+    (buf[3] === 0x04 || buf[3] === 0x06 || buf[3] === 0x08)
+  )
+    return "application/zip";
+  return null;
+}
+
+async function sniffMime(buffer: Buffer): Promise<string | null> {
+  try {
+    const mod: any = await import("file-type");
+    const fn = mod.fileTypeFromBuffer ?? mod.fromBuffer ?? mod.default?.fileTypeFromBuffer;
+    if (typeof fn === "function") {
+      const ft = await fn(buffer);
+      if (ft?.mime) return ft.mime as string;
+    }
+  } catch {
+    // file-type unavailable — fallback to magic bytes
+  }
+  return detectMimeByMagic(buffer);
 }
 
 /* ---------- Avatar upload pipeline (storage + DB in one call) ---------- */
@@ -886,17 +994,32 @@ export async function uploadAvatar(tokenStr: string, base64: string, contentType
   const buffer = Buffer.from(base64, "base64");
   if (buffer.byteLength === 0) throw new Error("Empty image");
   if (buffer.byteLength > 2 * 1024 * 1024) throw new Error("Image must be under 2 MB");
+  // File-type sniff: declared mime must match sniffed + be in allowed set
+  const sniffed = await sniffMime(buffer);
+  if (!sniffed || !AVATAR_ALLOWED_MIMES.has(sniffed))
+    throw new Error(
+      `Unsupported image content (${sniffed ?? "unknown"}) — use PNG, JPEG, WebP, or GIF`,
+    );
+  // Normalize JPEG variants: file-type returns image/jpeg
+  if (sniffed !== contentType)
+    throw new Error(`MIME mismatch: declared ${contentType} but file is ${sniffed}`);
+  // Entropy hardened: include randomUUID, 16 hex chars (64-bit)
   const rand = createHmac("sha256", sessionSecret())
-    .update(`${caller.id}:${Date.now()}`)
+    .update(`${caller.id}:${Date.now()}:${randomUUID()}`)
     .digest("hex")
-    .slice(0, 8);
+    .slice(0, 16);
   const path = `${caller.id}/avatar_${Date.now()}_${rand}.${ext}`;
   const { error } = await supabaseAdmin.storage
     .from(AVATAR_BUCKET)
     .upload(path, buffer, { contentType, upsert: false });
   if (error) throw new Error(`Storage upload failed (${error.message})`);
   const previous = caller.avatar_url;
-  await unwrap(db.from("profiles").update({ avatar_url: avatarUrlForPath(path) }).eq("id", caller.id));
+  await unwrap(
+    db
+      .from("profiles")
+      .update({ avatar_url: avatarUrlForPath(path) })
+      .eq("id", caller.id),
+  );
   // Best-effort cleanup of the replaced object so the bucket doesn't fill up.
   try {
     const m = previous?.match(/[?&]p=([^&]+)/);
@@ -919,7 +1042,12 @@ export async function listStudents() {
 
 export async function listStaff() {
   const rows = await unwrap<any[]>(
-    db.from("profiles").select("*").in("role", ["teacher", "admin"]).is("deleted_at", null).order("full_name"),
+    db
+      .from("profiles")
+      .select("*")
+      .in("role", ["teacher", "admin"])
+      .is("deleted_at", null)
+      .order("full_name"),
   );
   return rows.map(safeProfile);
 }
@@ -943,7 +1071,12 @@ export async function listTeachers() {
 export async function listTeacherDirectory() {
   const [rows, courses] = await Promise.all([
     unwrap<any[]>(
-      db.from("profiles").select("*").eq("role", "teacher").is("deleted_at", null).order("full_name"),
+      db
+        .from("profiles")
+        .select("*")
+        .eq("role", "teacher")
+        .is("deleted_at", null)
+        .order("full_name"),
     ),
     unwrap<any[]>(db.from("courses").select("id, title, code, teacher_id")),
   ]);
@@ -1032,8 +1165,6 @@ export async function enrollBiometrics(
   return fresh;
 }
 
-
-
 /** Full user directory for the admin Users & Roles console. */
 export async function listAllUsers() {
   const rows = await unwrap<any[]>(
@@ -1112,10 +1243,17 @@ export async function deleteAnnouncement(id: string) {
 export async function listCourses() {
   const courses = await unwrap<any[]>(db.from("courses").select("*").order("code"));
   const teachers = await unwrap<Array<{ id: string; full_name: string }>>(
-    db.from("profiles").select("id, full_name").in("role", ["teacher", "admin"]).is("deleted_at", null),
+    db
+      .from("profiles")
+      .select("id, full_name")
+      .in("role", ["teacher", "admin"])
+      .is("deleted_at", null),
   );
   const byId = new Map(teachers.map((t) => [t.id, t.full_name]));
-  return courses.map((c) => ({ ...c, teacher_name: c.teacher_id ? byId.get(c.teacher_id) : undefined }));
+  return courses.map((c) => ({
+    ...c,
+    teacher_name: c.teacher_id ? byId.get(c.teacher_id) : undefined,
+  }));
 }
 
 /**
@@ -1177,7 +1315,6 @@ export async function createAssignment(input: z.infer<typeof schemas.assignmentI
   await unwrap(db.from("assignments").insert(withoutToken(input)));
 }
 
-
 export async function enrollmentsForCourse(courseId: string): Promise<string[]> {
   const rows = await unwrap<Array<{ student_id: string }>>(
     db.from("enrollments").select("student_id").eq("course_id", courseId),
@@ -1194,7 +1331,12 @@ export async function enrollmentsForStudent(studentId: string): Promise<string[]
 
 export async function enrollStudent(student_id: string, course_id: string) {
   const existing = await unwrap<{ id: string } | null>(
-    db.from("enrollments").select("id").eq("student_id", student_id).eq("course_id", course_id).maybeSingle(),
+    db
+      .from("enrollments")
+      .select("id")
+      .eq("student_id", student_id)
+      .eq("course_id", course_id)
+      .maybeSingle(),
   );
   if (!existing) await unwrap(db.from("enrollments").insert({ student_id, course_id }));
 }
@@ -1231,7 +1373,11 @@ export async function getQuizPublic(id: string) {
   );
   // Never select correct_answer — grading happens in scoreQuiz (submitQuizAttempt).
   const questions = await unwrap<any[]>(
-    db.from("quiz_questions").select("id, quiz_id, question, options, position").eq("quiz_id", id).order("position"),
+    db
+      .from("quiz_questions")
+      .select("id, quiz_id, question, options, position")
+      .eq("quiz_id", id)
+      .order("position"),
   );
 
   return { quiz, questions };
@@ -1294,7 +1440,9 @@ const RUBRIC_STOPWORDS = new Set(
 
 /** Fallback concept words mined from free-text rubrics. */
 function rubricConcepts(rubric: string): string[] {
-  const words = (rubric.toLowerCase().match(/[a-z][a-z-]{2,}/g) ?? []).filter((w) => !RUBRIC_STOPWORDS.has(w));
+  const words = (rubric.toLowerCase().match(/[a-z][a-z-]{2,}/g) ?? []).filter(
+    (w) => !RUBRIC_STOPWORDS.has(w),
+  );
   return [...new Set(words)];
 }
 
@@ -1312,7 +1460,9 @@ export function gradeEssay(answer: string, rubric: string): boolean {
   if (isGibberishAnswer(answer, words)) return false;
   const categories = parseKeywordCategories(rubric);
   if (categories.length >= 2) {
-    const hitCategories = categories.filter((cat) => cat.some((kw) => keywordHit(answer, kw))).length;
+    const hitCategories = categories.filter((cat) =>
+      cat.some((kw) => keywordHit(answer, kw)),
+    ).length;
     return hitCategories >= 2;
   }
   // No declared categories: require at least two distinct rubric concept hits
@@ -1334,7 +1484,12 @@ async function scoreQuiz(quiz_id: string, answers: Record<string, string>) {
       .eq("quiz_id", quiz_id)
       .order("position"),
   );
-  const norm = (s: string) => s.trim().toLowerCase().replace(/\s+/g, " ").replace(/[.,;:!?]+$/, "");
+  const norm = (s: string) =>
+    s
+      .trim()
+      .toLowerCase()
+      .replace(/\s+/g, " ")
+      .replace(/[.,;:!?]+$/, "");
   const results = questions.map((q) => {
     const chosen = answers[q.id] ?? null;
     const options = (Array.isArray(q.options) ? q.options : []) as string[];
@@ -1384,7 +1539,9 @@ async function getQuizConfig(quizId: string): Promise<QuizConfig> {
 }
 
 async function attemptsFor(quizId: string, studentId: string) {
-  return unwrap<Array<{ attempt_number: number; score: number; total: number; created_at: string }>>(
+  return unwrap<
+    Array<{ attempt_number: number; score: number; total: number; created_at: string }>
+  >(
     db
       .from("quiz_attempts")
       .select("attempt_number, score, total, created_at")
@@ -1416,7 +1573,10 @@ function attemptCeiling(quiz: QuizConfig, extra: number): number | null {
 type AttemptRow = { attempt_number: number; score: number; total: number };
 
 /** Gradebook score for a set of attempts under the worksheet's policy. */
-function effectiveScore(attempts: AttemptRow[], policy: RetakePolicy): { score: number; total: number } | null {
+function effectiveScore(
+  attempts: AttemptRow[],
+  policy: RetakePolicy,
+): { score: number; total: number } | null {
   if (!attempts.length) return null;
   const pct = (a: AttemptRow) => (a.total > 0 ? a.score / a.total : 0);
   if (policy === "latest_attempt") {
@@ -1437,7 +1597,11 @@ function effectiveScore(attempts: AttemptRow[], policy: RetakePolicy): { score: 
  * worksheet's retake policy BEFORE scoring and recording: past the ceiling,
  * the attempt is rejected and nothing is written.
  */
-export async function submitQuizAttempt(quiz_id: string, answers: Record<string, string>, token: string) {
+export async function submitQuizAttempt(
+  quiz_id: string,
+  answers: Record<string, string>,
+  token: string,
+) {
   const caller = await requireSession(token);
   const quiz = await getQuizConfig(quiz_id);
   const [attempts, extra] = await Promise.all([
@@ -1449,8 +1613,7 @@ export async function submitQuizAttempt(quiz_id: string, answers: Record<string,
     return {
       ok: false as const,
       reason: (!quiz.allow_retake && extra === 0 ? "retakes_disabled" : "max_attempts") as
-        | "retakes_disabled"
-        | "max_attempts",
+        "retakes_disabled" | "max_attempts",
       attempts_used: attempts.length,
       attempts_allowed: ceiling,
     };
@@ -1459,11 +1622,16 @@ export async function submitQuizAttempt(quiz_id: string, answers: Record<string,
   const { score, total, results } = await scoreQuiz(quiz_id, answers);
   const attempt_number = attempts.reduce((m, a) => Math.max(m, a.attempt_number), 0) + 1;
   await unwrap(
-    db.from("quiz_attempts").insert({ quiz_id, student_id: caller.id, attempt_number, score, total, results }),
+    db
+      .from("quiz_attempts")
+      .insert({ quiz_id, student_id: caller.id, attempt_number, score, total, results }),
   );
 
   const used = attempts.length + 1;
-  const eff = effectiveScore([...attempts, { attempt_number, score, total }], quiz.retake_score_policy);
+  const eff = effectiveScore(
+    [...attempts, { attempt_number, score, total }],
+    quiz.retake_score_policy,
+  );
   return {
     ok: true as const,
     score,
@@ -1507,12 +1675,19 @@ export async function listMyQuizSummaries(token: string) {
   const caller = await requireSession(token);
   const [attempts, grants, quizzes] = await Promise.all([
     unwrap<any[]>(
-      db.from("quiz_attempts").select("quiz_id, attempt_number, score, total").eq("student_id", caller.id),
+      db
+        .from("quiz_attempts")
+        .select("quiz_id, attempt_number, score, total")
+        .eq("student_id", caller.id),
     ),
-    unwrap<any[]>(db.from("quiz_retake_grants").select("quiz_id, extra_attempts").eq("student_id", caller.id)),
+    unwrap<any[]>(
+      db.from("quiz_retake_grants").select("quiz_id, extra_attempts").eq("student_id", caller.id),
+    ),
     unwrap<any[]>(db.from("quizzes").select(QUIZ_CONFIG_COLS).is("deleted_at", null)),
   ]);
-  const configById = new Map<string, QuizConfig>((quizzes ?? []).map((q: any) => [q.id as string, q as QuizConfig]));
+  const configById = new Map<string, QuizConfig>(
+    (quizzes ?? []).map((q: any) => [q.id as string, q as QuizConfig]),
+  );
   const extraByQuiz = new Map<string, number>(
     (grants ?? []).map((g: any) => [g.quiz_id as string, (g.extra_attempts as number) ?? 0]),
   );
@@ -1573,7 +1748,9 @@ export async function listQuizAttemptsForQuiz(quiz_id: string, token: string) {
         .eq("quiz_id", quiz_id)
         .order("attempt_number"),
     ),
-    unwrap<any[]>(db.from("quiz_retake_grants").select("student_id, extra_attempts").eq("quiz_id", quiz_id)),
+    unwrap<any[]>(
+      db.from("quiz_retake_grants").select("student_id, extra_attempts").eq("quiz_id", quiz_id),
+    ),
   ]);
   const studentIds = [...new Set<string>((attempts ?? []).map((a: any) => a.student_id as string))];
   const profiles = studentIds.length
@@ -1640,7 +1817,9 @@ export async function grantQuizRetake(quiz_id: string, student_id: string, token
     );
   } else {
     await unwrap(
-      db.from("quiz_retake_grants").insert({ quiz_id, student_id, extra_attempts: 1, granted_by: caller.id }),
+      db
+        .from("quiz_retake_grants")
+        .insert({ quiz_id, student_id, extra_attempts: 1, granted_by: caller.id }),
     );
   }
 }
@@ -1648,8 +1827,12 @@ export async function grantQuizRetake(quiz_id: string, student_id: string, token
 /** Wipe a student's attempt history (and grant) so they can start fresh. */
 export async function resetQuizAttempts(quiz_id: string, student_id: string, token: string) {
   await requireQuizOwnerOrAdmin(token, quiz_id);
-  await unwrap(db.from("quiz_attempts").delete().eq("quiz_id", quiz_id).eq("student_id", student_id));
-  await unwrap(db.from("quiz_retake_grants").delete().eq("quiz_id", quiz_id).eq("student_id", student_id));
+  await unwrap(
+    db.from("quiz_attempts").delete().eq("quiz_id", quiz_id).eq("student_id", student_id),
+  );
+  await unwrap(
+    db.from("quiz_retake_grants").delete().eq("quiz_id", quiz_id).eq("student_id", student_id),
+  );
 }
 
 export async function createQuizWithQuestions(
@@ -1658,7 +1841,9 @@ export async function createQuizWithQuestions(
 ) {
   const created = await unwrap<any>(db.from("quizzes").insert(quiz).select().single());
   await unwrap(
-    db.from("quiz_questions").insert(questions.map((q, i) => ({ ...q, quiz_id: created.id, position: i + 1 }))),
+    db
+      .from("quiz_questions")
+      .insert(questions.map((q, i) => ({ ...q, quiz_id: created.id, position: i + 1 }))),
   );
 }
 
@@ -1669,7 +1854,9 @@ export async function listGradesForStudent(studentId: string) {
 }
 
 export async function listGradesForCourse(courseId: string, quarter: number) {
-  return unwrap<any[]>(db.from("grades").select("*").eq("course_id", courseId).eq("quarter", quarter));
+  return unwrap<any[]>(
+    db.from("grades").select("*").eq("course_id", courseId).eq("quarter", quarter),
+  );
 }
 
 export async function upsertGrade(input: z.infer<typeof schemas.gradeInput>) {
@@ -1691,7 +1878,11 @@ export async function upsertGrade(input: z.infer<typeof schemas.gradeInput>) {
 
 export async function listAttendance(studentId: string) {
   return unwrap<any[]>(
-    db.from("attendance_logs").select("*").eq("student_id", studentId).order("timestamp", { ascending: false }),
+    db
+      .from("attendance_logs")
+      .select("*")
+      .eq("student_id", studentId)
+      .order("timestamp", { ascending: false }),
   );
 }
 
@@ -1768,8 +1959,7 @@ async function recordTapForProfile(raw: any, atISO?: string) {
   let matched: any = null;
   if (scan_type === "in") {
     const courses = await listCourses();
-    const enrolled =
-      raw.role === "student" ? new Set(await enrollmentsForStudent(raw.id)) : null;
+    const enrolled = raw.role === "student" ? new Set(await enrollmentsForStudent(raw.id)) : null;
     const today = DAY_CODES[at.getDay()];
     const atMin = at.getHours() * 60 + at.getMinutes();
     const sessions = courses.filter(
@@ -1783,8 +1973,7 @@ async function recordTapForProfile(raw: any, atISO?: string) {
     if (sessions.length > 0) {
       // Prefer the session whose window contains the tap; else nearest start.
       const inWindow = sessions.find(
-        (c: any) =>
-          atMin >= toMinutes(c.start_time) - 30 && atMin <= toMinutes(c.end_time),
+        (c: any) => atMin >= toMinutes(c.start_time) - 30 && atMin <= toMinutes(c.end_time),
       );
       matched =
         inWindow ??
@@ -1834,7 +2023,9 @@ export async function deleteAttendanceLog(id: string) {
 
 /* ---------- Misc ---------- */
 
-export async function countRows(table: z.infer<typeof schemas.countable>["table"]): Promise<number> {
+export async function countRows(
+  table: z.infer<typeof schemas.countable>["table"],
+): Promise<number> {
   const { count, error } = await db.from(table).select("*", { count: "exact", head: true });
   if (error) {
     console.error("[lms] count error:", error);
@@ -1871,7 +2062,9 @@ function attachmentList(value: unknown): Attachment[] {
 
 /** Best-effort removal of binary objects for hard deletes / detach. */
 async function removeMaterialObjects(items: Attachment[]) {
-  const paths = items.map((a) => a.path).filter((p): p is string => typeof p === "string" && p.length > 0);
+  const paths = items
+    .map((a) => a.path)
+    .filter((p): p is string => typeof p === "string" && p.length > 0);
   if (!paths.length) return;
   try {
     await supabaseAdmin.storage.from(MATERIAL_BUCKET).remove(paths);
@@ -1899,7 +2092,11 @@ export async function requireCourseOwnerOrAdmin(token: string, courseId: string)
 
 async function requireAssignmentOwnerOrAdmin(token: string, assignmentId: string) {
   const row = await unwrap<any>(
-    db.from("assignments").select("id, course_id, attachments").eq("id", assignmentId).maybeSingle(),
+    db
+      .from("assignments")
+      .select("id, course_id, attachments")
+      .eq("id", assignmentId)
+      .maybeSingle(),
   );
   if (!row) throw new Error("Assignment not found");
   const caller = await requireCourseOwnerOrAdmin(token, row.course_id as string);
@@ -1923,6 +2120,24 @@ export async function uploadCourseMaterial(
   const buffer = Buffer.from(base64, "base64");
   if (buffer.byteLength === 0) throw new Error("Empty file");
   if (buffer.byteLength > MAX_MATERIAL_BYTES) throw new Error("File must be under 15 MB");
+  // File-type sniff: validate real content vs declared mime
+  const sniffed = await sniffMime(buffer);
+  if (!sniffed || !MATERIAL_ALLOWED_MIMES.has(sniffed)) {
+    throw new Error(
+      `Unsupported file content (${sniffed ?? "unknown"}) — use PDF, DOCX, PNG, JPG, or ZIP`,
+    );
+  }
+  // Allow zip-container mismatch for docx: file-type/magic returns application/zip for docx files
+  const zipFamily = new Set([
+    "application/zip",
+    "application/x-zip-compressed",
+    "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+  ]);
+  const isZipSniff = sniffed === "application/zip";
+  const isZipDeclared = zipFamily.has(content_type);
+  if (sniffed !== content_type && !(isZipSniff && isZipDeclared)) {
+    throw new Error(`MIME mismatch: declared ${content_type} but file is ${sniffed}`);
+  }
   const rand = createHmac("sha256", sessionSecret())
     .update(`${caller.id}:${name}:${Date.now()}`)
     .digest("hex")
@@ -1978,7 +2193,9 @@ export async function updateQuiz(
     await unwrap(db.from("quiz_attempts").delete().eq("quiz_id", id));
     await unwrap(db.from("quiz_questions").delete().eq("quiz_id", id));
     await unwrap(
-      db.from("quiz_questions").insert(questions.map((q, i) => ({ ...q, quiz_id: id, position: i + 1 }))),
+      db
+        .from("quiz_questions")
+        .insert(questions.map((q, i) => ({ ...q, quiz_id: id, position: i + 1 }))),
     );
   }
 }
@@ -1996,7 +2213,9 @@ export async function deleteQuiz(tokenStr: string, id: string, mode: "soft" | "h
     await unwrap(db.from("quizzes").update({ deleted_at: new Date().toISOString() }).eq("id", id));
     return { mode };
   }
-  const row = await unwrap<any>(db.from("quizzes").select("attachments").eq("id", id).maybeSingle());
+  const row = await unwrap<any>(
+    db.from("quizzes").select("attachments").eq("id", id).maybeSingle(),
+  );
   await unwrap(db.from("quiz_attempts").delete().eq("quiz_id", id));
   await unwrap(db.from("quiz_retake_grants").delete().eq("quiz_id", id));
   await unwrap(db.from("quiz_questions").delete().eq("quiz_id", id));
@@ -2005,7 +2224,11 @@ export async function deleteQuiz(tokenStr: string, id: string, mode: "soft" | "h
   return { mode };
 }
 
-export async function updateAssignment(tokenStr: string, id: string, patch: Record<string, unknown>) {
+export async function updateAssignment(
+  tokenStr: string,
+  id: string,
+  patch: Record<string, unknown>,
+) {
   await requireAssignmentOwnerOrAdmin(tokenStr, id);
   if (Object.keys(patch).length) await unwrap(db.from("assignments").update(patch).eq("id", id));
 }
@@ -2017,7 +2240,9 @@ export async function updateAssignment(tokenStr: string, id: string, patch: Reco
 export async function deleteAssignment(tokenStr: string, id: string, mode: "soft" | "hard") {
   const { row } = await requireAssignmentOwnerOrAdmin(tokenStr, id);
   if (mode === "soft") {
-    await unwrap(db.from("assignments").update({ deleted_at: new Date().toISOString() }).eq("id", id));
+    await unwrap(
+      db.from("assignments").update({ deleted_at: new Date().toISOString() }).eq("id", id),
+    );
     return { mode };
   }
   await unwrap(db.from("submissions").delete().eq("assignment_id", id));
@@ -2054,7 +2279,9 @@ export async function hardwareRoster() {
   const rows = await unwrap<any[]>(
     db
       .from("profiles")
-      .select("id, full_name, student_id, section, grade_level, role, rfid_uid, face_embedding, avatar_url")
+      .select(
+        "id, full_name, student_id, section, grade_level, role, rfid_uid, face_embedding, avatar_url",
+      )
       .is("deleted_at", null)
       .order("full_name"),
   );
