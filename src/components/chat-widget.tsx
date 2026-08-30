@@ -42,7 +42,7 @@ const TOOL_LABELS: Record<string, string> = {
   list_announcements: "Reading announcements",
   list_courses: "Looking up courses",
   get_my_grades: "Checking your grades",
-  list_my_assignments: "Checking assignments",
+  list_my_assignments: "Checking activities",
   get_my_attendance: "Checking attendance",
   list_students: "Listing students",
   get_student_grades: "Checking student grades",
@@ -51,7 +51,7 @@ const TOOL_LABELS: Record<string, string> = {
 };
 
 const STUDENT_PROMPTS = [
-  "What are my pending assignments?",
+  "What are my pending activities?",
   "Check my Q1 grades",
   "Summarize the latest announcements",
   "How is my attendance lately?",
@@ -222,7 +222,7 @@ function ChatPanel({
                 <div>
                   <p className="font-display font-bold text-card-foreground">Hi {firstName}!</p>
                   <p className="mt-1 text-sm text-muted-foreground">
-                    Ask me about grades, assignments, attendance, or announcements.
+                    Ask me about grades, activities, attendance, or announcements.
                   </p>
                 </div>
                 <div className="flex flex-wrap justify-center gap-2">

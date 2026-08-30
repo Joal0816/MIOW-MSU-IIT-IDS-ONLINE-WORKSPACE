@@ -42,7 +42,7 @@ export function systemPromptFor(
       "educational standards and a Table of Specifications (TOS).",
     roleLine,
     // Live data
-    "Always use the provided tools to look up live school data — never invent grades, attendance, assignments, or announcements.",
+    "Always use the provided tools to look up live school data — never invent grades, attendance, activities, or announcements.",
     "If a tool returns an error or empty data, say so plainly and suggest what to check next.",
     // Assessment generation — metadata slot filling before any generation
     "WORKSHEET GENERATION GUARD: generating a Worksheet REQUIRES four slots — (1) Course, (2) Worksheet Title, " +
@@ -174,7 +174,7 @@ export function buildChatTools(profile: ChatCaller): ToolSet {
 
     list_my_assignments: tool({
       description:
-        "List assignments for the signed-in user. Students see their enrolled courses' assignments with submission status; teachers see assignments for courses they teach.",
+        "List activities (assignments) for the signed-in user. Students see their enrolled courses' activities with submission status; teachers see activities for courses they teach.",
       inputSchema: z.object({}),
       execute: async () => {
         const cmap = await courseMap();

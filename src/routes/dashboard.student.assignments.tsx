@@ -34,9 +34,9 @@ import { cn } from "@/lib/utils";
 export const Route = createFileRoute("/dashboard/student/assignments")({
   head: () => ({
     meta: [
-      { title: "Assignments | MIOW - MSU-IIT IDS Online Workspace" },
-      { name: "description", content: "View and submit your assignments and performance tasks." },
-      { property: "og:title", content: "Assignments | MIOW - MSU-IIT IDS Online Workspace" },
+      { title: "Activities | MIOW - MSU-IIT IDS Online Workspace" },
+      { name: "description", content: "View and submit your activities and performance tasks." },
+      { property: "og:title", content: "Activities | MIOW - MSU-IIT IDS Online Workspace" },
       { property: "og:description", content: "View and submit your assignments and performance tasks." },
     ],
   }),
@@ -140,7 +140,7 @@ function AssignmentsPage() {
 
   return (
     <AppShell nav={STUDENT_NAV} profile={profile} subtitle="Student Portal">
-      <h1 className="font-display text-2xl font-bold sm:text-3xl">Assignments</h1>
+      <h1 className="font-display text-2xl font-bold sm:text-3xl">Activities</h1>
       <p className="mb-5 mt-1 text-sm text-muted-foreground">
         Submit written work and performance tasks before the deadline.
       </p>

@@ -345,7 +345,7 @@ export interface NavItem {
 export const STUDENT_NAV: NavItem[] = [
   { to: "/dashboard/student", label: "Dashboard", icon: <LayoutDashboard className="h-4 w-4" /> },
   { to: "/dashboard/student/grades", label: "Grades", icon: <BarChart3 className="h-4 w-4" /> },
-  { to: "/dashboard/student/assignments", label: "Assignments", icon: <ClipboardList className="h-4 w-4" /> },
+  { to: "/dashboard/student/assignments", label: "Activities", icon: <ClipboardList className="h-4 w-4" /> },
   { to: "/dashboard/student/quizzes", label: "Worksheets", icon: <FileQuestion className="h-4 w-4" /> },
   { to: "/dashboard/student/attendance", label: "Attendance", icon: <CalendarCheck className="h-4 w-4" /> },
   { to: "/dashboard/student/settings", label: "Settings", icon: <Settings className="h-4 w-4" /> },

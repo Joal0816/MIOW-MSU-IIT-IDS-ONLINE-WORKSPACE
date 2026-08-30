@@ -603,9 +603,37 @@ function CoursesPage() {
         <div className="grid gap-3 sm:grid-cols-2">
           <input value={courseForm.title} onChange={(e) => setCourseForm((f) => ({ ...f, title: e.target.value }))} placeholder="Course title *" className="h-11 rounded-xl border border-input bg-background px-3 text-sm outline-none focus:ring-2 focus:ring-ring sm:col-span-2" />
           <input value={courseForm.code} onChange={(e) => setCourseForm((f) => ({ ...f, code: e.target.value }))} placeholder="Code (e.g. MATH10) *" className="h-11 rounded-xl border border-input bg-background px-3 text-sm outline-none focus:ring-2 focus:ring-ring" />
-          <select value={courseForm.grade_level} onChange={(e) => setCourseForm((f) => ({ ...f, grade_level: e.target.value }))} className="h-11 rounded-xl border border-input bg-background px-3 text-sm outline-none focus:ring-2 focus:ring-ring">
-            {[7, 8, 9, 10, 11, 12].map((g) => <option key={g} value={g}>Grade {g}</option>)}
-          </select>
+          <select value={courseForm.grade_level} onChange={(e)=>setCourseForm({...courseForm, grade_level:e.target.value})} className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm">
+                  <option value="7">Grade 7 (G7)</option>
+                  <option value="8">Grade 8 (G8)</option>
+                  <option value="9">Grade 9 (G9)</option>
+                  <option value="10">Grade 10 (G10)</option>
+                  <option value="11">Grade 11 (G11)</option>
+                  <option value="12">Grade 12 (G12)</option>
+                  <option value="13">College — 1st Year</option>
+                  <option value="14">College — 2nd Year</option>
+                  <option value="15">College — 3rd Year</option>
+                  <option value="16">College — 4th Year</option>
+                </select>
+              {(courseForm.grade_level==="11" || courseForm.grade_level==="12") && (
+                <div className="mt-2">
+                  <label className="text-xs font-medium">Strand (SHS)</label>
+                  <select value={(courseForm as any).strand ?? ""} onChange={(e)=>setCourseForm({...courseForm, strand:e.target.value} as any)} className="mt-1 w-full rounded-md border border-input bg-background px-3 py-2 text-sm">
+                    <option value="">Select strand</option>
+                    <option value="STEM">STEM</option>
+                    <option value="ABM">ABM</option>
+                    <option value="HUMSS">HUMSS</option>
+                    <option value="GAS">GAS</option>
+                    <option value="TVL">TVL</option>
+                  </select>
+                </div>
+              )}
+              {(courseForm.grade_level==="13" || courseForm.grade_level==="14" || courseForm.grade_level==="15" || courseForm.grade_level==="16") && (
+                <div className="mt-2">
+                  <label className="text-xs font-medium">Program (College)</label>
+                  <input value={(courseForm as any).program ?? ""} onChange={(e)=>setCourseForm({...courseForm, program:e.target.value} as any)} placeholder="e.g., BSIT, BSED" className="mt-1 w-full rounded-md border border-input bg-background px-3 py-2 text-sm" />
+                </div>
+              )}
           {isAdmin ? (
             <select aria-label="Course lead" value={courseForm.teacher_id} onChange={(e) => setCourseForm((f) => ({ ...f, teacher_id: e.target.value }))} className="h-11 rounded-xl border border-input bg-background px-3 text-sm outline-none focus:ring-2 focus:ring-ring sm:col-span-2">
               <option value="">Assign teacher…</option>

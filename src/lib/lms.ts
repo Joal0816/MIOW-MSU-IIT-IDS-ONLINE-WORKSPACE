@@ -118,6 +118,11 @@ export interface Course {
   start_time?: string | null;
   end_time?: string | null;
   late_threshold_minutes?: number;
+  /** G7-College model: 7=G7 .. 12=G12, 13=College 1st Yr .. 16=4th Yr */
+  education_level?: "jhs" | "shs" | "college" | null;
+  college_year?: number | null;
+  strand?: string | null;
+  program?: string | null;
 }
 
 const DAY_LABELS: Record<string, string> = {
@@ -180,6 +185,9 @@ export interface Assignment {
   /** Handouts uploaded by staff (PDF/DOCX/PNG/JPG/ZIP). */
   attachments?: Attachment[];
 }
+
+// Pedagogical alias — DB table stays `assignments`, UI calls them Activities.
+export type Activity = Assignment;
 
 export interface Submission {
   id: string;
@@ -694,6 +702,10 @@ export async function listAssignments(): Promise<Assignment[]> {
 export async function createAssignment(input: Partial<Assignment>): Promise<void> {
   await createAssignmentFn({ data: { ...(input as object), token: sessionToken() } as never });
 }
+
+// Activity aliases — pedagogical rename, DB stays `assignments`
+export const listActivities = listAssignments;
+export const createActivity = createAssignment;
 
 export async function listSubmissionsForStudent(studentId: string): Promise<Submission[]> {
   return listSubmissionsForStudentFn({ data: { studentId, token: sessionToken() } });

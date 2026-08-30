@@ -11,6 +11,7 @@ import {
   updateAnnouncement,
   type Announcement,
 } from "@/lib/lms";
+import { notifyAnnouncement } from "@/lib/notifications";
 import { staffNav, AppShell, Badge, EmptyState, FilterTabs, Modal, MotionCard, useProfile } from "@/components/lms";
 import { cn } from "@/lib/utils";
 
@@ -82,10 +83,10 @@ function AnnouncementsPage() {
     setSaving(true);
     try {
       if (editing) {
-        await updateAnnouncement(editing.id, form);
+        await updateAnnouncement(editing.id, form); void notifyAnnouncement({ title: form.title, content: form.content, target_audience: form.target_audience }).catch(()=>{});
         toast.success("Announcement updated.");
       } else {
-        await createAnnouncement({ ...form, author_id: profile.id });
+        await createAnnouncement({ ...form, author_id: profile.id }); void notifyAnnouncement({ title: form.title, content: form.content, target_audience: form.target_audience }).catch(()=>{});
         toast.success("Announcement posted.");
       }
       setOpen(false);

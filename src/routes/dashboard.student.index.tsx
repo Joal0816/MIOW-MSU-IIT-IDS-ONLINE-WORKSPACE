@@ -62,7 +62,7 @@ function StudentDashboard() {
 
   if (!profile) return null;
 
-  const myCourses = (courses ?? []).filter((c) => c.grade_level === profile.grade_level);
+  const myCourses = (courses ?? []).filter((c) => String(c.grade_level) === String(profile.grade_level));
   const courseIds = new Set(myCourses.map((c) => c.id));
   const submittedIds = new Set(
     (submissions ?? []).filter((s) => s.status !== "pending").map((s) => s.assignment_id),
