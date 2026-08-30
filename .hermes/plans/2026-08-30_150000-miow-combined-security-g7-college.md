@@ -2,7 +2,7 @@
 
 > **For Hermes:** Use subagent-driven-development skill to implement this plan task-by-task.
 
-**Goal:** Deliver a hardened, G7-to-College-ready **MIOW (MSU-IIT IDS ONLINE WORKSPACE)** — fix critical/high/medium security gaps (session secret isolation, jti revocation, RLS defense-in-depth, hardware/avatar/material hardening, brute-force & upload validation, async bcrypt, MCP & chat auth, security headers), remove ALL Lovable references, retain MIOW brand, deliver pedagogical renames (Assignment → Activity), G7-College course model (JHS/SHS/College), Google Docs manual worksheets, drag-drop uploads, teacher-gated score/answer-key release, long-term AI chatbot memory, and optional facial recognition — with zero regressions and single-source MIOW brand.
+**Goal:** Deliver a hardened, G7-to-College-ready **MIOW (MSU-IIT IDS ONLINE WORKSPACE)** for **G7, G8, G9, G10, G11, G12, 1st–4th Year College** (10 levels in Creating Course) — fix critical/high/medium security gaps (session secret isolation, jti revocation, RLS defense-in-depth, hardware/avatar/material hardening, brute-force & upload validation, async bcrypt, MCP & chat auth, security headers), remove ALL Lovable references, retain MIOW brand, deliver pedagogical renames (Assignment → Activity), G7-College course model (G7-G12 + College Yr1-Yr4), Google Docs manual worksheets, drag-drop uploads, teacher-gated score/answer-key release, long-term AI chatbot memory, and optional facial recognition — with zero regressions and single-source MIOW brand.
 
 **Architecture:** Retain **MIOW** via `src/lib/brand.ts` (single source of truth; `APP_NAME`, `APP_SHORT_NAME`, `NOTIFICATION_SIGNOFF` remain MIOW). TanStack Start (Vite + Nitro) server functions (`src/lib/lms.server.ts` / `src/lib/lms.functions.ts`) remain the sole auth boundary, using service_role admin client (`src/integrations/supabase/client.server.ts`) as server-only data layer with **DB RLS as second line** (drop `Public demo access using (true)` policies). Short-lived HMAC tokens move to dedicated `SESSION_SECRET` + jti-backed `sessions` table checked in `requireSession` (`src/lib/lms.server.ts:82-87`). Public routes (`api/public/avatar.ts`, `api/public/material.ts`, `api/public/hardware/*`) tightened via strict allowlists, header-based auth, timestamp/replay protection, and mime sniffing. AI Gateway (`src/lib/ai-gateway.server.ts` renamed from Lovable gateway) + `chat-tools.server.ts` + `chat-memory.server.ts` provide chatbot with Supabase-backed memory. New tables: `sessions` (jti), `chat_memories`, `announcement_attachments`, `submission_files`, `course` level cols (`education_level`/`strand`/`program`), `score_released` flags. Google Docs: Picker API + Drive export → `worksheet-parser.ts`. Facial rec: face-api.js / onnx pre-trained, client embedding + server verify, flagged off. All verified via graph coverage (`no_recorded_issue` on 10 critical files, 14 `parse_partial` best-effort) + grep for missing guards.
 
@@ -20,7 +20,7 @@
 - **Assignment Model:** `assignments` table + `submissions` + `quizzes`/`quiz_questions` separate. Need pedagogical rename Assignments → Activities/Worksheets — keep DB `assignments` with comment, alias types.
 - **NOTIFICATION_SIGNOFF** ready but unused — no email/push pipeline. Add `src/lib/notifications.ts` stub.
 - **Manual Worksheet via Google Docs:** `src/lib/worksheet-parser.ts` parses 4-section text; `src/routes/dashboard.admin.courses.tsx:59k` + `worksheet-context.ts` generates via AI. Need "Import from Google Docs" path.
-- **Courses:** `src/routes/dashboard.admin.courses.tsx` (CoursesPage) has `grade_level`, `color`, `days/schedule`, `teacher_id`. G7-COLLEGE means `grade_level` 7-12 + college year 1-4, not just "10".
+- **Courses:** `src/routes/dashboard.admin.courses.tsx` (CoursesPage) has `grade_level`, `color`, `days/schedule`, `teacher_id`. G7-COLLEGE in Creating Course means **10 explicit levels: G7, G8, G9, G10, G11, G12, 1st Year College, 2nd Year College, 3rd Year College, 4th Year College** (values `7..16`), not just "10".
 - **Teachers Dashboard Menu:** `src/components/lms.tsx: staffNav` + `dashboard.admin.*` routes. Needs "Students Info" quick list.
 - **Announcements:** `src/routes/dashboard.admin.announcements.tsx` (277 lines, simple form) — needs drag-drop attachments.
 - **AI Chatbot:** `src/components/chat-widget.tsx` (localStorage history) + `src/lib/chat-tools.server.ts` + `src/lib/ai-gateway.server.ts` (Lovable AI Gateway). No cross-session memory beyond localStorage; server tools stateless.
@@ -37,7 +37,7 @@
 2. **Phase 1 — Critical Security:** Dedicated `SESSION_SECRET` (compat read), jti-backed `sessions` table + revocation, RLS lockdown (drop `Public demo access`), sanitize `unwrap`.
 3. **Phase 2 — High Security:** Hardware timestamp/replay, avatar entropy + optional auth, material header auth, mime sniff, brute-force rate limit.
 4. **Phase 3 — Medium Security + Hardening:** Async bcrypt, MCP `email_verified`, chat auth + CSP/HSTS.
-5. **Phase 4 — Feature Foundation:** Pedagogical rename (Assignment→Activity type alias, DB stays), notification stub, G7-College course model (JHS/SHS/College).
+5. **Phase 4 — Feature Foundation:** Pedagogical rename (Assignment→Activity type alias, DB stays), notification stub, G7-College course model (G7, G8, G9, G10, G11, G12, 1st–4th Year College — 10 levels).
 6. **Phase 5 — Feature UX:** G7-College creation wizard, teacher Students Info + menus, announcement dropzone, chat long-term memory, score gating, worksheet file uploads, dashboard polish, Google Docs import, optional facial rec (flagged off).
 
 DRY: extract `Dropzone` (`src/components/dropzone.tsx`), `releaseToggle`, `rate-limit` helper, `brand()` helper. YAGNI: no full SIS rebuild, no grading rewrite.
@@ -457,39 +457,56 @@ export async function notifyAnnouncement(a: Announcement) {
 
 **Commit:** `feat(notify): stub notification pipeline`
 
-### Task 18 — G7-COLLEGE course model (JHS/SHS/College)
+### Task 18 — G7-COLLEGE course model (G7-G12 + College Yr1-Yr4)
 
-**Objective:** Courses span G7-12 + College 1-4 with level-aware filtering.
+**Objective:** Creating Course must support every level from **G7, G8, G9, G10, G11, G12, 1st Year College, 2nd Year College, 3rd Year College, 4th Year College** (10 levels) with level-aware filtering for students.
 
 **Files:**
 - Create: `supabase/migrations/20260831_g7_college_courses.sql`
-- Modify: `src/lib/lms.server.ts:320` (schemas courseInput)
-- Modify: `src/routes/dashboard.admin.courses.tsx:55-77` (EMPTY_COURSE, grade_level select)
-- Modify: `src/routes/dashboard.student.index.tsx:65` filter
+- Modify: `src/lib/lms.server.ts:320` (schemas `courseInput` — `grade_level` 7-12 + `college_year` 1-4, or unified `grade_level` 7-16; add `education_level` enum `jhs`/`shs`/`college` + `strand`/`program`)
+- Modify: `src/routes/dashboard.admin.courses.tsx:55-77` (`EMPTY_COURSE`, `grade_level` select — 10 options: `G7`, `G8`, `G9`, `G10`, `G11`, `G12`, `College 1st Year`, `College 2nd Year`, `College 3rd Year`, `College 4th Year`)
+- Modify: `src/routes/dashboard.student.index.tsx:65` (filter `myCourses` by `profile.grade_level` / `college_year` mapping)
 
 **Migration:**
 ```sql
+-- Keep numeric grade_level for backwards compat: 7=G7, 8=G8, 9=G9, 10=G10, 11=G11, 12=G12, 13=College 1st Yr, 14=2nd, 15=3rd, 16=4th
 alter table public.courses add column if not exists education_level text check (education_level in ('jhs','shs','college')) default 'jhs';
-alter table public.courses add column if not exists strand text;
-alter table public.courses add column if not exists program text;
--- grade_level 7-12 for jhs/shs, 13-16 for college Yr1-4
+alter table public.courses add column if not exists college_year int check (college_year between 1 and 4);
+alter table public.courses add column if not exists strand text;  -- SHS: e.g., STEM, ABM, HUMSS (for G11-G12)
+alter table public.courses add column if not exists program text; -- College: e.g., BSIT, BSED (for College Yr1-4)
+-- Backfill: existing grade_level 7-10 => jhs, 11-12 => shs, 13-16 => college
+update public.courses set education_level = case when grade_level >= 13 then 'college' when grade_level >= 11 then 'shs' else 'jhs' end where education_level is null;
 ```
 
-**UI:** Segmented control: JHS (7-10) | SHS (11-12 + strand) | College (Yr1-4 + program). `EMPTY_COURSE.grade_level` becomes 7-16.
+**UI (Creating Course section):** Single `Level` dropdown with 10 labeled options — `Grade 7`, `Grade 8`, `Grade 9`, `Grade 10`, `Grade 11`, `Grade 12`, `College — 1st Year`, `College — 2nd Year`, `College — 3rd Year`, `College — 4th Year` (value `7..16`). When `College Yr1-4` is chosen, show `Program` input; when `G11-G12` chosen, show `Strand` select. `EMPTY_COURSE.grade_level` defaults `"7"` (G7). Validation: `college_year` required iff `grade_level >=13`, `strand` only for `11-12`.
 
-**Commit:** `feat(courses): G7-College course levels`
+**Helpers:** `src/lib/domain-labels.ts` or `src/lib/course-levels.ts`:
+```ts
+export const COURSE_LEVELS = [
+  { value: 7, label: "Grade 7 (G7)" }, { value: 8, label: "Grade 8 (G8)" },
+  { value: 9, label: "Grade 9 (G9)" }, { value: 10, label: "Grade 10 (G10)" },
+  { value: 11, label: "Grade 11 (G11)" }, { value: 12, label: "Grade 12 (G12)" },
+  { value: 13, label: "College — 1st Year" }, { value: 14, label: "College — 2nd Year" },
+  { value: 15, label: "College — 3rd Year" }, { value: 16, label: "College — 4th Year" },
+] as const;
+export const levelLabel = (v:number) => COURSE_LEVELS.find(l=>l.value===v)?.label ?? `Level ${v}`;
+```
+
+**Commit:** `feat(courses): G7-College course levels — G7-G12 + College Yr1-Yr4 (10 levels)`
 
 ### Task 19 — Admin & Teachers Dashboard: G7-COLLEGE course creation (UX)
 
-**Objective:** Polished creation wizard with grade/level, strand/program, color, schedule, teacher assign.
+**Objective:** Polished Creating-Course wizard where admin/teacher picks **G7 through 4th Year College** explicitly, with correct strand/program, color, schedule, teacher assignment.
 
 **Files:**
-- Modify: `src/routes/dashboard.admin.courses.tsx:102-600` (CoursesPage form, POLICY_LABELS, COLORS)
-- Modify: `src/components/lms.tsx` AppShell + staffNav
+- Modify: `src/routes/dashboard.admin.courses.tsx:102-600` (CoursesPage form, POLICY_LABELS, COLORS — Level dropdown = 10 options `G7`..`4th Year College`)
+- Modify: `src/components/lms.tsx` AppShell + staffNav (show level badge `G7`/`College 2nd Yr` via `levelLabel`)
 
-**Steps:** Stepper: 1) Basic (title/code/level) 2) Assignment (teacher, strand/program) 3) Schedule (days/start/end/grace). Validate `grade_level` matches `education_level`. Preview via `courseStyle`.
+**Steps:** Stepper: **1) Basic** (title/code/**Level** — 10-option select `G7/G8/G9/G10/G11/G12/College 1st Yr/2nd Yr/3rd Yr/4th Yr`) **2) Assignment** (teacher, strand for G11-G12, program for College Yr1-4) **3) Schedule** (days/start/end/grace). Validate `grade_level 7..16` maps to `education_level` (`7-10=>jhs`, `11-12=>shs`, `13-16=>college`); require `program` if college, `strand` if G11-G12. Show preview card via `courseStyle` + `levelLabel(v)`. On save, set `education_level`/`college_year`/`program`/`strand` alongside `grade_level`.
 
-**Commit:** `feat(courses): G7-College creation wizard`
+**Example payloads:** `{ title:"Math 7", grade_level:7, education_level:"jhs" }`, `{ title:"Research 12", grade_level:12, strand:"STEM" }`, `{ title:"BSIT 101", grade_level:13, college_year:1, program:"BSIT" }`.
+
+**Commit:** `feat(courses): G7-College creation wizard — G7..4th Year College selector`
 
 ### Task 20 — Teachers Dashboard: Students Info + Dashboard menu
 
@@ -680,7 +697,7 @@ Add `useProfile` gate. Ensure `pageTitle()` uses **MIOW** via `src/lib/brand.ts`
 ## Risks, Tradeoffs, Open Questions
 
 - **Risk:** Renaming Assignment → Activity touches 30+ UI strings but DB stays `assignments` — old API `listAssignments` kept as alias; cache keys still `assignments` — document in README.
-- **Tradeoff:** G7-College `grade_level` 7-16 vs current 10 only — old data `grade_level` 10 stays valid; need backfill `education_level='jhs'` for existing rows.
+- **Tradeoff:** G7-College `grade_level` 7-16 vs current 10 only — old data `grade_level` 10 stays valid; need backfill `education_level='jhs'` and `college_year` for existing rows (G7-G12=7-12, College Yr1-4=13-16).
 - **Tradeoff:** Google Picker requires Google Cloud project + OAuth consent + Drive scope — provide env template + fallback manual paste import if keys missing.
 - **Risk:** Score gating changes student expectation ("see your score instantly" in `quizzes.tsx:32` meta) — update copy to "submitted, awaiting release".
 - **Risk:** Lovable AI Gateway removal → chat break — gateway fully renamed to generic `AI_GATEWAY_KEY`/`OPENAI_*`; verify `ai-gateway.server.ts` rename compiles; no Lovable import remains.
