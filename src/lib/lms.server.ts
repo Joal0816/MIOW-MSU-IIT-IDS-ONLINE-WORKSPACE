@@ -7,10 +7,8 @@
 import { createHmac, timingSafeEqual, randomUUID } from "node:crypto";
 import bcrypt from "bcryptjs";
 import { z } from "zod";
-import { supabaseAdmin } from "@/integrations/supabase/client.server";
+import { db, supabaseAdmin } from "@/integrations/db/client";
 import { getBucket } from "@/lib/rate-limit";
-
-const db: any = supabaseAdmin;
 
 // PostgREST codes that are safe to retry. PGRST303 ("JWT issued at future")
 // is a transient gateway clock-skew rejection: the request is refused during

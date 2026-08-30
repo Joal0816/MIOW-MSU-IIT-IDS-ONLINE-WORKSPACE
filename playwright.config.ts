@@ -25,14 +25,10 @@ export default defineConfig({
     timeout: 120000,
     cwd: 'C:/Users/kent/Documents/lmslatest',
     env: {
-      SUPABASE_URL: 'https://test.supabase.co',
-      SUPABASE_SERVICE_ROLE_KEY: 'test-service-role-key-1234567890abcdef',
-      SUPABASE_PUBLISHABLE_KEY: 'test-publishable-key',
+      DATABASE_URL: 'postgres://miow:miow_dev_password@localhost:5432/miow',
       SESSION_SECRET: 'test-session-secret-32-chars-hex-1234567890ab',
       HARDWARE_API_KEY: 'test-hardware-key',
       AI_GATEWAY_KEY: 'test-ai-key',
-      VITE_SUPABASE_URL: 'https://test.supabase.co',
-      VITE_SUPABASE_PUBLISHABLE_KEY: 'test-publishable-key',
     },
   },
 });
