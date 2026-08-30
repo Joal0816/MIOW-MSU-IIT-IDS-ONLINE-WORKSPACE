@@ -15,6 +15,7 @@ import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as ApiChatRouteImport } from './routes/api/chat'
 import { Route as DashboardAdminRouteImport } from './routes/dashboard.admin'
 import { Route as DashboardStudentRouteImport } from './routes/dashboard.student'
+import { Route as DashboardTeacherRouteImport } from './routes/dashboard.teacher'
 import { Route as ApiPublicAvatarRouteImport } from './routes/api/public/avatar'
 import { Route as ApiPublicMaterialRouteImport } from './routes/api/public/material'
 import { Route as ApiTeacherSettingsRouteImport } from './routes/api/teacher/settings'
@@ -32,7 +33,9 @@ import { Route as DashboardStudentAttendanceRouteImport } from './routes/dashboa
 import { Route as DashboardStudentGradesRouteImport } from './routes/dashboard.student.grades'
 import { Route as DashboardStudentQuizzesRouteImport } from './routes/dashboard.student.quizzes'
 import { Route as DashboardStudentSettingsRouteImport } from './routes/dashboard.student.settings'
+import { Route as DashboardTeacherIndexRouteImport } from './routes/dashboard.teacher.index'
 import { Route as DashboardTeacherSettingsRouteImport } from './routes/dashboard.teacher.settings'
+import { Route as DashboardTeacherStudentsRouteImport } from './routes/dashboard.teacher.students'
 import { Route as ApiPublicHardwareAttendanceRouteImport } from './routes/api/public/hardware/attendance'
 import { Route as ApiPublicHardwareSyncUsersRouteImport } from './routes/api/public/hardware/sync-users'
 
@@ -64,6 +67,11 @@ const DashboardAdminRoute = DashboardAdminRouteImport.update({
 const DashboardStudentRoute = DashboardStudentRouteImport.update({
   id: '/dashboard/student',
   path: '/dashboard/student',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DashboardTeacherRoute = DashboardTeacherRouteImport.update({
+  id: '/dashboard/teacher',
+  path: '/dashboard/teacher',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiPublicAvatarRoute = ApiPublicAvatarRouteImport.update({
@@ -156,11 +164,22 @@ const DashboardStudentSettingsRoute =
     path: '/settings',
     getParentRoute: () => DashboardStudentRoute,
   } as any)
+const DashboardTeacherIndexRoute = DashboardTeacherIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => DashboardTeacherRoute,
+} as any)
 const DashboardTeacherSettingsRoute =
   DashboardTeacherSettingsRouteImport.update({
-    id: '/dashboard/teacher/settings',
-    path: '/dashboard/teacher/settings',
-    getParentRoute: () => rootRouteImport,
+    id: '/settings',
+    path: '/settings',
+    getParentRoute: () => DashboardTeacherRoute,
+  } as any)
+const DashboardTeacherStudentsRoute =
+  DashboardTeacherStudentsRouteImport.update({
+    id: '/students',
+    path: '/students',
+    getParentRoute: () => DashboardTeacherRoute,
   } as any)
 const ApiPublicHardwareAttendanceRoute =
   ApiPublicHardwareAttendanceRouteImport.update({
@@ -182,6 +201,7 @@ export interface FileRoutesByFullPath {
   '/api/chat': typeof ApiChatRoute
   '/dashboard/admin': typeof DashboardAdminRouteWithChildren
   '/dashboard/student': typeof DashboardStudentRouteWithChildren
+  '/dashboard/teacher': typeof DashboardTeacherRouteWithChildren
   '/api/public/avatar': typeof ApiPublicAvatarRoute
   '/api/public/material': typeof ApiPublicMaterialRoute
   '/api/teacher/settings': typeof ApiTeacherSettingsRoute
@@ -198,8 +218,10 @@ export interface FileRoutesByFullPath {
   '/dashboard/student/quizzes': typeof DashboardStudentQuizzesRoute
   '/dashboard/student/settings': typeof DashboardStudentSettingsRoute
   '/dashboard/teacher/settings': typeof DashboardTeacherSettingsRoute
+  '/dashboard/teacher/students': typeof DashboardTeacherStudentsRoute
   '/dashboard/admin/': typeof DashboardAdminIndexRoute
   '/dashboard/student/': typeof DashboardStudentIndexRoute
+  '/dashboard/teacher/': typeof DashboardTeacherIndexRoute
   '/api/public/hardware/attendance': typeof ApiPublicHardwareAttendanceRoute
   '/api/public/hardware/sync-users': typeof ApiPublicHardwareSyncUsersRoute
 }
@@ -224,8 +246,10 @@ export interface FileRoutesByTo {
   '/dashboard/student/quizzes': typeof DashboardStudentQuizzesRoute
   '/dashboard/student/settings': typeof DashboardStudentSettingsRoute
   '/dashboard/teacher/settings': typeof DashboardTeacherSettingsRoute
+  '/dashboard/teacher/students': typeof DashboardTeacherStudentsRoute
   '/dashboard/admin': typeof DashboardAdminIndexRoute
   '/dashboard/student': typeof DashboardStudentIndexRoute
+  '/dashboard/teacher': typeof DashboardTeacherIndexRoute
   '/api/public/hardware/attendance': typeof ApiPublicHardwareAttendanceRoute
   '/api/public/hardware/sync-users': typeof ApiPublicHardwareSyncUsersRoute
 }
@@ -237,6 +261,7 @@ export interface FileRoutesById {
   '/api/chat': typeof ApiChatRoute
   '/dashboard/admin': typeof DashboardAdminRouteWithChildren
   '/dashboard/student': typeof DashboardStudentRouteWithChildren
+  '/dashboard/teacher': typeof DashboardTeacherRouteWithChildren
   '/api/public/avatar': typeof ApiPublicAvatarRoute
   '/api/public/material': typeof ApiPublicMaterialRoute
   '/api/teacher/settings': typeof ApiTeacherSettingsRoute
@@ -253,8 +278,10 @@ export interface FileRoutesById {
   '/dashboard/student/quizzes': typeof DashboardStudentQuizzesRoute
   '/dashboard/student/settings': typeof DashboardStudentSettingsRoute
   '/dashboard/teacher/settings': typeof DashboardTeacherSettingsRoute
+  '/dashboard/teacher/students': typeof DashboardTeacherStudentsRoute
   '/dashboard/admin/': typeof DashboardAdminIndexRoute
   '/dashboard/student/': typeof DashboardStudentIndexRoute
+  '/dashboard/teacher/': typeof DashboardTeacherIndexRoute
   '/api/public/hardware/attendance': typeof ApiPublicHardwareAttendanceRoute
   '/api/public/hardware/sync-users': typeof ApiPublicHardwareSyncUsersRoute
 }
@@ -267,6 +294,7 @@ export interface FileRouteTypes {
     | '/api/chat'
     | '/dashboard/admin'
     | '/dashboard/student'
+    | '/dashboard/teacher'
     | '/api/public/avatar'
     | '/api/public/material'
     | '/api/teacher/settings'
@@ -283,8 +311,10 @@ export interface FileRouteTypes {
     | '/dashboard/student/quizzes'
     | '/dashboard/student/settings'
     | '/dashboard/teacher/settings'
+    | '/dashboard/teacher/students'
     | '/dashboard/admin/'
     | '/dashboard/student/'
+    | '/dashboard/teacher/'
     | '/api/public/hardware/attendance'
     | '/api/public/hardware/sync-users'
   fileRoutesByTo: FileRoutesByTo
@@ -309,8 +339,10 @@ export interface FileRouteTypes {
     | '/dashboard/student/quizzes'
     | '/dashboard/student/settings'
     | '/dashboard/teacher/settings'
+    | '/dashboard/teacher/students'
     | '/dashboard/admin'
     | '/dashboard/student'
+    | '/dashboard/teacher'
     | '/api/public/hardware/attendance'
     | '/api/public/hardware/sync-users'
   id:
@@ -321,6 +353,7 @@ export interface FileRouteTypes {
     | '/api/chat'
     | '/dashboard/admin'
     | '/dashboard/student'
+    | '/dashboard/teacher'
     | '/api/public/avatar'
     | '/api/public/material'
     | '/api/teacher/settings'
@@ -337,8 +370,10 @@ export interface FileRouteTypes {
     | '/dashboard/student/quizzes'
     | '/dashboard/student/settings'
     | '/dashboard/teacher/settings'
+    | '/dashboard/teacher/students'
     | '/dashboard/admin/'
     | '/dashboard/student/'
+    | '/dashboard/teacher/'
     | '/api/public/hardware/attendance'
     | '/api/public/hardware/sync-users'
   fileRoutesById: FileRoutesById
@@ -350,10 +385,10 @@ export interface RootRouteChildren {
   ApiChatRoute: typeof ApiChatRoute
   DashboardAdminRoute: typeof DashboardAdminRouteWithChildren
   DashboardStudentRoute: typeof DashboardStudentRouteWithChildren
+  DashboardTeacherRoute: typeof DashboardTeacherRouteWithChildren
   ApiPublicAvatarRoute: typeof ApiPublicAvatarRoute
   ApiPublicMaterialRoute: typeof ApiPublicMaterialRoute
   ApiTeacherSettingsRoute: typeof ApiTeacherSettingsRoute
-  DashboardTeacherSettingsRoute: typeof DashboardTeacherSettingsRoute
   ApiPublicHardwareAttendanceRoute: typeof ApiPublicHardwareAttendanceRoute
   ApiPublicHardwareSyncUsersRoute: typeof ApiPublicHardwareSyncUsersRoute
 }
@@ -400,6 +435,13 @@ declare module '@tanstack/react-router' {
       path: '/dashboard/student'
       fullPath: '/dashboard/student'
       preLoaderRoute: typeof DashboardStudentRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/dashboard/teacher': {
+      id: '/dashboard/teacher'
+      path: '/dashboard/teacher'
+      fullPath: '/dashboard/teacher'
+      preLoaderRoute: typeof DashboardTeacherRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/public/avatar': {
@@ -521,12 +563,26 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DashboardStudentSettingsRouteImport
       parentRoute: typeof DashboardStudentRoute
     }
+    '/dashboard/teacher/': {
+      id: '/dashboard/teacher/'
+      path: '/'
+      fullPath: '/dashboard/teacher/'
+      preLoaderRoute: typeof DashboardTeacherIndexRouteImport
+      parentRoute: typeof DashboardTeacherRoute
+    }
     '/dashboard/teacher/settings': {
       id: '/dashboard/teacher/settings'
-      path: '/dashboard/teacher/settings'
+      path: '/settings'
       fullPath: '/dashboard/teacher/settings'
       preLoaderRoute: typeof DashboardTeacherSettingsRouteImport
-      parentRoute: typeof rootRouteImport
+      parentRoute: typeof DashboardTeacherRoute
+    }
+    '/dashboard/teacher/students': {
+      id: '/dashboard/teacher/students'
+      path: '/students'
+      fullPath: '/dashboard/teacher/students'
+      preLoaderRoute: typeof DashboardTeacherStudentsRouteImport
+      parentRoute: typeof DashboardTeacherRoute
     }
     '/api/public/hardware/attendance': {
       id: '/api/public/hardware/attendance'
@@ -592,6 +648,21 @@ const DashboardStudentRouteChildren: DashboardStudentRouteChildren = {
 const DashboardStudentRouteWithChildren =
   DashboardStudentRoute._addFileChildren(DashboardStudentRouteChildren)
 
+interface DashboardTeacherRouteChildren {
+  DashboardTeacherSettingsRoute: typeof DashboardTeacherSettingsRoute
+  DashboardTeacherStudentsRoute: typeof DashboardTeacherStudentsRoute
+  DashboardTeacherIndexRoute: typeof DashboardTeacherIndexRoute
+}
+
+const DashboardTeacherRouteChildren: DashboardTeacherRouteChildren = {
+  DashboardTeacherSettingsRoute: DashboardTeacherSettingsRoute,
+  DashboardTeacherStudentsRoute: DashboardTeacherStudentsRoute,
+  DashboardTeacherIndexRoute: DashboardTeacherIndexRoute,
+}
+
+const DashboardTeacherRouteWithChildren =
+  DashboardTeacherRoute._addFileChildren(DashboardTeacherRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthRoute: AuthRoute,
@@ -599,23 +670,13 @@ const rootRouteChildren: RootRouteChildren = {
   ApiChatRoute: ApiChatRoute,
   DashboardAdminRoute: DashboardAdminRouteWithChildren,
   DashboardStudentRoute: DashboardStudentRouteWithChildren,
+  DashboardTeacherRoute: DashboardTeacherRouteWithChildren,
   ApiPublicAvatarRoute: ApiPublicAvatarRoute,
   ApiPublicMaterialRoute: ApiPublicMaterialRoute,
   ApiTeacherSettingsRoute: ApiTeacherSettingsRoute,
-  DashboardTeacherSettingsRoute: DashboardTeacherSettingsRoute,
   ApiPublicHardwareAttendanceRoute: ApiPublicHardwareAttendanceRoute,
   ApiPublicHardwareSyncUsersRoute: ApiPublicHardwareSyncUsersRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}

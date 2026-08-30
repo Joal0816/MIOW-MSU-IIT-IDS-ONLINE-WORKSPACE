@@ -363,13 +363,15 @@ export const ADMIN_NAV: NavItem[] = [
   { to: "/dashboard/admin/settings", label: "Settings", icon: <Settings className="h-4 w-4" /> },
 ];
 
-// Teacher Portal — classroom surfaces only. Admin settings, user/role
-// management, and the student registry are NOT in this nav.
+// Teacher Portal — classroom surfaces. Dashboard + Students Info give
+// teachers a quick roster scoped to the courses they lead.
 export const TEACHER_NAV: NavItem[] = [
+  { to: "/dashboard/teacher", label: "Dashboard", icon: <LayoutDashboard className="h-4 w-4" /> },
+  { to: "/dashboard/teacher/students", label: "Students", icon: <Users className="h-4 w-4" /> },
   { to: "/dashboard/admin/courses", label: "Courses", icon: <BookOpen className="h-4 w-4" /> },
-  { to: "/dashboard/admin/grades", label: "Gradebook", icon: <Layers className="h-4 w-4" /> },
-  { to: "/dashboard/admin/attendance", label: "Attendance Kiosk", icon: <CalendarCheck className="h-4 w-4" /> },
   { to: "/dashboard/admin/announcements", label: "Announcements", icon: <Megaphone className="h-4 w-4" /> },
+  { to: "/dashboard/admin/grades", label: "Gradebook", icon: <Layers className="h-4 w-4" /> },
+  { to: "/dashboard/admin/attendance", label: "Attendance", icon: <CalendarCheck className="h-4 w-4" /> },
   { to: "/dashboard/teacher/settings", label: "Settings", icon: <Settings className="h-4 w-4" /> },
 ];
 

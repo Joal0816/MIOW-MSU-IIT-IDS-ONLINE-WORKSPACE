@@ -1,12 +1,13 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Pencil, Pin, PinOff, Plus, Trash2 } from "lucide-react";
+import { CloudUpload, FileText, Paperclip, Pencil, Pin, PinOff, Plus, Trash2, X } from "lucide-react";
 import { toast } from "sonner";
 import {
   createAnnouncement,
   deleteAnnouncement,
   fmtDate,
+  formatFileSize,
   listAnnouncements,
   updateAnnouncement,
   type Announcement,
@@ -48,6 +49,40 @@ function AnnouncementsPage() {
   const [saving, setSaving] = useState(false);
   const [form, setForm] = useState<FormState>(EMPTY_FORM);
   const [audience, setAudience] = useState<AudienceFilter>("all");
+  const [dragging, setDragging] = useState(false);
+  const [pendingFiles, setPendingFiles] = useState<File[]>([]);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
+
+  const ACCEPTED = ".pdf,.doc,.docx,.png,.jpg,.jpeg,.zip";
+  const MAX_FILE_BYTES = 25 * 1024 * 1024;
+
+  const addFiles = (incoming: FileList | File[]) => {
+    const next = [...pendingFiles];
+    for (const file of Array.from(incoming)) {
+      if (file.size > MAX_FILE_BYTES) {
+        toast.error(`${file.name} is over 25 MB.`);
+        continue;
+      }
+      if (next.some((f) => f.name === file.name && f.size === file.size)) continue;
+      if (next.reduce((s, f) => s + f.size, 0) + file.size > 60 * 1024 * 1024) {
+        toast.error("Batch is too large (max 60 MB total).");
+        break;
+      }
+      next.push(file);
+    }
+    setPendingFiles(next);
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    setDragging(true);
+  };
+  const handleDragLeave = () => setDragging(false);
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    setDragging(false);
+    if (e.dataTransfer.files.length) addFiles(e.dataTransfer.files);
+  };
 
   if (!profile) return null;
 
@@ -72,6 +107,8 @@ function AnnouncementsPage() {
       target_audience: a.target_audience,
       pinned: a.pinned,
     });
+    setPendingFiles([]);
+    setDragging(false);
     setOpen(true);
   };
 
@@ -84,14 +121,18 @@ function AnnouncementsPage() {
     try {
       if (editing) {
         await updateAnnouncement(editing.id, form); void notifyAnnouncement({ title: form.title, content: form.content, target_audience: form.target_audience }).catch(()=>{});
-        toast.success("Announcement updated.");
+        if (pendingFiles.length) toast.success(`Announcement updated — ${pendingFiles.length} file(s) queued for upload (UI only).`);
+        else toast.success("Announcement updated.");
       } else {
         await createAnnouncement({ ...form, author_id: profile.id }); void notifyAnnouncement({ title: form.title, content: form.content, target_audience: form.target_audience }).catch(()=>{});
-        toast.success("Announcement posted.");
+        if (pendingFiles.length) toast.success(`Announcement posted — ${pendingFiles.length} file(s) queued for upload (UI only).`);
+        else toast.success("Announcement posted.");
       }
       setOpen(false);
       setEditing(null);
       setForm(EMPTY_FORM);
+      setPendingFiles([]);
+      setDragging(false);
       qc.invalidateQueries({ queryKey: ["announcements"] });
     } catch {
       toast.error(editing ? "Could not update announcement." : "Could not post announcement.");
@@ -131,6 +172,8 @@ function AnnouncementsPage() {
           onClick={() => {
             setEditing(null);
             setForm(EMPTY_FORM);
+            setPendingFiles([]);
+            setDragging(false);
             setOpen(true);
           }}
           className="flex items-center gap-1.5 rounded-xl bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground hover:opacity-90"
@@ -216,6 +259,8 @@ function AnnouncementsPage() {
         onClose={() => {
           setOpen(false);
           setEditing(null);
+          setPendingFiles([]);
+          setDragging(false);
         }}
         title={editing ? "Edit announcement" : "New announcement"}
       >
@@ -253,6 +298,67 @@ function AnnouncementsPage() {
               <option value="teachers">Teachers</option>
             </select>
           </div>
+
+          {/* Drag-drop attachments (UI — pending files, upload via course-material pattern when wired) */}
+          <div
+            role="button"
+            tabIndex={0}
+            aria-label="Attach files to announcement"
+            onClick={() => fileInputRef.current?.click()}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" || e.key === " ") {
+                e.preventDefault();
+                fileInputRef.current?.click();
+              }
+            }}
+            onDragOver={handleDragOver}
+            onDragLeave={handleDragLeave}
+            onDrop={handleDrop}
+            className={cn(
+              "flex cursor-pointer flex-col items-center justify-center gap-1 rounded-xl border-2 border-dashed px-3 py-5 text-center transition",
+              dragging ? "border-primary bg-primary/10 ring-2 ring-primary/40" : "border-border hover:border-primary/50 hover:bg-muted/60",
+            )}
+          >
+            <CloudUpload className={cn("h-6 w-6", dragging ? "text-primary" : "text-muted-foreground")} />
+            <p className="text-sm font-semibold">{dragging ? "Drop files here" : "Drag and drop files here, or browse"}</p>
+            <p className="text-xs text-muted-foreground">Supports PDF, DOCX, PNG, JPG, ZIP (Max: 25 MB each, 60 MB total)</p>
+            <input
+              ref={fileInputRef}
+              type="file"
+              multiple
+              accept={ACCEPTED}
+              className="hidden"
+              aria-label="Announcement attachments"
+              onChange={(e) => {
+                if (e.target.files?.length) addFiles(e.target.files);
+                e.target.value = "";
+              }}
+            />
+          </div>
+          {pendingFiles.length > 0 && (
+            <ul className="grid gap-1.5">
+              {pendingFiles.map((f) => (
+                <li key={`${f.name}-${f.size}`} className="flex items-center gap-2 rounded-lg bg-muted/60 px-2.5 py-1.5">
+                  <FileText className="h-3.5 w-3.5 shrink-0 text-primary" />
+                  <span className="min-w-0 flex-1 truncate text-xs font-medium">{f.name}</span>
+                  <span className="text-[11px] text-muted-foreground">{formatFileSize(f.size)}</span>
+                  <button
+                    type="button"
+                    onClick={() => setPendingFiles((prev) => prev.filter((x) => x !== f))}
+                    aria-label={`Remove ${f.name}`}
+                    className="rounded-md p-1 text-muted-foreground hover:bg-rose-50 hover:text-rose-600 dark:hover:bg-rose-500/10"
+                  >
+                    <X className="h-3.5 w-3.5" />
+                  </button>
+                </li>
+              ))}
+            </ul>
+          )}
+          {pendingFiles.length > 0 && (
+            <p className="flex items-center gap-1.5 text-xs text-muted-foreground">
+              <Paperclip className="h-3.5 w-3.5" /> {pendingFiles.length} file(s) pending — will be attached when announcement is posted
+            </p>
+          )}
           <label className="flex cursor-pointer items-center gap-2.5 rounded-xl border border-border bg-muted/50 px-4 py-3">
             <input
               type="checkbox"

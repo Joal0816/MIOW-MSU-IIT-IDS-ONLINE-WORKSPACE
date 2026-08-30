@@ -15,7 +15,7 @@ import {
   updateProfile,
   type Profile,
 } from "@/lib/lms";
-import { ADMIN_NAV, AppShell, Badge, Card, EmptyState, Modal, useProfile } from "@/components/lms";
+import { ADMIN_NAV, AppShell, Badge, Card, EmptyState, Modal, staffNav, useProfile } from "@/components/lms";
 
 export const Route = createFileRoute("/dashboard/admin/students")({
   head: () => ({
@@ -47,7 +47,7 @@ const EMPTY_FORM = {
 };
 
 function StudentsPage() {
-  const profile = useProfile(["admin"]);
+  const profile = useProfile(["admin", "teacher"]);
   const qc = useQueryClient();
   const { data: students } = useQuery({ queryKey: ["students"], queryFn: listStudents, enabled: !!profile });
   const [open, setOpen] = useState(false);
@@ -118,7 +118,7 @@ function StudentsPage() {
   };
 
   return (
-    <AppShell nav={ADMIN_NAV} profile={profile} subtitle="Admin Console">
+    <AppShell nav={staffNav(profile.role)} profile={profile} subtitle={profile.role === "admin" ? "Admin Console" : "Teacher Portal"}>
       <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="font-display text-2xl font-bold sm:text-3xl">Students</h1>
@@ -154,6 +154,11 @@ function StudentsPage() {
           {[7, 8, 9, 10, 11, 12].map((g) => (
             <option key={g} value={g}>
               Grade {g}
+            </option>
+          ))}
+          {[13, 14, 15, 16].map((g) => (
+            <option key={g} value={String(g)}>
+              College Yr{g - 12}
             </option>
           ))}
         </select>
