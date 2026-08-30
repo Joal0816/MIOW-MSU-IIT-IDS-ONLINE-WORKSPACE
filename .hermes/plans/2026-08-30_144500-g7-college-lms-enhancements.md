@@ -80,21 +80,30 @@ export const BRAND_LOGO_SRC = "/miow-logo.svg";
 
 **Step 4 — Pass + commit** `git commit -m "chore(brand): confirm MIOW retained (no G7-College rebrand)"` (or no-op if already correct)
 
-### Task 2 — Remove "Edit with Lovable" credits
+### Task 2 — Remove ALL Lovable references in code
 
-**Objective:** Remove all Lovable marketing/edit affordances, keep AI Gateway if still used.
+**Objective:** Delete every `lovable` reference in code — imports, strings, comments, env prefixes, assets — not just the badge. Zero `grep -ri lovable` hits after (allow only historical mention in this plan file if needed).
 
-**Files:**
-- Modify: `vite.config.ts:1-20` (remove @lovable.dev/vite-tanstack-config)
-- Modify: `src/lib/lovable-error-reporting.ts` (stub or delete)
-- Modify: `src/integrations/supabase/client.ts:29-56` (remove lovable-preview-auth broker)
-- Modify: `src/integrations/supabase/auth-middleware.ts`, `client.server.ts` messages
-- Modify: `package.json:21,89` (keep mcp-js only if needed, remove vite-tanstack-config)
-- Modify: `src/lib/ai-gateway.server.ts` — rename if keeping Lovable gateway, or swap to OpenAI compatible env
+**Files (exhaustive sweep):**
+- Delete: `.lovable/` folder (`mcp/manifest.json`, `project.json`) — or keep `.lovable/project.json` only if build requires template, but remove Lovable branding inside
+- Modify: `vite.config.ts:1-20` (remove `import lovable from "@lovable.dev/vite-tanstack-config"` and `lovable()` plugin call; remove `@lovable.dev/vite-tanstack-config` dep)
+- Delete: `src/lib/lovable-error-reporting.ts` (entire file; replace imports with `src/lib/error-reporting.ts` stub or direct `console.error`)
+- Modify: `src/routes/__root.tsx:14` (remove `import { reportLovableError }` and its `ErrorComponent` useEffect call)
+- Modify: `src/integrations/supabase/client.ts:29-56` (delete `lovable-preview-auth` broker: `brokeredPreviewStorage`, `PREVIEW_ZONES` Lovable hosts, `lovableproject.com`/`gptengineer` checks)
+- Modify: `src/integrations/supabase/auth-middleware.ts`, `src/integrations/supabase/client.server.ts`, `src/integrations/supabase/cron-auth.ts` (replace error string `"Connect Supabase in Lovable Cloud."` → `"Configure Supabase env (SUPABASE_URL / SUPABASE_...)."`; remove `LOVABLE_CRON_SECRET` prefix → `CRON_SECRET` if used)
+- Modify: `package.json:21,89` (remove `@lovable.dev/mcp-js` and `@lovable.dev/vite-tanstack-config` if present; keep other deps)
+- Modify: `src/lib/ai-gateway.server.ts` (rename `createLovableAiGatewayProvider` → `createAiGatewayProvider`, `LOVABLE_AIG_RUN_ID_HEADER` → `AI_GATEWAY_RUN_ID_HEADER`; swap env `LOVABLE_API_KEY` → generic `AI_GATEWAY_KEY` / `OPENAI_API_KEY`; comments "Lovable AI Gateway" → "AI Gateway")
+- Search & clean: `grep -Rin lovable C:/Users/kent/Documents/lmslatest --include="*.ts" --include="*.tsx" --include="*.js" --include="*.json" --include="*.md" --include="*.toml"` — fix hits in `supabase/config.toml`, `README.md`, `AGENTS.md`, `.env.example`, `src/lib/mcp/*` (if Lovable MCP tooling), `src/components/*` badge, `eslint.config.js` comments
+- Modify: `supabase/config.toml` (remove `[lovable]` section if any)
+- Modify: `README.md`, `AGENTS.md` (remove Lovable Cloud instructions)
 
-**Steps:** grep `lovable` → replace messages "Connect Supabase in Lovable Cloud" → "Configure Supabase env". Remove floating badge component if exists (search `lovable` in `src/components`). Build after removal.
+**Steps:**
+1. `grep -Rin lovable` baseline → record ~12-15 hits (see scan)
+2. Apply deletions/renames above one-by-one (keep `brand.ts` MIOW rename from Task 1 intact)
+3. `grep -Rin lovable --exclude-dir=.git --exclude-dir=node_modules --exclude-dir=.hermes` → must return 0 (or only this plan's historical note)
+4. `bun run lint && bun run build` + `tsc --noEmit` green; `vite dev` manual check no missing import
 
-**Commit:** `chore: remove Lovable edit credits`
+**Commit:** `chore: remove ALL Lovable references in code`
 
 ### Task 3 — Rename Assignment → Activity (UI label, type alias, keep DB)
 
@@ -387,7 +396,7 @@ export async function exportDocAsText(id:string, token:string) { /* Drive export
 - Unit: `brand.test.ts` (MIOW retained), `domain-labels.test.ts` (Activity label), `notifications.test.ts` (stub), `parseWorksheet google docs` (paste export), `score release` (submit → hidden until released), `chat memory` (summary injection)
 - Component: Dropzone (drag over, drop 2 files, formatFileSize), Course wizard (JHS 7 → SHS 12 → College Yr1), Announcements attachments, Students Info table
 - Integration: `bun run build` must stay green after each task; `bun run lint`; Supabase migrations `supabase db push --dry-run`; manual: create G7 course → student sees in dashboard → teacher creates worksheet via Google Docs import → student submits file drag-drop → teacher releases score → student sees score
-- Search verification: `grep -rn "Lovable\\|lovableproject" src` → 0 after Task 2 (except ai-gateway if kept with env rename); `grep -rn "MIOW" src` should remain positive (brand); `grep -rn "Assignment" src --include="*.tsx"` → only comments/DB
+- Search verification: `grep -Rin lovable --exclude-dir=.git --exclude-dir=node_modules --exclude-dir=.hermes` → 0 after Task 2 (no hits in code; only historical note in this plan allowed); `grep -rn "MIOW" src` should remain positive (brand retained); `grep -rn "Assignment" src --include="*.tsx"` → only comments/DB
 - Security check after: `check_index_coverage` on modified files (brand.ts, lms.server.ts, chat-tools.server.ts, announcements/quizzes routes)
 
 ## Risks, Tradeoffs, Open Questions
@@ -396,7 +405,7 @@ export async function exportDocAsText(id:string, token:string) { /* Drive export
 - **Tradeoff:** G7-College grade_level 7-16 vs current 10 only — old data grade_level 10 stays valid; need backfill `education_level='jhs'` for existing rows.
 - **Tradeoff:** Google Picker requires Google Cloud project + OAuth consent + Drive scope — provide env template + fallback manual paste import if keys missing.
 - **Risk:** Score gating changes student expectation ("see your score instantly" in `quizzes.tsx:32` meta) — update copy to "submitted, awaiting release".
-- **Risk:** Lovable AI Gateway removal → chat break — keep gateway rename to `AI_GATEWAY_KEY` instead of hard remove if still in use; plan offers both paths.
+- **Risk:** Lovable AI Gateway removal → chat break — gateway fully renamed to generic `AI_GATEWAY_KEY`/`OPENAI_*`; verify `src/lib/ai-gateway.server.ts` rename compiles; no Lovable import remains.
 - **Open:** Human "sign-off constant ready but unused" — Task 4 stub does not send email; when pipeline added, inject `NOTIFICATION_SIGNOFF` into email footer centrally.
 - **Open:** Facial recognition accuracy vs lighting — keep optional, behind flag, server fallback to PIN; biometric enrollment needs explicit consent per DepEd.
 - **YAGNI:** Do not add full SIS (enrollment payments) — keep `enrollStudent` as is; do not rebuild grading; reuse `formatFileSize`/`Dropzone` extract.
