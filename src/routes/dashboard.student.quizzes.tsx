@@ -203,8 +203,8 @@ function QuizzesPage() {
 
       <Modal open={!!activeId} onClose={() => setActiveId(null)} title={activeQuiz?.title ?? "Worksheet"} wide>
         {result ? (
-          // Teacher-gated release (Task 23): hide score until score_released === true
-          (activeQuiz as unknown as { score_released?: boolean | null })?.score_released === false ? (
+          // Teacher-gated release: server gates score/answer_key; client mirrors via result.score_released
+          (result.score == null || (result as unknown as { score_released?: boolean })?.score_released === false) ? (
             <div className="flex flex-col items-center py-8 text-center">
               <ShieldCheck className="h-12 w-12 text-amber-500" />
               <p className="mt-3 text-base font-semibold">Awaiting teacher release</p>

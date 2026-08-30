@@ -1567,9 +1567,12 @@ interface QuizConfig {
   allow_retake: boolean;
   max_attempts: number; // 0 = unlimited while retakes are allowed
   retake_score_policy: RetakePolicy;
+  score_released: boolean;
+  answer_key_released: boolean;
 }
 
-const QUIZ_CONFIG_COLS = "id, course_id, title, allow_retake, max_attempts, retake_score_policy";
+const QUIZ_CONFIG_COLS =
+  "id, course_id, title, allow_retake, max_attempts, retake_score_policy, score_released, answer_key_released";
 
 async function getQuizConfig(quizId: string): Promise<QuizConfig> {
   const quiz = await unwrap<any>(
@@ -1673,17 +1676,27 @@ export async function submitQuizAttempt(
     [...attempts, { attempt_number, score, total }],
     quiz.retake_score_policy,
   );
+  // Teacher-gated release: hide scores/answer key until quiz.score_released / answer_key_released.
+  const isScoreReleased = quiz.score_released === true;
+  const isAnswerKeyReleased = quiz.answer_key_released === true;
+  const gatedResults = isAnswerKeyReleased
+    ? results
+    : results.map((r) => ({ ...r, correct_answer: "" }));
+  const gatedScore = isScoreReleased ? score : null;
+  const gatedEffective = isScoreReleased ? (eff?.score ?? score) : null;
   return {
     ok: true as const,
-    score,
+    score: gatedScore as number | null,
     total,
-    results,
+    results: gatedResults,
     attempt_number,
     attempts_used: used,
     attempts_allowed: ceiling,
     can_retake: ceiling == null || used < ceiling,
-    effective_score: eff?.score ?? score,
+    effective_score: gatedEffective as number | null,
     retake_score_policy: quiz.retake_score_policy,
+    score_released: isScoreReleased,
+    answer_key_released: isAnswerKeyReleased,
   };
 }
 
@@ -1697,6 +1710,7 @@ export async function quizAttemptInfo(quiz_id: string, token: string) {
   ]);
   const ceiling = attemptCeiling(quiz, extra);
   const eff = effectiveScore(attempts, quiz.retake_score_policy);
+  const isScoreReleased = quiz.score_released === true;
   return {
     quiz_id,
     allow_retake: quiz.allow_retake,
@@ -1705,9 +1719,11 @@ export async function quizAttemptInfo(quiz_id: string, token: string) {
     attempts_used: attempts.length,
     attempts_allowed: ceiling,
     can_retake: attempts.length === 0 || ceiling == null || attempts.length < ceiling,
-    effective_score: eff?.score ?? null,
-    effective_total: eff?.total ?? null,
+    effective_score: isScoreReleased ? (eff?.score ?? null) : null,
+    effective_total: isScoreReleased ? (eff?.total ?? null) : null,
     extra_attempts: extra,
+    score_released: isScoreReleased,
+    answer_key_released: quiz.answer_key_released === true,
   };
 }
 
@@ -1742,13 +1758,16 @@ export async function listMyQuizSummaries(token: string) {
     const list = byQuiz.get(quiz.id) ?? [];
     const ceiling = attemptCeiling(quiz, extraByQuiz.get(quiz.id) ?? 0);
     const eff = effectiveScore(list, quiz.retake_score_policy);
+    const isScoreReleased = (quiz as QuizConfig).score_released === true;
     return {
       quiz_id: quiz.id,
       attempts_used: list.length,
       attempts_allowed: ceiling,
       can_retake: list.length === 0 || ceiling == null || list.length < ceiling,
-      effective_score: eff?.score ?? null,
-      effective_total: eff?.total ?? null,
+      effective_score: isScoreReleased ? (eff?.score ?? null) : null,
+      effective_total: isScoreReleased ? (eff?.total ?? null) : null,
+      score_released: isScoreReleased,
+      answer_key_released: (quiz as QuizConfig).answer_key_released === true,
     };
   });
 }

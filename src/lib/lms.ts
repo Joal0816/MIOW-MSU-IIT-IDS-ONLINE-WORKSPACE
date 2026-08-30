@@ -303,15 +303,17 @@ export interface QuizAttemptSummary {
 export type SubmitQuizResult =
   | {
       ok: true;
-      score: number;
+      score: number | null;
       total: number;
       results: QuizResultItem[];
       attempt_number: number;
       attempts_used: number;
       attempts_allowed: number | null;
       can_retake: boolean;
-      effective_score: number;
+      effective_score: number | null;
       retake_score_policy: RetakePolicy;
+      score_released: boolean;
+      answer_key_released: boolean;
     }
   | {
       ok: false;
