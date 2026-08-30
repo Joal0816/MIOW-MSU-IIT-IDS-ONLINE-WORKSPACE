@@ -1,0 +1,32 @@
+DROP POLICY IF EXISTS "Public demo access" ON public.profiles;
+DROP POLICY IF EXISTS "Public demo access" ON public.announcements;
+DROP POLICY IF EXISTS "Public demo access" ON public.courses;
+DROP POLICY IF EXISTS "Public demo access" ON public.enrollments;
+DROP POLICY IF EXISTS "Public demo access" ON public.assignments;
+DROP POLICY IF EXISTS "Public demo access" ON public.submissions;
+DROP POLICY IF EXISTS "Public demo access" ON public.quizzes;
+DROP POLICY IF EXISTS "Public demo access" ON public.quiz_questions;
+DROP POLICY IF EXISTS "Public demo access" ON public.grades;
+DROP POLICY IF EXISTS "Public demo access" ON public.attendance_logs;
+
+REVOKE ALL ON public.profiles FROM anon, authenticated;
+REVOKE ALL ON public.announcements FROM anon, authenticated;
+REVOKE ALL ON public.courses FROM anon, authenticated;
+REVOKE ALL ON public.enrollments FROM anon, authenticated;
+REVOKE ALL ON public.assignments FROM anon, authenticated;
+REVOKE ALL ON public.submissions FROM anon, authenticated;
+REVOKE ALL ON public.quizzes FROM anon, authenticated;
+REVOKE ALL ON public.quiz_questions FROM anon, authenticated;
+REVOKE ALL ON public.grades FROM anon, authenticated;
+REVOKE ALL ON public.attendance_logs FROM anon, authenticated;
+
+GRANT ALL ON public.profiles TO service_role;
+GRANT ALL ON public.announcements TO service_role;
+GRANT ALL ON public.courses TO service_role;
+GRANT ALL ON public.enrollments TO service_role;
+GRANT ALL ON public.assignments TO service_role;
+GRANT ALL ON public.submissions TO service_role;
+GRANT ALL ON public.quizzes TO service_role;
+GRANT ALL ON public.quiz_questions TO service_role;
+GRANT ALL ON public.grades TO service_role;
+GRANT ALL ON public.attendance_logs TO service_role;

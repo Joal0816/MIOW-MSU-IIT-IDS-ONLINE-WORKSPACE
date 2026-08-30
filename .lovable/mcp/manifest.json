@@ -1,0 +1,238 @@
+{
+  "version": 1,
+  "sdk_version": "0.26.3",
+  "path": "/mcp",
+  "auth": {
+    "type": "oauth",
+    "issuer": "https://tqohsptzgbftwrxtxcka.supabase.co/auth/v1",
+    "accepted_audiences": [
+      "authenticated"
+    ]
+  },
+  "mcp": {
+    "server": {
+      "name": "classmate-connect",
+      "version": "0.1.0",
+      "title": "ClassMate Connect"
+    },
+    "tools": [
+      {
+        "name": "get_my_profile",
+        "title": "Get my profile",
+        "description": "Return the signed-in user's own ClassMate Connect school profile, including role, student number, grade level, and section.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "type": "object",
+          "properties": {}
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "list_announcements",
+        "title": "List announcements",
+        "description": "List school announcements visible to the signed-in user, newest first.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "type": "object",
+          "properties": {
+            "limit": {
+              "description": "Maximum announcements to return (default 10).",
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 50
+            }
+          }
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "list_courses",
+        "title": "List courses",
+        "description": "List the school course catalog. For students, each course is flagged with whether they are enrolled; for teachers, whether they teach it.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "type": "object",
+          "properties": {}
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "get_my_grades",
+        "title": "Get my grades",
+        "description": "Return the signed-in student's quarterly grades per course: written work, performance task, and exam scores plus the transmuted final grade.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "type": "object",
+          "properties": {}
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "get_my_attendance",
+        "title": "Get my attendance",
+        "description": "Return the signed-in student's recent gate scan history (tap in/out) with a summary of on-time vs late arrivals.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "type": "object",
+          "properties": {
+            "limit": {
+              "description": "Maximum log entries to return (default 60).",
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 200
+            }
+          }
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "list_my_assignments",
+        "title": "List my assignments",
+        "description": "List assignments for the signed-in user's courses. Students see assignments for enrolled courses with their submission status; teachers see assignments for the courses they teach.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "type": "object",
+          "properties": {}
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "submit_assignment",
+        "title": "Submit assignment",
+        "description": "Submit or update the signed-in student's text response for an assignment in a course they are enrolled in.",
+        "annotations": {
+          "readOnlyHint": false,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "type": "object",
+          "properties": {
+            "assignment_id": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+              "description": "The assignment id to submit work for."
+            },
+            "content": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 20000,
+              "description": "The student's written submission or answer text."
+            }
+          },
+          "required": [
+            "assignment_id",
+            "content"
+          ]
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "list_students",
+        "title": "List students",
+        "description": "List all student profiles (name, student number, grade level, section). Staff accounts only.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "type": "object",
+          "properties": {}
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "get_student_grades",
+        "title": "Get student grades",
+        "description": "Return quarterly grades for a specific student, by student profile id. Staff accounts only.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "type": "object",
+          "properties": {
+            "student_id": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+              "description": "The student's profile id (see list_students)."
+            }
+          },
+          "required": [
+            "student_id"
+          ]
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "get_student_attendance",
+        "title": "Get student attendance",
+        "description": "Return recent gate scan history for a specific student, by student profile id. Staff accounts only.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "type": "object",
+          "properties": {
+            "student_id": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+              "description": "The student's profile id (see list_students)."
+            },
+            "limit": {
+              "description": "Maximum log entries to return (default 60).",
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 200
+            }
+          },
+          "required": [
+            "student_id"
+          ]
+        },
+        "outputSchema": null
+      }
+    ]
+  }
+}
