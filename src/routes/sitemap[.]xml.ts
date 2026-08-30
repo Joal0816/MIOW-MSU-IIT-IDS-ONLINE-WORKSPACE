@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 
-const BASE_URL = "https://classsync-guardian.lovable.app";
+const BASE_URL = "https://example.com";
 
 interface SitemapEntry {
   path: string;

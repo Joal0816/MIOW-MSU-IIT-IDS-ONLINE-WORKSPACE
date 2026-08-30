@@ -66,18 +66,6 @@ Generate the SQL schema and types for:
 
 - Include comprehensive mock seed data across all views so the app is fully testable immediately after generation.
 
-This project was built with [Lovable](https://lovable.dev).
-
-**Live app**: https://classsync-guardian.lovable.app
-
-## Build with Lovable
-
-Continue developing this project in the [Lovable editor](https://lovable.dev/projects/cd7202ca-046a-4623-a9bc-0225e8c6b590).
-
-- **Ship faster**: describe what you want to build and Lovable handles the code.
-- **Stay in sync**: every change made in Lovable is committed straight to this repository.
-- **Full ownership**: this code is yours. Push to `main` on GitHub and your changes sync back into Lovable, ready for your next prompt.
-
 ## Development
 
 Prefer working locally? You need Node.js and npm — [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating).

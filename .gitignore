@@ -31,7 +31,7 @@ dist-ssr
 *.sln
 *.sw?
 
-# Lovable Cloud generated env (regenerated per environment; never commit)
+# Generated env (regenerated per environment; never commit)
 .env
 .env.*
 !.env.example

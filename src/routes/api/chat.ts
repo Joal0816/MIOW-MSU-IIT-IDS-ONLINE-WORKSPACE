@@ -42,9 +42,9 @@ export const Route = createFileRoute("/api/chat")({
           return new Response("Sign in to chat", { status: 401 });
         }
 
-        const key = process.env["LOVABLE_API_KEY"];
+        const key = process.env["AI_GATEWAY_KEY"] ?? process.env["OPENAI_API_KEY"];
         if (!key) {
-          return new Response("Missing LOVABLE_API_KEY", { status: 500 });
+          return new Response("Missing AI_GATEWAY_KEY", { status: 500 });
         }
 
         // Server-only modules are loaded inside the handler so this route
@@ -62,9 +62,9 @@ export const Route = createFileRoute("/api/chat")({
           return new Response("Session expired — please sign in again", { status: 401 });
         }
 
-        const provider = gateway.createLovableAiGatewayProvider(
+        const provider = gateway.createAiGatewayProvider(
           key,
-          gateway.getLovableAiGatewayRunId(request),
+          gateway.getAiGatewayRunId(request),
         );
         const model = provider("google/gemini-3.7-flash");
 
@@ -78,7 +78,7 @@ export const Route = createFileRoute("/api/chat")({
 
         return result.toUIMessageStreamResponse({
           originalMessages: messages as UIMessage[],
-          headers: gateway.getLovableAiGatewayResponseHeaders(undefined),
+          headers: gateway.getAiGatewayResponseHeaders(undefined),
         });
       },
     },

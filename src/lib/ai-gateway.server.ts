@@ -1,10 +1,10 @@
-// Server-only Lovable AI Gateway provider for the AI SDK (chat completions path).
+// Server-only AI Gateway provider for the AI SDK (chat completions path).
 // Create per-request — the fetch wrapper keeps the run id in a per-request closure.
 import { createOpenAICompatible } from "@ai-sdk/openai-compatible";
 
-const LOVABLE_AIG_RUN_ID_HEADER = "X-Lovable-AIG-Run-ID";
+const AI_GATEWAY_RUN_ID_HEADER = "X-AI-Gateway-Run-ID";
 
-export function createLovableAiGatewayRunIdFetch(initialRunId?: string) {
+export function createAiGatewayRunIdFetch(initialRunId?: string) {
   let runId = initialRunId?.trim() || undefined;
   let resolveRunId: (value: string | undefined) => void = () => {};
   let runIdResolved = false;
@@ -27,12 +27,12 @@ export function createLovableAiGatewayRunIdFetch(initialRunId?: string) {
   return {
     fetch: async (input: RequestInfo | URL, init?: RequestInit) => {
       const headers = new Headers(init?.headers);
-      if (runId && !headers.has(LOVABLE_AIG_RUN_ID_HEADER)) {
-        headers.set(LOVABLE_AIG_RUN_ID_HEADER, runId);
+      if (runId && !headers.has(AI_GATEWAY_RUN_ID_HEADER)) {
+        headers.set(AI_GATEWAY_RUN_ID_HEADER, runId);
       }
       try {
         const response = await fetch(input, { ...init, headers });
-        publishRunId(response.headers.get(LOVABLE_AIG_RUN_ID_HEADER) ?? undefined);
+        publishRunId(response.headers.get(AI_GATEWAY_RUN_ID_HEADER) ?? undefined);
         return response;
       } catch (error) {
         publishRunId(undefined);
@@ -44,20 +44,20 @@ export function createLovableAiGatewayRunIdFetch(initialRunId?: string) {
   };
 }
 
-export function createLovableAiGatewayProvider(
-  lovableApiKey: string,
+export function createAiGatewayProvider(
+  aiGatewayKey: string,
   initialRunId?: string,
   options?: { structuredOutputs?: boolean },
 ) {
-  const runIdFetch = createLovableAiGatewayRunIdFetch(initialRunId);
+  const runIdFetch = createAiGatewayRunIdFetch(initialRunId);
 
   const provider = createOpenAICompatible({
-    name: "lovable",
-    baseURL: "https://ai.gateway.lovable.dev/v1",
+    name: "ai-gateway",
+    baseURL: "https://ai.gateway.example.com/v1",
     supportsStructuredOutputs: options?.structuredOutputs ?? false,
     headers: {
-      "Lovable-API-Key": lovableApiKey,
-      "X-Lovable-AIG-SDK": "vercel-ai-sdk",
+      "AI-Gateway-Key": aiGatewayKey,
+      "X-AI-Gateway-SDK": "vercel-ai-sdk",
     },
     fetch: runIdFetch.fetch,
   });
@@ -68,12 +68,12 @@ export function createLovableAiGatewayProvider(
   });
 }
 
-export function getLovableAiGatewayRunId(request: Request) {
-  return request.headers.get(LOVABLE_AIG_RUN_ID_HEADER)?.trim() || undefined;
+export function getAiGatewayRunId(request: Request) {
+  return request.headers.get(AI_GATEWAY_RUN_ID_HEADER)?.trim() || undefined;
 }
 
-// Forward only X-Lovable-AIG-* headers back to browser callers.
-export function getLovableAiGatewayResponseHeaders(
+// Forward only X-AI-Gateway-* headers back to browser callers.
+export function getAiGatewayResponseHeaders(
   providerHeaders: HeadersInit | undefined,
   init?: HeadersInit,
 ) {
@@ -86,14 +86,14 @@ export function getLovableAiGatewayResponseHeaders(
   );
 
   new Headers(providerHeaders).forEach((value, name) => {
-    if (name.toLowerCase().startsWith("x-lovable-aig-")) {
+    if (name.toLowerCase().startsWith("x-ai-gateway-")) {
       headers.set(name, value);
       exposedHeaders.add(name);
     }
   });
 
   headers.forEach((_, name) => {
-    if (name.toLowerCase().startsWith("x-lovable-aig-")) {
+    if (name.toLowerCase().startsWith("x-ai-gateway-")) {
       exposedHeaders.add(name);
     }
   });

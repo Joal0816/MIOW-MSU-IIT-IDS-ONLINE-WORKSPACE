@@ -13,4 +13,4 @@ Allow: /
 User-agent: *
 Allow: /
 
-Sitemap: https://classsync-guardian.lovable.app/sitemap.xml
+Sitemap: https://example.com/sitemap.xml

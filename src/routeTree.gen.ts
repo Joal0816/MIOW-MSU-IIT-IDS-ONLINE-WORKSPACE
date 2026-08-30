@@ -18,7 +18,6 @@ import { Route as Char91DotwellKnownChar93OauthProtectedResourceRouteImport } fr
 import { Route as ApiChatRouteImport } from './routes/api/chat'
 import { Route as DashboardAdminRouteImport } from './routes/dashboard.admin'
 import { Route as DashboardStudentRouteImport } from './routes/dashboard.student'
-import { Route as DotlovableOauthConsentRouteImport } from './routes/[.]lovable.oauth.consent'
 import { Route as Char91DotmcpChar93InvokeToolToolRouteImport } from './routes/[.mcp]/invoke-tool/$tool'
 import { Route as ApiPublicAvatarRouteImport } from './routes/api/public/avatar'
 import { Route as ApiPublicMaterialRouteImport } from './routes/api/public/material'
@@ -88,9 +87,6 @@ const DashboardStudentRoute = DashboardStudentRouteImport.update({
   path: '/dashboard/student',
   getParentRoute: () => rootRouteImport,
 } as any)
-const DotlovableOauthConsentRoute = DotlovableOauthConsentRouteImport.update({
-  id: '/.lovable/oauth/consent',
-  path: '/.lovable/oauth/consent',
   getParentRoute: () => rootRouteImport,
 } as any)
 const Char91DotmcpChar93InvokeToolToolRoute =
@@ -218,7 +214,6 @@ export interface FileRoutesByFullPath {
   '/api/chat': typeof ApiChatRoute
   '/dashboard/admin': typeof DashboardAdminRouteWithChildren
   '/dashboard/student': typeof DashboardStudentRouteWithChildren
-  '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
   '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
   '/api/public/avatar': typeof ApiPublicAvatarRoute
   '/api/public/material': typeof ApiPublicMaterialRoute
@@ -249,7 +244,6 @@ export interface FileRoutesByTo {
   '/.mcp/list-tools': typeof Char91DotmcpChar93ListToolsRoute
   '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
   '/api/chat': typeof ApiChatRoute
-  '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
   '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
   '/api/public/avatar': typeof ApiPublicAvatarRoute
   '/api/public/material': typeof ApiPublicMaterialRoute
@@ -283,7 +277,6 @@ export interface FileRoutesById {
   '/api/chat': typeof ApiChatRoute
   '/dashboard/admin': typeof DashboardAdminRouteWithChildren
   '/dashboard/student': typeof DashboardStudentRouteWithChildren
-  '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
   '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
   '/api/public/avatar': typeof ApiPublicAvatarRoute
   '/api/public/material': typeof ApiPublicMaterialRoute
@@ -318,7 +311,6 @@ export interface FileRouteTypes {
     | '/api/chat'
     | '/dashboard/admin'
     | '/dashboard/student'
-    | '/.lovable/oauth/consent'
     | '/.mcp/invoke-tool/$tool'
     | '/api/public/avatar'
     | '/api/public/material'
@@ -349,7 +341,6 @@ export interface FileRouteTypes {
     | '/.mcp/list-tools'
     | '/.well-known/oauth-protected-resource'
     | '/api/chat'
-    | '/.lovable/oauth/consent'
     | '/.mcp/invoke-tool/$tool'
     | '/api/public/avatar'
     | '/api/public/material'
@@ -382,7 +373,6 @@ export interface FileRouteTypes {
     | '/api/chat'
     | '/dashboard/admin'
     | '/dashboard/student'
-    | '/.lovable/oauth/consent'
     | '/.mcp/invoke-tool/$tool'
     | '/api/public/avatar'
     | '/api/public/material'
@@ -416,7 +406,6 @@ export interface RootRouteChildren {
   ApiChatRoute: typeof ApiChatRoute
   DashboardAdminRoute: typeof DashboardAdminRouteWithChildren
   DashboardStudentRoute: typeof DashboardStudentRouteWithChildren
-  DotlovableOauthConsentRoute: typeof DotlovableOauthConsentRoute
   Char91DotmcpChar93InvokeToolToolRoute: typeof Char91DotmcpChar93InvokeToolToolRoute
   ApiPublicAvatarRoute: typeof ApiPublicAvatarRoute
   ApiPublicMaterialRoute: typeof ApiPublicMaterialRoute
@@ -491,11 +480,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DashboardStudentRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/.lovable/oauth/consent': {
-      id: '/.lovable/oauth/consent'
-      path: '/.lovable/oauth/consent'
-      fullPath: '/.lovable/oauth/consent'
-      preLoaderRoute: typeof DotlovableOauthConsentRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/.mcp/invoke-tool/$tool': {
@@ -706,7 +690,6 @@ const rootRouteChildren: RootRouteChildren = {
   ApiChatRoute: ApiChatRoute,
   DashboardAdminRoute: DashboardAdminRouteWithChildren,
   DashboardStudentRoute: DashboardStudentRouteWithChildren,
-  DotlovableOauthConsentRoute: DotlovableOauthConsentRoute,
   Char91DotmcpChar93InvokeToolToolRoute: Char91DotmcpChar93InvokeToolToolRoute,
   ApiPublicAvatarRoute: ApiPublicAvatarRoute,
   ApiPublicMaterialRoute: ApiPublicMaterialRoute,
