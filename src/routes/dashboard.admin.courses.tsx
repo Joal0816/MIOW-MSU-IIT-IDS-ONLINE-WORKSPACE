@@ -133,7 +133,7 @@ function CoursesPage() {
   const [rosterQuiz, setRosterQuiz] = useState<Quiz | null>(null);
   // Content editing / removal state (worksheets + assignments)
   const [editQuiz, setEditQuiz] = useState<Quiz | null>(null);
-  const [editQuizForm, setEditQuizForm] = useState({ ...EMPTY_POLICY, title: "", duration_minutes: "15", questions: "" });
+  const [editQuizForm, setEditQuizForm] = useState({ ...EMPTY_POLICY, title: "", duration_minutes: "15", questions: "", score_released: false, answer_key_released: false });
   const [editAssign, setEditAssign] = useState<Assignment | null>(null);
   const [editAssignForm, setEditAssignForm] = useState({ title: "", description: "", due_date: "", total_points: "100", component_type: "written_work" as Assignment["component_type"] });
   const [removeTarget, setRemoveTarget] = useState<{ kind: "quiz" | "assignment"; id: string; title: string } | null>(null);
@@ -345,6 +345,8 @@ function CoursesPage() {
       title: q.title,
       duration_minutes: String(q.duration_minutes),
       questions: "",
+      score_released: !!(q as any).score_released,
+      answer_key_released: !!(q as any).answer_key_released,
     });
     setEditQuiz(q);
   };
@@ -375,6 +377,8 @@ function CoursesPage() {
           title: editQuizForm.title.trim(),
           duration_minutes: Math.max(1, parseInt(editQuizForm.duration_minutes) || 15),
           ...policyPayload(editQuizForm),
+          score_released: !!editQuizForm.score_released,
+          answer_key_released: !!editQuizForm.answer_key_released,
         },
         questions,
       );
@@ -1010,6 +1014,17 @@ function CoursesPage() {
               className="mt-1 w-full rounded-xl border border-input bg-background p-3 font-mono text-xs outline-none focus:ring-2 focus:ring-ring"
             />
           </label>
+          <div className="flex flex-col gap-2 rounded-xl border border-border bg-muted/30 p-3">
+            <label className="flex items-center justify-between gap-3 text-sm">
+              <span className="font-medium">Release scores to students</span>
+              <input type="checkbox" checked={!!editQuizForm.score_released} onChange={(e)=>setEditQuizForm(f=>({...f, score_released:e.target.checked}))} className="h-4 w-4 rounded border-input" />
+            </label>
+            <label className="flex items-center justify-between gap-3 text-sm">
+              <span className="font-medium">Release answer key</span>
+              <input type="checkbox" checked={!!editQuizForm.answer_key_released} onChange={(e)=>setEditQuizForm(f=>({...f, answer_key_released:e.target.checked}))} className="h-4 w-4 rounded border-input" />
+            </label>
+            <p className="text-xs text-muted-foreground">When unchecked, students see “Awaiting teacher release”.</p>
+          </div>
           {editQuiz && (
             <MaterialManager target="quiz" id={editQuiz.id} courseId={editQuiz.course_id} attachments={editQuiz.attachments ?? []} />
           )}

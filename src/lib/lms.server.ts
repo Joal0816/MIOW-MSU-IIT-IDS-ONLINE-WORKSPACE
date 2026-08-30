@@ -507,6 +507,8 @@ export const schemas = {
         max_attempts: z.number().int().min(0).max(50),
         retake_score_policy: z.enum(["highest_score", "latest_attempt", "average_score"]),
         attachments: z.array(attachmentMeta).max(10),
+        score_released: z.boolean(),
+        answer_key_released: z.boolean(),
       })
       .partial(),
     questions: z
@@ -531,6 +533,7 @@ export const schemas = {
         total_points: z.number().int().min(1).max(1000),
         component_type: z.enum(["written_work", "performance_task", "quarterly_exam"]),
         attachments: z.array(attachmentMeta).max(10),
+        score_released: z.boolean(),
       })
       .partial(),
     ...token,

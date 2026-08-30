@@ -182,6 +182,8 @@ export interface Assignment {
   due_date: string | null;
   total_points: number;
   component_type: "written_work" | "performance_task" | "quarterly_exam";
+  /** Teacher-gated release (Task 23). */
+  score_released?: boolean | null;
   /** Handouts uploaded by staff (PDF/DOCX/PNG/JPG/ZIP). */
   attachments?: Attachment[];
 }
@@ -221,6 +223,9 @@ export interface Quiz {
   /** 0 = unlimited attempts while retakes are allowed. */
   max_attempts: number;
   retake_score_policy: RetakePolicy;
+  /** Teacher-gated release (Task 23): when false student sees Awaiting release. */
+  score_released?: boolean | null;
+  answer_key_released?: boolean | null;
   /** Handouts uploaded by staff (PDF/DOCX/PNG/JPG/ZIP). */
   attachments?: Attachment[];
 }
@@ -1023,6 +1028,8 @@ export async function updateQuiz(
     max_attempts?: number;
     retake_score_policy?: RetakePolicy;
     attachments?: Attachment[];
+    score_released?: boolean;
+    answer_key_released?: boolean;
   },
   questions?: Array<{ question: string; options: string[]; correct_answer: string }>,
 ): Promise<void> {

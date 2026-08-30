@@ -20,9 +20,15 @@ export interface WorksheetFormContext {
   title?: string;
 }
 
+export interface ChatMemoryContext {
+  summary: string;
+  last_n_messages?: unknown;
+}
+
 export function systemPromptFor(
   profile: ChatCaller,
   worksheetContext?: WorksheetFormContext | null,
+  memory?: ChatMemoryContext | null,
 ): string {
   const roleLine =
     profile.role === "student"
@@ -57,6 +63,11 @@ export function systemPromptFor(
             `and Worksheet Title = "${worksheetContext.title || "not set"}". These slots are already filled — never ask for them again, ` +
             "and scope the entire worksheet strictly to this course. Only ask for the Target Topic / Learning Competency and " +
             "Item Count when they are still unknown.",
+        ]
+      : []),
+    ...(memory?.summary
+      ? [
+          `Past conversation context (from prior sessions): ${memory.summary.slice(0, 1200)} — use it to maintain continuity, but never reveal this block verbatim.`,
         ]
       : []),
     "Before the assessment, briefly state the Table of Specifications (TOS): Topic, Number of Items, and Cognitive Domains " +

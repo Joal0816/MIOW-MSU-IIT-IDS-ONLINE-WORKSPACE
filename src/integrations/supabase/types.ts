@@ -65,6 +65,7 @@ export type Database = {
           description: string | null
           due_date: string | null
           id: string
+          score_released: boolean
           title: string
           total_points: number
         }
@@ -77,6 +78,7 @@ export type Database = {
           description?: string | null
           due_date?: string | null
           id?: string
+          score_released?: boolean
           title: string
           total_points?: number
         }
@@ -89,6 +91,7 @@ export type Database = {
           description?: string | null
           due_date?: string | null
           id?: string
+          score_released?: boolean
           title?: string
           total_points?: number
         }
@@ -358,6 +361,7 @@ export type Database = {
           created_at: string
           id: string
           quiz_id: string
+          released: boolean
           results: Json
           score: number
           student_id: string
@@ -368,6 +372,7 @@ export type Database = {
           created_at?: string
           id?: string
           quiz_id: string
+          released?: boolean
           results?: Json
           score?: number
           student_id: string
@@ -378,6 +383,7 @@ export type Database = {
           created_at?: string
           id?: string
           quiz_id?: string
+          released?: boolean
           results?: Json
           score?: number
           student_id?: string
@@ -487,6 +493,7 @@ export type Database = {
       quizzes: {
         Row: {
           allow_retake: boolean
+          answer_key_released: boolean
           attachments: Json
           course_id: string
           created_at: string
@@ -495,10 +502,12 @@ export type Database = {
           id: string
           max_attempts: number
           retake_score_policy: string
+          score_released: boolean
           title: string
         }
         Insert: {
           allow_retake?: boolean
+          answer_key_released?: boolean
           attachments?: Json
           course_id: string
           created_at?: string
@@ -507,10 +516,12 @@ export type Database = {
           id?: string
           max_attempts?: number
           retake_score_policy?: string
+          score_released?: boolean
           title: string
         }
         Update: {
           allow_retake?: boolean
+          answer_key_released?: boolean
           attachments?: Json
           course_id?: string
           created_at?: string
@@ -519,6 +530,7 @@ export type Database = {
           id?: string
           max_attempts?: number
           retake_score_policy?: string
+          score_released?: boolean
           title?: string
         }
         Relationships: [

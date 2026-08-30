@@ -29,9 +29,9 @@ export const Route = createFileRoute("/dashboard/student/quizzes")({
   head: () => ({
     meta: [
       { title: "Worksheets | MIOW - MSU-IIT IDS Online Workspace" },
-      { name: "description", content: "Take timed worksheets and exams and see your score instantly." },
+      { name: "description", content: "Take timed worksheets and exams — scores appear after teacher release." },
       { property: "og:title", content: "Worksheets | MIOW - MSU-IIT IDS Online Workspace" },
-      { property: "og:description", content: "Take timed worksheets and exams and see your score instantly." },
+      { property: "og:description", content: "Take timed worksheets and exams — scores appear after teacher release." },
     ],
   }),
   component: QuizzesPage,
@@ -142,7 +142,7 @@ function QuizzesPage() {
     <AppShell nav={STUDENT_NAV} profile={profile} subtitle="Student Portal">
       <h1 className="font-display text-2xl font-bold sm:text-3xl">Worksheets</h1>
       <p className="mb-6 mt-1 text-sm text-muted-foreground">
-        Timed worksheets, drills, and exams — your score is shown instantly.
+        Timed worksheets, drills, and exams — scores appear after your teacher releases them.
       </p>
 
       {myQuizzes.length === 0 ? (
@@ -200,6 +200,30 @@ function QuizzesPage() {
 
       <Modal open={!!activeId} onClose={() => setActiveId(null)} title={activeQuiz?.title ?? "Worksheet"} wide>
         {result ? (
+          // Teacher-gated release (Task 23): hide score until score_released === true
+          (activeQuiz as unknown as { score_released?: boolean | null })?.score_released === false ? (
+            <div className="flex flex-col items-center py-8 text-center">
+              <ShieldCheck className="h-12 w-12 text-amber-500" />
+              <p className="mt-3 text-base font-semibold">Awaiting teacher release</p>
+              <p className="mt-1 text-sm text-muted-foreground">
+                Your worksheet has been submitted. Your teacher will release your score soon.
+              </p>
+              <p className="mt-2 text-xs text-muted-foreground">
+                Attempt {result.attempts_used} of {result.attempts_allowed ?? "∞"} recorded — score hidden until release.
+              </p>
+              <div className="mt-4 flex flex-col gap-2 w-full">
+                <p className="rounded-xl border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-center text-xs text-amber-800 dark:text-amber-200">
+                  Awaiting teacher release — submitted. You&apos;ll see your score and review once your teacher releases it.
+                </p>
+                <button
+                  onClick={() => setActiveId(null)}
+                  className="h-11 w-full rounded-xl bg-primary text-sm font-semibold text-primary-foreground hover:opacity-90"
+                >
+                  Done
+                </button>
+              </div>
+            </div>
+          ) : (
           <div>
             <div className="flex flex-col items-center py-4 text-center">
               <CheckCircle2 className="h-14 w-14 text-emerald-500" />
@@ -321,6 +345,7 @@ function QuizzesPage() {
               </button>
             </div>
           </div>
+          )
         ) : (
           <>
             <div className="mb-2 flex items-center justify-between rounded-xl bg-muted px-4 py-2.5">
