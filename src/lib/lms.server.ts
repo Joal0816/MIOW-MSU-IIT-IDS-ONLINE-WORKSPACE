@@ -8,6 +8,7 @@ import { createHmac, timingSafeEqual, randomUUID } from "node:crypto";
 import bcrypt from "bcryptjs";
 import { z } from "zod";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
+import { getBucket } from "@/lib/rate-limit";
 
 const db: any = supabaseAdmin;
 
@@ -592,9 +593,16 @@ export async function findByRfid(uid: string) {
 }
 
 async function verifyPin(p: any, pin: string): Promise<boolean> {
+  // In-memory rate limit: 5 attempts per 15 min per profile (brute-force hardening)
+  const bucket = getBucket(`pin:${p.id ?? p.student_id ?? p.email ?? "unknown"}`);
+  if (!bucket.consume()) {
+    const err: any = new Error("Too many attempts");
+    err.status = 429;
+    throw err;
+  }
   if (typeof p.pin_hash === "string" && p.pin_hash) {
     try {
-      return bcrypt.compareSync(pin, p.pin_hash);
+      return await bcrypt.compare(pin, p.pin_hash);
     } catch {
       return false;
     }
@@ -604,7 +612,7 @@ async function verifyPin(p: any, pin: string): Promise<boolean> {
   if (typeof p.pin === "string" && p.pin.length > 0 && p.pin === pin) {
     await db
       .from("profiles")
-      .update({ pin_hash: bcrypt.hashSync(pin, 10), pin: null })
+      .update({ pin_hash: await bcrypt.hash(pin, 10), pin: null })
       .eq("id", p.id);
     return true;
   }
@@ -624,9 +632,15 @@ async function verifySecret(p: any, secret: string): Promise<boolean> {
   // upgrade); staff authenticate with a password_hash. Try both so a single
   // endpoint serves every role.
   if (await verifyPin(p, secret)) return true;
+  const bucket = getBucket(`secret:${p.id ?? p.email ?? "unknown"}`);
+  if (!bucket.consume()) {
+    const err: any = new Error("Too many attempts");
+    err.status = 429;
+    throw err;
+  }
   if (typeof p.password_hash === "string" && p.password_hash) {
     try {
-      return bcrypt.compareSync(secret, p.password_hash);
+      return await bcrypt.compare(secret, p.password_hash);
     } catch {
       return false;
     }
@@ -638,6 +652,14 @@ export async function verifyPinLogin(login: string, secret: string) {
   // Strip PostgREST ilike wildcards so the identifier is matched literally.
   const identifier = login.trim().replace(/[*%]/g, "");
   if (!identifier || !secret) return { ok: false as const, reason: "invalid" as const };
+
+  // In-memory rate limit per identifier (covers enumeration + brute force before DB lookup)
+  const identBucket = getBucket(`login:ident:${identifier.toLowerCase()}`);
+  if (!identBucket.consume()) {
+    const err: any = new Error("Too many attempts");
+    err.status = 429;
+    throw err;
+  }
 
   // Separate parameterized lookups per identifier column — the raw input is
   // never interpolated into a PostgREST filter expression (filter injection),
@@ -669,6 +691,14 @@ export async function verifyPinLogin(login: string, secret: string) {
       reason: "locked" as const,
       retryAfterMinutes: Math.max(1, Math.ceil((lockedUntil - now) / 60000)),
     };
+  }
+
+  // In-memory rate limit per profile before bcrypt (5 per 15 min)
+  const profileBucket = getBucket(`login:profile:${p.id}`);
+  if (!profileBucket.consume()) {
+    const err: any = new Error("Too many attempts");
+    err.status = 429;
+    throw err;
   }
 
   if (!(await verifySecret(p, secret))) {
@@ -722,7 +752,7 @@ export async function createProfile(input: z.infer<typeof schemas.profileInput>)
     rfid_uid: (row["rfid_uid"] as string | null) ?? null,
   });
   if (typeof row["pin"] === "string" && row["pin"]) {
-    row["pin_hash"] = bcrypt.hashSync(row["pin"], 10);
+    row["pin_hash"] = await bcrypt.hash(row["pin"], 10);
     row["pin"] = null; // never persist plaintext PINs
   }
   const p = await unwrap<any>(db.from("profiles").insert(row).select().single());
@@ -799,7 +829,7 @@ export async function updateProfile(id: string, patch: Record<string, unknown>) 
     id,
   );
   if (typeof row["pin"] === "string" && row["pin"]) {
-    row["pin_hash"] = bcrypt.hashSync(row["pin"], 10);
+    row["pin_hash"] = await bcrypt.hash(row["pin"], 10);
     row["pin"] = null; // never persist plaintext PINs
   }
   await unwrap(db.from("profiles").update(row).eq("id", id));
@@ -1131,7 +1161,7 @@ export async function createTeacher(input: z.infer<typeof schemas.teacherInput>)
   });
   row["email"] = email;
   row["role"] = "teacher";
-  row["pin_hash"] = bcrypt.hashSync(input.pin, 12);
+  row["pin_hash"] = await bcrypt.hash(input.pin, 12);
   row["pin"] = null;
   // Faculty sign in at the kiosk with their employee ID (or email) + PIN, so
   // the employee ID must exist as a login handle too.
