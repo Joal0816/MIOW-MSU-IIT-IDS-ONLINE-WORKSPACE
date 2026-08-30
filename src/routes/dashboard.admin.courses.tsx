@@ -38,6 +38,7 @@ import {
 import { staffNav, AppShell, Badge, EmptyState, Modal, MotionCard, courseStyle, useProfile } from "@/components/lms";
 import { parseWorksheet } from "@/lib/worksheet-parser";
 import { openWorksheetChat } from "@/lib/worksheet-context";
+import { openGooglePicker } from "@/lib/google-docs";
 import { COURSE_LEVELS, collegeYearOf, educationLevelOf, levelLabel } from "@/lib/course-levels";
 import { cn } from "@/lib/utils";
 
@@ -137,6 +138,8 @@ function CoursesPage() {
   const [editAssign, setEditAssign] = useState<Assignment | null>(null);
   const [editAssignForm, setEditAssignForm] = useState({ title: "", description: "", due_date: "", total_points: "100", component_type: "written_work" as Assignment["component_type"] });
   const [removeTarget, setRemoveTarget] = useState<{ kind: "quiz" | "assignment"; id: string; title: string } | null>(null);
+  const [docsImportOpen, setDocsImportOpen] = useState(false);
+  const [docsMarkdown, setDocsMarkdown] = useState("");
 
   if (!profile) return null;
 
@@ -472,6 +475,12 @@ function CoursesPage() {
           </button>
           <button onClick={() => setModal("quiz")} className="flex items-center gap-1.5 rounded-xl border border-border bg-card px-4 py-2.5 text-sm font-semibold hover:bg-muted">
             <FileQuestion className="h-4 w-4" /> Worksheet
+          </button>
+          <button
+            onClick={() => setDocsImportOpen(true)}
+            className="flex items-center gap-1.5 rounded-xl border border-border bg-card px-4 py-2.5 text-sm font-semibold hover:bg-muted"
+          >
+            <Upload className="h-4 w-4" /> Import from Google Docs
           </button>
         </div>
       </div>
@@ -1121,6 +1130,57 @@ function CoursesPage() {
 
       <Modal open={!!rosterQuiz} onClose={() => setRosterQuiz(null)} title={`Attempts — ${rosterQuiz?.title ?? ""}`} wide>
         {rosterQuiz && <AttemptRoster quizId={rosterQuiz.id} />}
+      </Modal>
+
+      {/* Task 26: Google Docs import stub */}
+      <Modal open={docsImportOpen} onClose={() => setDocsImportOpen(false)} title="Import from Google Docs" wide>
+        <p className="mb-3 text-xs text-muted-foreground">
+          Paste exported Google Doc markdown below — we&apos;ll run <code className="font-mono">parseWorksheet</code> and preview the detected items.
+          The picker (<code className="font-mono">openGooglePicker</code> / gapi) is a stub until OAuth is configured.
+        </p>
+        <button
+          type="button"
+          onClick={() => openGooglePicker(() => toast.info("Google Picker stub — wire gapi OAuth next"))}
+          className="mb-3 flex h-9 items-center gap-1.5 rounded-lg border border-border px-3 text-xs font-semibold hover:bg-muted"
+        >
+          <Upload className="h-3.5 w-3.5" /> Open Google Picker (stub)
+        </button>
+        <textarea
+          value={docsMarkdown}
+          onChange={(e) => setDocsMarkdown(e.target.value)}
+          rows={8}
+          placeholder="Paste Google Doc text / markdown here..."
+          className="w-full rounded-xl border border-input bg-background p-3 font-mono text-xs outline-none focus:ring-2 focus:ring-ring"
+        />
+        {docsMarkdown.trim() && (() => {
+          const { questions, dropped } = parseWorksheet(docsMarkdown);
+          return (
+            <div className="mt-3 rounded-xl border border-border bg-muted/30 p-3">
+              <p className="text-xs font-semibold">Preview: {questions.length} question(s) detected{dropped ? ` · ${dropped} dropped` : ""}</p>
+              {questions.length > 0 && (
+                <ol className="mt-2 list-decimal space-y-1 pl-5 text-xs">
+                  {questions.slice(0, 6).map((q, i) => (
+                    <li key={i} className="truncate">{q.question.slice(0, 90)}{q.question.length > 90 ? "…" : ""}</li>
+                  ))}
+                  {questions.length > 6 && <li className="text-muted-foreground">…and {questions.length - 6} more</li>}
+                </ol>
+              )}
+              <button
+                type="button"
+                onClick={() => {
+                  setQuizForm((f) => ({ ...f, questions: docsMarkdown }));
+                  setDocsImportOpen(false);
+                  setModal("quiz");
+                  toast.success(`Loaded ${questions.length} question(s) into the worksheet form`);
+                }}
+                disabled={questions.length === 0}
+                className="mt-3 h-9 rounded-lg bg-primary px-4 text-xs font-semibold text-primary-foreground hover:opacity-90 disabled:opacity-50"
+              >
+                Use in worksheet
+              </button>
+            </div>
+          );
+        })()}
       </Modal>
     </AppShell>
   );

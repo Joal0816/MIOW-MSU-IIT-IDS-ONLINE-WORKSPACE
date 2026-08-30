@@ -275,7 +275,7 @@ function AssignmentsPage() {
             <>
               <CloudUpload className="h-7 w-7 text-muted-foreground" />
               <p className="text-sm font-semibold">Drop a file here, or click to browse</p>
-              <p className="text-xs text-muted-foreground">PDF, DOCX, images — up to 15 MB</p>
+              <p className="text-xs text-muted-foreground">PDF, DOCX, images — up to 15 MB · multiple files allowed</p>
             </>
           )}
         </div>
