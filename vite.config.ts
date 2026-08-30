@@ -11,8 +11,8 @@ export default defineConfig({
     tsConfigPaths(),
     tanstackStart({
       srcDirectory: "src",
-      router: { entry: "src/router.tsx" },
-      server: { entry: "src/server.ts" },
+      router: { entry: "router.tsx" },
+      server: { entry: "server.ts" },
     }),
     viteReact(),
     nitro(),
