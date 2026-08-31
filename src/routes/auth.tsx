@@ -8,6 +8,7 @@ import {
   ShieldCheck,
 } from "lucide-react";
 import { toast } from "sonner";
+import { dbg, dbgError } from "@/lib/debug";
 import {
   dashboardPathFor,
   findProfileByRfid,
@@ -94,6 +95,7 @@ function AuthPage() {
 
   const handleUid = async (code: string) => {
     if (verifying || busy) return;
+    dbg("auth", "RFID tap", { uid: code.trim() });
     setBusy(true);
     try {
       const p = await findProfileByRfid(code.trim());
@@ -111,9 +113,11 @@ function AuthPage() {
   const handlePin = async (e: React.FormEvent) => {
     e.preventDefault();
     if (busy) return;
+    dbg("auth", "PIN login clicked", { login: login.trim(), pinLength: pin.trim().length });
     setBusy(true);
     try {
       const res = await pinLogin(login.trim(), pin.trim());
+      dbg("auth", "pinLogin result", { ok: res.ok, reason: (res as any).reason, profile: (res as any).profile?.role });
       if (res.ok) {
         startVerify(res.profile);
       } else if (res.reason === "locked") {
@@ -129,7 +133,8 @@ function AuthPage() {
           }.`,
         );
       }
-    } catch {
+    } catch (e) {
+      dbgError("auth", "PIN login error", e);
       toast.error("Sign-in failed — please try again.");
     } finally {
       setBusy(false);

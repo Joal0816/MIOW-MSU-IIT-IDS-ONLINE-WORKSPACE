@@ -460,6 +460,7 @@ export function transmutedOf(
 }
 
 import { logAudit } from "@/lib/settings";
+import { dbg } from "@/lib/debug";
 
 /* ---------- Session (hardware-auth demo with signed server tokens) ---------- */
 
@@ -572,6 +573,7 @@ export type PinLoginResult =
  * The server enforces a 5-attempt / 15-minute lockout on all accounts.
  */
 export async function pinLogin(login: string, secret: string): Promise<PinLoginResult> {
+  dbg("lms", "pinLogin RPC call", { login });
   const res = (await pinLoginFn({ data: { login, secret } })) as
     | { ok: true; profile: Profile; token: string }
     | {
@@ -580,6 +582,7 @@ export async function pinLogin(login: string, secret: string): Promise<PinLoginR
         retryAfterMinutes?: number;
         attemptsLeft?: number;
       };
+  dbg("lms", "pinLogin RPC response", { ok: res.ok, reason: (res as any).reason });
   if (res.ok) return { ok: true, profile: { ...res.profile, session_token: res.token } };
   return res;
 }

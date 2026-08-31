@@ -665,6 +665,10 @@ async function verifySecret(p: any, secret: string): Promise<boolean> {
 }
 
 export async function verifyPinLogin(login: string, secret: string) {
+  const dbgS = (msg: string, data?: unknown) => {
+    if (process.env.DEBUG_LOGS === "true") console.debug(`[auth:server] ${msg}`, data ?? "");
+  };
+  dbgS("verifyPinLogin called", { login: login.trim() });
   // Strip PostgREST ilike wildcards so the identifier is matched literally.
   const identifier = login.trim().replace(/[*%]/g, "");
   if (!identifier || !secret) return { ok: false as const, reason: "invalid" as const };
@@ -697,7 +701,8 @@ export async function verifyPinLogin(login: string, secret: string) {
   }
   // Unknown identifiers get the same generic failure as a wrong secret, so
   // the endpoint can't be used to enumerate accounts.
-  if (!p) return { ok: false as const, reason: "invalid" as const };
+  if (!p) { dbgS("profile not found", { identifier }); return { ok: false as const, reason: "invalid" as const }; }
+  dbgS("profile found", { email: p.email, role: p.role, hasPinHash: !!p.pin_hash, locked: !!p.locked_until });
 
   const now = Date.now();
   const lockedUntil = typeof p.locked_until === "string" ? Date.parse(p.locked_until) : 0;
@@ -744,6 +749,7 @@ export async function verifyPinLogin(login: string, secret: string) {
       .update({ failed_login_attempts: 0, locked_until: null })
       .eq("id", p.id);
   }
+  dbgS("login success", { email: p.email, role: p.role });
   return { ok: true as const, profile: safeProfile(p), token: createSessionToken(p.id) };
 }
 
