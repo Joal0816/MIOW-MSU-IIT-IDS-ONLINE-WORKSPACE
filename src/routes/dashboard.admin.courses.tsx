@@ -40,6 +40,7 @@ import { parseWorksheet } from "@/lib/worksheet-parser";
 import { openWorksheetChat } from "@/lib/worksheet-context";
 import { openGooglePicker } from "@/lib/google-docs";
 import { COURSE_LEVELS, collegeYearOf, educationLevelOf, levelLabel } from "@/lib/course-levels";
+import { CED_PROGRAMS, CED_DEPARTMENT_LABELS } from "@/lib/ced-programs";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/dashboard/admin/courses")({
@@ -793,12 +794,24 @@ function CoursesPage() {
               courseForm.grade_level === "16") && (
               <label className="block">
                 <span className="mb-1 block text-xs font-semibold text-muted-foreground">Program (College) *</span>
-                <input
+                <select
                   value={courseForm.program ?? ""}
                   onChange={(e) => setCourseForm({ ...courseForm, program: e.target.value })}
-                  placeholder="e.g., BSIT, BSED, BSBA"
                   className="h-11 w-full rounded-xl border border-input bg-background px-3 text-sm outline-none focus:ring-2 focus:ring-ring"
-                />
+                >
+                  <option value="">Select program</option>
+                  {(["SME", "PRE", "PE", "TTE"] as const).map((dept) => {
+                    const progs = CED_PROGRAMS.filter((p) => p.department === dept);
+                    if (!progs.length) return null;
+                    return (
+                      <optgroup key={dept} label={CED_DEPARTMENT_LABELS[dept]}>
+                        {progs.map((p) => (
+                          <option key={p.name} value={p.name}>{p.name}</option>
+                        ))}
+                      </optgroup>
+                    );
+                  })}
+                </select>
               </label>
             )}
             <div>
