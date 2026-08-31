@@ -573,7 +573,11 @@ export type PinLoginResult =
  * The server enforces a 5-attempt / 15-minute lockout on all accounts.
  */
 export async function pinLogin(login: string, secret: string): Promise<PinLoginResult> {
-  dbg("lms", "pinLogin RPC call", { login });
+  dbg("lms", "pinLogin RPC call", { login, pinLoginFnDefined: typeof pinLoginFn });
+  if (!pinLoginFn) {
+    dbgError("lms", "pinLoginFn is undefined! Module import failed.");
+    throw new Error("pinLoginFn not loaded — server function module failed to initialize");
+  }
   const res = (await pinLoginFn({ data: { login, secret } })) as
     | { ok: true; profile: Profile; token: string }
     | {
