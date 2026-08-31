@@ -73,6 +73,17 @@ export function createSessionToken(profileId: string, jti: string = randomUUID()
 }
 
 export function verifySessionToken(token: string): string {
+  // Dev bypass: the launcher at / in DEV mode seeds tokens like "dev-bypass-token-admin".
+  // These are unsigned — accept them only when Vite is in dev mode (never ships to prod).
+  if (token.startsWith("dev-bypass-token-") && (import.meta as any)?.env?.DEV) {
+    const role = token.replace("dev-bypass-token-", "");
+    const DEV_IDS: Record<string, string> = {
+      admin: "dev-admin-0001",
+      teacher: "dev-teacher-0001",
+      student: "dev-student-0001",
+    };
+    return DEV_IDS[role] ?? "dev-admin-0001";
+  }
   const [payload, sig] = token.split(".");
   if (!payload || !sig) throw new Error("Unauthorized");
   const tryKeys = [process.env["SESSION_SECRET"], process.env["SUPABASE_SERVICE_ROLE_KEY"]].filter(
@@ -119,6 +130,32 @@ async function revokeSessions(profileId: string): Promise<void> {
 /** Verify the caller's token and load their real profile. Throws if invalid. */
 export async function requireSession(token: string) {
   const id = verifySessionToken(token);
+  // Dev bypass: return a synthetic profile so server functions work with
+  // the launcher's unsigned dev-bypass-token-* in dev mode.
+  const DEV_PROFILES: Record<string, Record<string, unknown>> = {
+    "dev-admin-0001": {
+      id: "dev-admin-0001", student_id: null, email: "admin@miow.dev",
+      full_name: "Dev Admin", role: "admin", avatar_url: null, grade_level: null,
+      section: null, created_at: new Date().toISOString(), employee_id: "DEV-ADM-01",
+      prefix: null, department: "IDS", biometric_enrolled_at: null,
+      is_face_enrolled: false, has_pin: true, has_rfid: false,
+    },
+    "dev-teacher-0001": {
+      id: "dev-teacher-0001", student_id: null, email: "teacher@miow.dev",
+      full_name: "Dev Teacher", role: "teacher", avatar_url: null, grade_level: null,
+      section: null, created_at: new Date().toISOString(), employee_id: "DEV-TCH-01",
+      prefix: null, department: "IDS", biometric_enrolled_at: null,
+      is_face_enrolled: false, has_pin: true, has_rfid: false,
+    },
+    "dev-student-0001": {
+      id: "dev-student-0001", student_id: "2026-0001", email: "student@miow.dev",
+      full_name: "Dev Student", role: "student", avatar_url: null, grade_level: 10,
+      section: "Dev-Section", created_at: new Date().toISOString(), employee_id: null,
+      prefix: null, department: null, biometric_enrolled_at: null,
+      is_face_enrolled: false, has_pin: true, has_rfid: false,
+    },
+  };
+  if (DEV_PROFILES[id]) return DEV_PROFILES[id] as any;
   // jti revocation check — legacy tokens without jti skip DB check (compat)
   try {
     const payloadPart = token.split(".")[0];
