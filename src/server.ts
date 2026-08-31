@@ -50,6 +50,7 @@ function applySecurityHeaders(res: Response) {
   res.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin');
   res.headers.set('Permissions-Policy', 'camera=(), microphone=(), geolocation=()');
   if (res.headers.get('content-type')?.includes('text/html')) {
+    // CSP: keep unsafe-inline/unsafe-eval for Vite HMR + shiki (follow-up: migrate to nonce)
     res.headers.set('Content-Security-Policy', "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; connect-src 'self' https://*.supabase.co wss://*.supabase.co");
   }
   // HSTS only over https - set anyway, browsers ignore on http

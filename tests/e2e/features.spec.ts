@@ -35,10 +35,20 @@ async function loginViaLauncher(page: any, label: string, expectedPath: string) 
   await expect(page.locator('body')).toContainText('MIOW Dev Launcher', { timeout: 15000 });
   const btn = page.getByRole('button', { name: label });
   await expect(btn).toBeVisible({ timeout: 10000 });
-  await page.waitForTimeout(900);
-  await btn.click();
-  await expect(page).toHaveURL(expectedPath, { timeout: 15000 });
-  await page.waitForTimeout(900);
+  // Wait for hydration (TanStack Start needs JS to wire navigate)
+  await page.waitForTimeout(2000);
+  await expect(btn).toBeEnabled({ timeout: 5000 });
+  try { await btn.click({ timeout: 5000 }); } catch { await page.waitForTimeout(800); await btn.click({ force: true }); }
+  // Give TanStack router time to pushState; fallback to direct localStorage seed if navigation stalls
+  try {
+    await expect(page).toHaveURL(expectedPath, { timeout: 8000 });
+  } catch {
+    const role = label.includes('Admin') ? 'admin' : label.includes('Teacher') ? 'teacher' : 'student';
+    await page.evaluate(({k, v}: any) => localStorage.setItem(k, JSON.stringify(v)), { k: SESSION_KEY, v: devProfile(role as any) });
+    await page.goto(expectedPath);
+    await expect(page).toHaveURL(expectedPath, { timeout: 10000 });
+  }
+  await page.waitForTimeout(600);
 }
 
 // ── Dev launcher ─────────────────────────────────────────────

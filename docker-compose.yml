@@ -8,7 +8,7 @@ services:
       POSTGRES_PASSWORD: miow_dev_password
       POSTGRES_DB: miow
     ports:
-      - "5432:5432"
+      - "127.0.0.1:5432:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
       # Optional: auto-run migrations on first start (copy SQL files)
@@ -18,6 +18,26 @@ services:
       interval: 5s
       timeout: 2s
       retries: 10
+
+  # Optional: production app (uses same env as host .env)
+  # Build requires a Dockerfile. Until then, run locally with:
+  #   DATABASE_URL=postgres://miow:miow_dev_password@localhost:5432/miow bun run dev
+  # When you add a Dockerfile, uncomment below:
+  # app:
+  #   build: .
+  #   container_name: miow-app
+  #   restart: unless-stopped
+  #   ports:
+  #     - "127.0.0.1:3000:3000"
+  #   env_file: .env
+  #   environment:
+  #     DATABASE_URL: postgres://miow:miow_dev_password@postgres:5432/miow
+  #     STORAGE_PATH: /app/storage
+  #   volumes:
+  #     - ./storage:/app/storage
+  #   depends_on:
+  #     postgres:
+  #       condition: service_healthy
 
 volumes:
   pgdata:
