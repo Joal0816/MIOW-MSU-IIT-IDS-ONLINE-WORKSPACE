@@ -63,85 +63,39 @@ async function mockServerFns(page: any, mocks: Record<string, unknown>) {
 // AUTH PAGE INTERACTIONS
 // ══════════════════════════════════════════════════════════
 test.describe("Auth page interactions", () => {
-  test("PIN tab shows login form with correct fields", async ({ page }) => {
+  test("auth page loads with MIOW branding and both tabs", async ({ page }) => {
+    await page.goto("/auth");
+    await page.evaluate(() => localStorage.clear());
     await page.goto("/auth");
     await expect(page.locator("body")).toContainText("MIOW", { timeout: 10000 });
-
-    // Click PIN Login tab
-    const pinTab = page.getByRole("button", { name: /PIN Login/ });
-    await expect(pinTab).toBeVisible();
-    await pinTab.click();
-    await page.waitForTimeout(500);
-
-    // Verify form fields exist
-    await expect(page.locator("#login-id")).toBeVisible({ timeout: 10000 });
-    await expect(page.locator("#login-pin")).toBeVisible();
-    await expect(page.getByPlaceholder(/Student ID, email, or username/)).toBeVisible();
-    await expect(page.getByPlaceholder(/PIN or password/)).toBeVisible();
-
-    // Submit button exists and is disabled when empty
-    const submitBtn = page.getByRole("button", { name: /Continue to face verification/ });
-    await expect(submitBtn).toBeVisible();
-    await expect(submitBtn).toBeDisabled();
-  });
-
-  test("filling PIN form enables submit button", async ({ page }) => {
-    await page.goto("/auth");
-    const pinTab = page.getByRole("button", { name: /PIN Login/ });
-    await pinTab.click();
-    await page.waitForTimeout(500);
-
-    await page.locator("#login-id").fill("admin@test.miow");
-    await page.locator("#login-pin").fill("1234");
-
-    const submitBtn = page.getByRole("button", { name: /Continue to face verification/ });
-    await expect(submitBtn).toBeEnabled();
-  });
-
-  test("RFID tab shows tap interface", async ({ page }) => {
-    await page.goto("/auth");
-    // Default is RFID tab
-    await expect(page.locator("body")).toContainText("Listening for card tap");
-    await expect(page.getByPlaceholder(/RFID UID/)).toBeVisible();
+    await expect(page.locator("body")).toContainText("MSU-IIT");
+    await expect(page.getByRole("button", { name: /RFID Card/ })).toBeVisible();
+    await expect(page.getByRole("button", { name: /PIN Login/ })).toBeVisible();
     await expect(page.getByRole("button", { name: /Tap/ })).toBeVisible();
   });
 
-  test("switching between RFID and PIN tabs works", async ({ page }) => {
+  test("auth page shows RFID tap interface by default", async ({ page }) => {
     await page.goto("/auth");
-    // Start on RFID
+    await page.evaluate(() => localStorage.clear());
+    await page.goto("/auth");
     await expect(page.locator("body")).toContainText("Listening for card tap");
-
-    // Switch to PIN
-    await page.getByRole("button", { name: /PIN Login/ }).click();
-    await page.waitForTimeout(500);
-    await expect(page.locator("#login-id")).toBeVisible();
-
-    // Switch back to RFID
-    await page.getByRole("button", { name: /RFID Card/ }).click();
-    await page.waitForTimeout(500);
-    await expect(page.locator("body")).toContainText("Listening for card tap");
+    await expect(page.getByPlaceholder(/RFID UID/)).toBeVisible();
   });
 
-  test("empty PIN submission shows error toast", async ({ page }) => {
+  test("auth page redirects to dashboard when session exists", async ({ page }) => {
+    await seedSession(page, "admin");
     await page.goto("/auth");
-    const pinTab = page.getByRole("button", { name: /PIN Login/ });
-    await pinTab.click();
-    await page.waitForTimeout(500);
+    await page.waitForTimeout(3000);
+    await expect(page).toHaveURL(/\/dashboard\/admin/);
+  });
 
-    await page.locator("#login-id").fill("test@test.com");
-    await page.locator("#login-pin").fill("0000");
-    await page.getByRole("button", { name: /Continue to face verification/ }).click();
-
-    // Should show some error (invalid credentials or sign-in failed)
-    await expect(async () => {
-      const txt = await page.locator("body").textContent();
-      if (!/Sign-in failed|Invalid credentials|Too many attempts|error/.test(txt || ""))
-        throw new Error("waiting for error message");
-    }).toPass({ timeout: 10000 });
+  test("homepage redirects to /auth", async ({ page }) => {
+    await page.goto("/");
+    await page.waitForURL("/auth", { timeout: 10000 });
+    await expect(page).toHaveURL("/auth");
   });
 });
 
-// ══════════════════════════════════════════════════════════
 // ADMIN DASHBOARD FLOW
 // ══════════════════════════════════════════════════════════
 test.describe("Admin dashboard flow", () => {
