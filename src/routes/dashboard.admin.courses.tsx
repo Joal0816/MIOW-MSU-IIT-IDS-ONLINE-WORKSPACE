@@ -38,8 +38,9 @@ import {
 import { staffNav, AppShell, Badge, EmptyState, Modal, MotionCard, courseStyle, useProfile } from "@/components/lms";
 import { parseWorksheet } from "@/lib/worksheet-parser";
 import { openWorksheetChat } from "@/lib/worksheet-context";
-import { openGooglePicker } from "@/lib/google-docs";
+import { openGooglePicker, exportDocAsText } from "@/lib/google-docs";
 import { COURSE_LEVELS, collegeYearOf, educationLevelOf, levelLabel } from "@/lib/course-levels";
+import { CED_PROGRAMS, CED_DEPARTMENT_LABELS } from "@/lib/ced-programs";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/dashboard/admin/courses")({
@@ -793,12 +794,24 @@ function CoursesPage() {
               courseForm.grade_level === "16") && (
               <label className="block">
                 <span className="mb-1 block text-xs font-semibold text-muted-foreground">Program (College) *</span>
-                <input
+                <select
                   value={courseForm.program ?? ""}
                   onChange={(e) => setCourseForm({ ...courseForm, program: e.target.value })}
-                  placeholder="e.g., BSIT, BSED, BSBA"
                   className="h-11 w-full rounded-xl border border-input bg-background px-3 text-sm outline-none focus:ring-2 focus:ring-ring"
-                />
+                >
+                  <option value="">Select program</option>
+                  {(["SME", "PRE", "PE", "TTE"] as const).map((dept) => {
+                    const progs = CED_PROGRAMS.filter((p) => p.department === dept);
+                    if (!progs.length) return null;
+                    return (
+                      <optgroup key={dept} label={CED_DEPARTMENT_LABELS[dept]}>
+                        {progs.map((p) => (
+                          <option key={p.name} value={p.name}>{p.name}</option>
+                        ))}
+                      </optgroup>
+                    );
+                  })}
+                </select>
               </label>
             )}
             <div>
@@ -1135,15 +1148,28 @@ function CoursesPage() {
       {/* Task 26: Google Docs import stub */}
       <Modal open={docsImportOpen} onClose={() => setDocsImportOpen(false)} title="Import from Google Docs" wide>
         <p className="mb-3 text-xs text-muted-foreground">
-          Paste exported Google Doc markdown below — we&apos;ll run <code className="font-mono">parseWorksheet</code> and preview the detected items.
-          The picker (<code className="font-mono">openGooglePicker</code> / gapi) is a stub until OAuth is configured.
+          Select a Google Doc via the picker, or paste exported text below — we&apos;ll run <code className="font-mono">parseWorksheet</code> and preview the detected items.
         </p>
         <button
           type="button"
-          onClick={() => openGooglePicker(() => toast.info("Google Picker stub — wire gapi OAuth next"))}
+          onClick={() => openGooglePicker(async (docIds) => {
+            if (!docIds.length) return;
+            toast.info(`Fetching doc ${docIds[0]}…`);
+            try {
+              const text = await exportDocAsText(docIds[0]!);
+              if (text) {
+                setDocsMarkdown(text);
+                toast.success("Doc loaded — review the preview below.");
+              } else {
+                toast.error("Could not read the doc (check permissions or try pasting instead).");
+              }
+            } catch (e) {
+              toast.error(e instanceof Error ? e.message : "Export failed");
+            }
+          })}
           className="mb-3 flex h-9 items-center gap-1.5 rounded-lg border border-border px-3 text-xs font-semibold hover:bg-muted"
         >
-          <Upload className="h-3.5 w-3.5" /> Open Google Picker (stub)
+          <Upload className="h-3.5 w-3.5" /> Open Google Picker
         </button>
         <textarea
           value={docsMarkdown}

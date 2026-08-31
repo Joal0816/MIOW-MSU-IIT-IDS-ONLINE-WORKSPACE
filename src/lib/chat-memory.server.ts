@@ -2,9 +2,7 @@
 // Server-only chat memory helpers for ClassMate long-term recall (Task 22).
 // Table: public.chat_memories (id, profile_id, summary, last_n_messages, created_at, updated_at)
 // Access is service_role only (RLS enabled, no public policy).
-import { supabaseAdmin } from "@/integrations/supabase/client.server";
-
-const db: any = supabaseAdmin;
+import { db } from "@/integrations/db/client.server";
 
 export interface ChatMemory {
   id: string;
