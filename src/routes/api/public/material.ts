@@ -33,7 +33,7 @@ export const Route = createFileRoute("/api/public/material")({
         } catch {
           return new Response("Unauthorized", { status: 401 });
         }
-        const { supabaseAdmin } = await import("@/integrations/db/client");
+        const { supabaseAdmin } = await import("@/integrations/db/client.server");
         const { data, error } = await supabaseAdmin.storage.from("course-materials").download(p);
         if (error || !data) return new Response("Not found", { status: 404 });
         const ext = p.split(".").pop()!;

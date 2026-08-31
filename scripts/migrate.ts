@@ -19,6 +19,68 @@ async function main() {
       }
     }
 
+    // Local Postgres doesn't have Supabase's `auth` schema (auth.jwt(), auth.uid()).
+    // Create a dummy so that Supabase OAuth/RLS migrations don't fail.
+    await pool.query(`CREATE SCHEMA IF NOT EXISTS auth`);
+    await pool.query(`
+      CREATE OR REPLACE FUNCTION auth.jwt() RETURNS jsonb
+      LANGUAGE sql STABLE AS $$ SELECT '{}'::jsonb $$;
+    `);
+    await pool.query(`
+      CREATE OR REPLACE FUNCTION auth.uid() RETURNS uuid
+      LANGUAGE sql STABLE AS $$ SELECT NULL::uuid $$;
+    `);
+    await pool.query(`
+      CREATE OR REPLACE FUNCTION auth.role() RETURNS text
+      LANGUAGE sql STABLE AS $$ SELECT ''::text $$;
+    `);
+    // extensions schema for pgcrypto etc.
+    await pool.query(`CREATE SCHEMA IF NOT EXISTS extensions`);
+    // Ensure pgcrypto is available (used in later migrations)
+    try {
+      await pool.query(`CREATE EXTENSION IF NOT EXISTS pgcrypto WITH SCHEMA extensions`);
+    } catch {
+      // try without schema
+      try {
+        await pool.query(`CREATE EXTENSION IF NOT EXISTS pgcrypto`);
+      } catch {}
+    }
+    // storage schema for Supabase storage migrations (local uses filesystem, but migrations reference storage.objects)
+    await pool.query(`CREATE SCHEMA IF NOT EXISTS storage`);
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS storage.buckets (
+        id TEXT PRIMARY KEY,
+        name TEXT NOT NULL,
+        owner TEXT,
+        created_at TIMESTAMPTZ DEFAULT now(),
+        updated_at TIMESTAMPTZ DEFAULT now(),
+        public BOOLEAN DEFAULT false
+      );
+    `);
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS storage.objects (
+        bucket_id TEXT,
+        name TEXT,
+        owner TEXT,
+        created_at TIMESTAMPTZ DEFAULT now(),
+        updated_at TIMESTAMPTZ DEFAULT now(),
+        last_accessed_at TIMESTAMPTZ,
+        metadata JSONB,
+        path_tokens TEXT[]
+      );
+    `);
+    await pool.query(`
+      INSERT INTO storage.buckets (id, name, public)
+      VALUES ('avatars','avatars',false), ('course-materials','course-materials',false)
+      ON CONFLICT (id) DO NOTHING;
+    `);
+    await pool.query(`
+      CREATE OR REPLACE FUNCTION storage.foldername(name TEXT) RETURNS TEXT[]
+      LANGUAGE sql IMMUTABLE AS $$ SELECT string_to_array(name, '/') $$;
+    `);
+    // private schema is created in 20260822180649, but ensure early for storage policies that use it
+    await pool.query(`CREATE SCHEMA IF NOT EXISTS private`);
+
     // Ensure migrations tracking table
     await pool.query(`
       CREATE TABLE IF NOT EXISTS _migrations (

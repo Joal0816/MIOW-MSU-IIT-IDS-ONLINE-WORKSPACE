@@ -7,7 +7,7 @@
 import { createHmac, timingSafeEqual, randomUUID } from "node:crypto";
 import bcrypt from "bcryptjs";
 import { z } from "zod";
-import { db, supabaseAdmin } from "@/integrations/db/client";
+import { db, supabaseAdmin } from "@/integrations/db/client.server";
 import { getBucket } from "@/lib/rate-limit";
 
 // PostgREST codes that are safe to retry. PGRST303 ("JWT issued at future")
