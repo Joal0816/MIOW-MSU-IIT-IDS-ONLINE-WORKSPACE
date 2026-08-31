@@ -17,8 +17,8 @@ function getRedis(): any {
   if (!url) return null;
   if (redis) return redis;
   try {
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
-    const IORedis = require("ioredis");
+    // Dynamic require hidden from Vite scanner — ioredis is optional
+    const IORedis = (globalThis as any).require?.("ioredis") ?? (() => { throw new Error("not found"); })();
     redis = new IORedis(url, { maxRetriesPerRequest: 1, enableReadyCheck: false, lazyConnect: true });
     redis.on?.("error", (e: unknown) => {
       if (!redisWarned) { console.warn("[rate-limit] Redis error, falling back to in-memory:", e); redisWarned = true; }
