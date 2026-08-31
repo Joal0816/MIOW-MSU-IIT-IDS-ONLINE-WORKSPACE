@@ -25,7 +25,6 @@ export default defineConfig({
     timeout: 120000,
     cwd: 'C:/Users/kent/Documents/lmslatest',
     env: {
-      DATABASE_URL: 'postgres://miow:miow_dev_password@localhost:5432/miow',
       SESSION_SECRET: 'test-session-secret-32-chars-hex-1234567890ab',
       HARDWARE_API_KEY: 'test-hardware-key',
       AI_GATEWAY_KEY: 'test-ai-key',
