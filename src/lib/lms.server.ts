@@ -75,7 +75,7 @@ export function createSessionToken(profileId: string, jti: string = randomUUID()
 export function verifySessionToken(token: string): string {
   // Dev bypass: the launcher at / in DEV mode seeds tokens like "dev-bypass-token-admin".
   // These are unsigned — accept them only when Vite is in dev mode (never ships to prod).
-  if (token.startsWith("dev-bypass-token-") && (import.meta as any)?.env?.DEV) {
+  if (token.startsWith("dev-bypass-token-") && process.env.NODE_ENV !== "production") {
     const role = token.replace("dev-bypass-token-", "");
     const DEV_IDS: Record<string, string> = {
       admin: "dev-admin-0001",
