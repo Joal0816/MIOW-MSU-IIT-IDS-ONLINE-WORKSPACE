@@ -132,6 +132,11 @@ class QueryBuilder implements PromiseLike<{ data: unknown; error: unknown }> {
     return this;
   }
 
+  limit(n: number): this {
+    if (n === 1) this.limitOne = true;
+    return this;
+  }
+
   maybeSingle(): this {
     this.limitOne = true;
     this.expectSingle = false;
