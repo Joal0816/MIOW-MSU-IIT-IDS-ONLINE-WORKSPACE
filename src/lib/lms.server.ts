@@ -602,30 +602,37 @@ export async function findByRfid(uid: string) {
 }
 
 async function verifyPin(p: any, pin: string): Promise<boolean> {
-  // In-memory rate limit: 5 attempts per 15 min per profile (brute-force hardening)
-  const bucket = getBucket(`pin:${p.id ?? p.student_id ?? p.email ?? "unknown"}`);
-  if (!bucket.consume()) {
+  // Rate limit: 5 FAILED attempts per 15 min per profile.
+  // Check if already locked out first, but only consume on actual failure.
+  const key = `pin:${p.id ?? p.student_id ?? p.email ?? "unknown"}`;
+  const bucket = getBucket(key);
+  // Pre-check: if already exhausted, throw immediately
+  if (bucket.remaining === 0) {
     const err: any = new Error("Too many attempts");
     err.status = 429;
     throw err;
   }
+  let ok = false;
   if (typeof p.pin_hash === "string" && p.pin_hash) {
     try {
-      return await bcrypt.compare(pin, p.pin_hash);
+      ok = await bcrypt.compare(pin, p.pin_hash);
     } catch {
-      return false;
+      ok = false;
     }
   }
   // Legacy plaintext row not yet backfilled — compare, then opportunistically
   // upgrade to a bcrypt hash and clear the plaintext copy.
-  if (typeof p.pin === "string" && p.pin.length > 0 && p.pin === pin) {
+  if (!ok && typeof p.pin === "string" && p.pin.length > 0 && p.pin === pin) {
     await db
       .from("profiles")
       .update({ pin_hash: await bcrypt.hash(pin, 10), pin: null })
       .eq("id", p.id);
-    return true;
+    ok = true;
   }
-  return false;
+  // Only consume a bucket slot on FAILURE (brute-force protection).
+  // Successful logins never exhaust the bucket.
+  if (!ok) bucket.consume();
+  return ok;
 }
 
 /* ---------- Unified PIN/password sign-in (all roles) ---------- */
