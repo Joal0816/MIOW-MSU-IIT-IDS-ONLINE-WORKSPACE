@@ -1,4 +1,4 @@
-// Server-only AI Gateway provider for the AI SDK (chat completions path).
+// Server-only AI provider for chat completions (OpenCode Go).
 // Create per-request — the fetch wrapper keeps the run id in a per-request closure.
 import { createOpenAICompatible } from "@ai-sdk/openai-compatible";
 
@@ -45,19 +45,18 @@ export function createAiGatewayRunIdFetch(initialRunId?: string) {
 }
 
 export function createAiGatewayProvider(
-  aiGatewayKey: string,
+  apiKey: string,
   initialRunId?: string,
   options?: { structuredOutputs?: boolean },
 ) {
   const runIdFetch = createAiGatewayRunIdFetch(initialRunId);
 
   const provider = createOpenAICompatible({
-    name: "ai-gateway",
-    baseURL: "https://ai.gateway.example.com/v1",
+    name: "opencode-go",
+    baseURL: "https://opencode.ai/zen/go/v1",
     supportsStructuredOutputs: options?.structuredOutputs ?? false,
     headers: {
-      "AI-Gateway-Key": aiGatewayKey,
-      "X-AI-Gateway-SDK": "vercel-ai-sdk",
+      Authorization: `Bearer ${apiKey}`,
     },
     fetch: runIdFetch.fetch,
   });
@@ -99,7 +98,7 @@ export function getAiGatewayResponseHeaders(
   });
 
   if (exposedHeaders.size > 0) {
-    headers.set("Access-Control-Expose-Headers", Array.from(exposedHeaders).join(", "));
+    headers.set("Access-Control-Expose-Headers", Array.from(exposedHeaders).join(","));
   }
 
   return headers;

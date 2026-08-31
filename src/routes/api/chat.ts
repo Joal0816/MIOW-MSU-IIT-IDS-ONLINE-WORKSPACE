@@ -42,9 +42,9 @@ export const Route = createFileRoute("/api/chat")({
           return new Response("Sign in to chat", { status: 401 });
         }
 
-        const key = process.env["AI_GATEWAY_KEY"] ?? process.env["OPENAI_API_KEY"];
+        const key = process.env["OPENCODE_API_KEY"] ?? process.env["AI_GATEWAY_KEY"];
         if (!key) {
-          return new Response("Missing AI_GATEWAY_KEY", { status: 500 });
+          return new Response("Missing OPENCODE_API_KEY", { status: 500 });
         }
 
         // Server-only modules are loaded inside the handler so this route
@@ -66,7 +66,7 @@ export const Route = createFileRoute("/api/chat")({
           key,
           gateway.getAiGatewayRunId(request),
         );
-        const model = provider("google/gemini-3.7-flash");
+        const model = provider("mimo-v2.5");
 
         const result = streamText({
           model,
