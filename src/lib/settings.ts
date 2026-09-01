@@ -268,22 +268,8 @@ export interface AuditEntry {
 }
 
 function seedAudit(): AuditEntry[] {
-  const now = Date.now();
-  const rows: Array<[string, string, string, string, number]> = [
-    ["Maria Santos", "teacher", "Grade modified", "Filipino 10 · Q2 · Performance Task score updated", 2 * 3600e3],
-    ["Admin Office", "admin", "RFID re-binding", "New card UID linked to a Grade 10 student", 26 * 3600e3],
-    ["Admin Office", "admin", "Announcement broadcast", '"Early dismissal on Friday" posted to All', 30 * 3600e3],
-    ["Jose Ramirez", "teacher", "Grade modified", "Math 9 · Q2 · bulk update — 34 records", 50 * 3600e3],
-    ["System", "system", "Backup completed", "Nightly PostgreSQL snapshot finished", 76 * 3600e3],
-  ];
-  return rows.map(([actor, role, action, detail, agoMs]) => ({
-    id: crypto.randomUUID(),
-    actor,
-    role,
-    action,
-    detail,
-    at: new Date(now - agoMs).toISOString(),
-  }));
+  // Production: no demo audit entries — return empty.
+  return [];
 }
 
 export function listAudit(): AuditEntry[] {
