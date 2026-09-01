@@ -58,6 +58,7 @@ async function requestToken(): Promise<string> {
     const client = (window as any).google.accounts.oauth2.initTokenClient({
       client_id: GIS_CLIENT_ID,
       scope: PICKER_SCOPE,
+      prompt: "consent",
       callback: (resp: any) => {
         if (resp.error) return reject(new Error(resp.error));
         accessToken = resp.access_token;
@@ -115,6 +116,9 @@ export async function exportDocAsText(docId: string): Promise<string> {
 
   const token = await requestToken();
   await ensureGapi();
+
+  // Set the token on gapi.client so REST calls use it
+  (window as any).gapi.client.setToken({ access_token: token });
 
   // Fetch the doc structure via REST (gapi.client wraps fetch)
   const resp = await (window as any).gapi.client.docs.documents.get({ documentId: docId });
