@@ -11,7 +11,9 @@ async function main() {
     const { rows } = await pool.query("SELECT count(*)::int AS c FROM public.profiles");
     console.log(`[seed] profiles count: ${rows[0].c}`);
     if (rows[0].c === 0) {
-      console.log("[seed] no profiles — migrations should have seeded default users. Check supabase/migrations/");
+      console.log(
+        "[seed] no profiles — migrations should have seeded default users. Check supabase/migrations/",
+      );
     } else {
       console.log("[seed] already seeded — nothing to do.");
     }
