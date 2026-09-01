@@ -52,7 +52,7 @@ function applySecurityHeaders(res: Response) {
   res.headers.set('Permissions-Policy', 'camera=(), microphone=(), geolocation=()');
   if (res.headers.get('content-type')?.includes('text/html')) {
     // CSP: keep unsafe-inline/unsafe-eval for Vite HMR + shiki (follow-up: migrate to nonce)
-    res.headers.set('Content-Security-Policy', "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://accounts.google.com https://apis.google.com https://www.gstatic.com; frame-src https://content.googleapis.com https://accounts.google.com https://docs.google.com; worker-src 'self' blob:; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob: https:; connect-src 'self' https://*.supabase.co wss://*.supabase.co https://www.googleapis.com https://accounts.google.com");
+    res.headers.set('Content-Security-Policy', "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://accounts.google.com https://apis.google.com https://www.gstatic.com; frame-src https://content.googleapis.com https://content-docs.googleapis.com https://accounts.google.com https://docs.google.com; worker-src 'self' blob:; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob: https:; connect-src 'self' https://*.supabase.co wss://*.supabase.co https://www.googleapis.com https://accounts.google.com");
   }
   // HSTS only over https - set anyway, browsers ignore on http
   res.headers.set('Strict-Transport-Security', 'max-age=63072000; includeSubDomains; preload');
