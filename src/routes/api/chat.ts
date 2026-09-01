@@ -1,5 +1,5 @@
 // ClassMate Assistant streaming chat endpoint.
-// Calls OpenCode Go directly (bypasses AI SDK streaming which breaks on reasoning models).
+// Calls OpenCode Go directly with mimo-v2.5 (bypasses AI SDK streaming for reasoning models).
 import { createFileRoute } from "@tanstack/react-router";
 
 type ChatRequestBody = {
@@ -20,7 +20,6 @@ function parseWorksheetContext(raw: unknown): { course?: string; title?: string 
   return ctx;
 }
 
-/** Convert AI SDK UIMessage[] to OpenAI chat message format. */
 function toOpenAIMessages(messages: any[], systemPrompt: string) {
   const out: Array<{ role: string; content: string }> = [{ role: "system", content: systemPrompt }];
   for (const m of messages) {
@@ -72,10 +71,8 @@ export const Route = createFileRoute("/api/chat")({
         }
 
         const ctx = parseWorksheetContext(body.worksheetContext);
-        const systemPrompt = systemPromptFor(profile, ctx);
-        const oaMessages = toOpenAIMessages(messages, systemPrompt);
+        const oaMessages = toOpenAIMessages(messages, systemPromptFor(profile, ctx));
 
-        // Call OpenCode Go directly
         const apiRes = await fetch("https://opencode.ai/zen/go/v1/chat/completions", {
           method: "POST",
           headers: {
@@ -96,21 +93,20 @@ export const Route = createFileRoute("/api/chat")({
           return new Response(`AI service error: ${apiRes.status}`, { status: 502 });
         }
 
-        // Transform OpenCode Go SSE → AI SDK DataStream v1 format
-        // Client expects: data: {"type":"text-start","id":"txt-0"}\n\n
-        //                 data: {"type":"text-delta","id":"txt-0","delta":"chunk"}\n\n
-        //                 data: {"type":"text-end","id":"txt-0"}\n\n
-        //                 data: [DONE]\n\n
+        // Buffer-based SSE parser — handles TCP packet splits correctly
         const encoder = new TextEncoder();
         const decoder = new TextDecoder();
         let textStarted = false;
         let textId = 0;
+        let buffer = "";
 
         const transform = new TransformStream({
           transform(chunk, controller) {
-            const raw = decoder.decode(chunk, { stream: true });
-            const lines = raw.split("\n");
-            for (const line of lines) {
+            buffer += decoder.decode(chunk, { stream: true });
+            let nlIdx;
+            while ((nlIdx = buffer.indexOf("\n")) !== -1) {
+              const line = buffer.slice(0, nlIdx).trim();
+              buffer = buffer.slice(nlIdx + 1);
               if (!line.startsWith("data: ")) continue;
               const data = line.slice(6).trim();
               if (data === "[DONE]") {
@@ -124,28 +120,19 @@ export const Route = createFileRoute("/api/chat")({
                 const parsed = JSON.parse(data);
                 const delta = parsed.choices?.[0]?.delta;
                 if (!delta) continue;
-
-                // Skip null/empty content (reasoning model reasoning phase)
                 if (delta.content === null || delta.content === undefined) continue;
                 if (delta.content === "") continue;
-
-                // Start text part on first content chunk
                 if (!textStarted) {
                   controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: "text-start", id: `txt-${textId}` })}\n\n`));
                   textStarted = true;
                 }
-
-                // Send text delta
                 controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: "text-delta", id: `txt-${textId}`, delta: delta.content })}\n\n`));
-              } catch {
-                // skip unparseable chunks
-              }
+              } catch {}
             }
           },
         });
 
         const body_ = apiRes.body!.pipeThrough(transform);
-
         return new Response(body_, {
           headers: {
             "Content-Type": "text/event-stream",
