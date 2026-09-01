@@ -5,7 +5,7 @@
 const GIS_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID ?? "";
 const GAPI_KEY = import.meta.env.VITE_GOOGLE_API_KEY ?? "";
 const GAPI_DISCOVERY = "https://www.googleapis.com/discovery/v1/apis/docs/v1/rest";
-const PICKER_SCOPE = "https://www.googleapis.com/auth/documents.readonly";
+const PICKER_SCOPE = "https://www.googleapis.com/auth/documents.readonly https://www.googleapis.com/auth/drive.readonly";
 
 // ── Lazy-loaded singletons ──────────────────────────────────────────
 

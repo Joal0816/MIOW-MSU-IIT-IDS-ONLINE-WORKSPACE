@@ -10,6 +10,8 @@ export interface WorksheetAssistContext {
   course: string;
   /** Worksheet title typed into the form (may be empty). */
   title: string;
+  /** Uploaded file content — AI generates questions based on this material. */
+  sourceMaterial?: string;
 }
 
 export const WORKSHEET_CHAT_EVENT = "ids:open-worksheet-chat";
