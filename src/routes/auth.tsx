@@ -69,8 +69,10 @@ function AuthPage() {
   });
 
   useEffect(() => {
+    const existing = loadSession();
+    if (existing) navigate({ to: dashboardPathFor(existing.role), replace: true });
     return () => timers.current.forEach(clearTimeout);
-  }, []);
+  }, [navigate]);
 
   const startVerify = (p: Profile) => {
     setVerifying(p);
