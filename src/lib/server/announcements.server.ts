@@ -14,7 +14,9 @@ export async function listAnnouncements() {
   );
 }
 
-export async function createAnnouncement(input: z.infer<ReturnType<typeof getAnnouncementInputSchema>>) {
+export async function createAnnouncement(
+  input: z.infer<ReturnType<typeof getAnnouncementInputSchema>>,
+) {
   await unwrap(db.from("announcements").insert(withoutToken(input)));
 }
 

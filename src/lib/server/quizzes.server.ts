@@ -4,6 +4,7 @@ import { z } from "zod";
 import { db } from "@/integrations/db/client.server";
 import { unwrap, withoutToken } from "@/lib/server/utils.server";
 import { requireSession, requireStaff } from "@/lib/server/auth.server";
+import { schemas } from "@/lib/server/schemas.server";
 
 export async function listQuizzes() {
   return unwrap<any[]>(db.from("quizzes").select("*").is("deleted_at", null));
@@ -458,8 +459,8 @@ export async function resetQuizAttempts(quiz_id: string, student_id: string, tok
 }
 
 export async function createQuizWithQuestions(
-  quiz: { course_id: string; title: string; duration_minutes?: number; allow_retake?: boolean; max_attempts?: number; retake_score_policy?: string; attachments?: unknown[] },
-  questions: Array<{ question: string; options: string[]; correct_answer: string }>,
+  quiz: z.infer<typeof schemas.quizBundle>["quiz"],
+  questions: z.infer<typeof schemas.quizBundle>["questions"],
 ) {
   const created = await unwrap<any>(db.from("quizzes").insert(quiz).select().single());
   await unwrap(
@@ -502,13 +503,19 @@ export async function deleteQuiz(tokenStr: string, id: string, mode: "soft" | "h
   await unwrap(db.from("quiz_questions").delete().eq("quiz_id", id));
   await unwrap(db.from("quizzes").delete().eq("id", id));
   // Best-effort removal of binary objects
-  const attachments = Array.isArray(row?.attachments) ? (row.attachments as Array<{ path?: string }>) : [];
-  const paths = attachments.map((a) => a.path).filter((p): p is string => typeof p === "string" && p.length > 0);
+  const attachments = Array.isArray(row?.attachments)
+    ? (row.attachments as Array<{ path?: string }>)
+    : [];
+  const paths = attachments
+    .map((a) => a.path)
+    .filter((p): p is string => typeof p === "string" && p.length > 0);
   if (paths.length) {
     try {
       const { supabaseAdmin } = await import("@/integrations/db/client.server");
       await supabaseAdmin.storage.from("course-materials").remove(paths);
-    } catch { /* best-effort */ }
+    } catch {
+      /* best-effort */
+    }
   }
   return { mode };
 }

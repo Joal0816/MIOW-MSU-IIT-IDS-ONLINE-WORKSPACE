@@ -118,7 +118,10 @@ test.describe("Admin dashboard flow", () => {
   test("admin can navigate to Students page", async ({ page }) => {
     await page.goto("/dashboard/admin");
     await page.waitForTimeout(1500);
-    await page.getByRole("link", { name: /Students/ }).first().click();
+    await page
+      .getByRole("link", { name: /Students/ })
+      .first()
+      .click();
     await page.waitForURL(/\/dashboard\/admin\/students/, { timeout: 10000 });
     await expect(page.locator("body")).toContainText(/Students|Manage/);
   });
@@ -126,7 +129,10 @@ test.describe("Admin dashboard flow", () => {
   test("admin can navigate to Teachers page", async ({ page }) => {
     await page.goto("/dashboard/admin");
     await page.waitForTimeout(1500);
-    await page.getByRole("link", { name: /Teachers/ }).first().click();
+    await page
+      .getByRole("link", { name: /Teachers/ })
+      .first()
+      .click();
     await page.waitForURL(/\/dashboard\/admin\/teachers/, { timeout: 10000 });
     await expect(page.locator("body")).toContainText(/Teachers|Faculty/);
   });
@@ -134,7 +140,10 @@ test.describe("Admin dashboard flow", () => {
   test("admin can navigate to Courses page", async ({ page }) => {
     await page.goto("/dashboard/admin");
     await page.waitForTimeout(1500);
-    await page.getByRole("link", { name: /Courses/ }).first().click();
+    await page
+      .getByRole("link", { name: /Courses/ })
+      .first()
+      .click();
     await page.waitForURL(/\/dashboard\/admin\/courses/, { timeout: 10000 });
     await expect(page.locator("body")).toContainText("Courses");
   });
@@ -142,7 +151,10 @@ test.describe("Admin dashboard flow", () => {
   test("admin can navigate to Announcements page", async ({ page }) => {
     await page.goto("/dashboard/admin");
     await page.waitForTimeout(1500);
-    await page.getByRole("link", { name: /Announcements/ }).first().click();
+    await page
+      .getByRole("link", { name: /Announcements/ })
+      .first()
+      .click();
     await page.waitForURL(/\/dashboard\/admin\/announcements/, { timeout: 10000 });
     await expect(page.locator("body")).toContainText("Announcements");
   });
@@ -150,7 +162,10 @@ test.describe("Admin dashboard flow", () => {
   test("admin can navigate to Settings page", async ({ page }) => {
     await page.goto("/dashboard/admin");
     await page.waitForTimeout(1500);
-    await page.getByRole("link", { name: /Settings/ }).first().click();
+    await page
+      .getByRole("link", { name: /Settings/ })
+      .first()
+      .click();
     await page.waitForURL(/\/dashboard\/admin\/settings/, { timeout: 10000 });
     await expect(page.locator("body")).toContainText("Settings");
   });
@@ -181,7 +196,9 @@ test.describe("Admin dashboard flow", () => {
     if (await assignBtn.isVisible()) {
       await assignBtn.click();
       await page.waitForTimeout(500);
-      await expect(page.locator("body")).toContainText(/Create.*Assignment|Worksheet title|Post assignment/);
+      await expect(page.locator("body")).toContainText(
+        /Create.*Assignment|Worksheet title|Post assignment/,
+      );
     }
   });
 
@@ -192,7 +209,9 @@ test.describe("Admin dashboard flow", () => {
     if (await quizBtn.isVisible()) {
       await quizBtn.click();
       await page.waitForTimeout(500);
-      await expect(page.locator("body")).toContainText(/Create.*worksheet|Select course|Paste a ClassMate/);
+      await expect(page.locator("body")).toContainText(
+        /Create.*worksheet|Select course|Paste a ClassMate/,
+      );
     }
   });
 
@@ -203,7 +222,9 @@ test.describe("Admin dashboard flow", () => {
     if (await importBtn.isVisible()) {
       await importBtn.click();
       await page.waitForTimeout(500);
-      await expect(page.locator("body")).toContainText(/Import from Google Docs|Open Google Picker/);
+      await expect(page.locator("body")).toContainText(
+        /Import from Google Docs|Open Google Picker/,
+      );
     }
   });
 });
@@ -232,7 +253,10 @@ test.describe("Teacher dashboard flow", () => {
   test("teacher can navigate to Students Info", async ({ page }) => {
     await page.goto("/dashboard/teacher");
     await page.waitForTimeout(1500);
-    await page.getByRole("link", { name: /Students/ }).first().click();
+    await page
+      .getByRole("link", { name: /Students/ })
+      .first()
+      .click();
     await page.waitForURL(/\/dashboard\/teacher\/students/, { timeout: 10000 });
     await expect(page.locator("body")).toContainText(/Students|Students Info/i);
   });
@@ -240,7 +264,10 @@ test.describe("Teacher dashboard flow", () => {
   test("teacher can navigate to Settings", async ({ page }) => {
     await page.goto("/dashboard/teacher");
     await page.waitForTimeout(1500);
-    await page.getByRole("link", { name: /Settings/ }).first().click();
+    await page
+      .getByRole("link", { name: /Settings/ })
+      .first()
+      .click();
     await page.waitForURL(/\/dashboard\/teacher\/settings/, { timeout: 10000 });
     await expect(page.locator("body")).toContainText("Settings");
   });
@@ -269,7 +296,10 @@ test.describe("Student dashboard flow", () => {
   test("student can navigate to Activities page", async ({ page }) => {
     await page.goto("/dashboard/student");
     await page.waitForTimeout(1500);
-    await page.getByRole("link", { name: /Activities/ }).first().click();
+    await page
+      .getByRole("link", { name: /Activities/ })
+      .first()
+      .click();
     await page.waitForURL(/\/dashboard\/student\/assignments/, { timeout: 10000 });
     await expect(page.locator("body")).toContainText(/Activities|Assignments/i);
   });
@@ -277,7 +307,10 @@ test.describe("Student dashboard flow", () => {
   test("student can navigate to Worksheets page", async ({ page }) => {
     await page.goto("/dashboard/student");
     await page.waitForTimeout(1500);
-    await page.getByRole("link", { name: /Worksheets/ }).first().click();
+    await page
+      .getByRole("link", { name: /Worksheets/ })
+      .first()
+      .click();
     await page.waitForURL(/\/dashboard\/student\/quizzes/, { timeout: 10000 });
     await expect(page.locator("body")).toContainText(/Worksheets|Quizzes/i);
   });
@@ -285,7 +318,10 @@ test.describe("Student dashboard flow", () => {
   test("student can navigate to Grades page", async ({ page }) => {
     await page.goto("/dashboard/student");
     await page.waitForTimeout(1500);
-    await page.getByRole("link", { name: /Grades/ }).first().click();
+    await page
+      .getByRole("link", { name: /Grades/ })
+      .first()
+      .click();
     await page.waitForURL(/\/dashboard\/student\/grades/, { timeout: 10000 });
     await expect(page.locator("body")).toContainText(/Grades|Grade/i);
   });
@@ -293,7 +329,10 @@ test.describe("Student dashboard flow", () => {
   test("student can navigate to Attendance page", async ({ page }) => {
     await page.goto("/dashboard/student");
     await page.waitForTimeout(1500);
-    await page.getByRole("link", { name: /Attendance/ }).first().click();
+    await page
+      .getByRole("link", { name: /Attendance/ })
+      .first()
+      .click();
     await page.waitForURL(/\/dashboard\/student\/attendance/, { timeout: 10000 });
     await expect(page.locator("body")).toContainText(/Attendance/i);
   });
@@ -301,7 +340,10 @@ test.describe("Student dashboard flow", () => {
   test("student can navigate to Settings page", async ({ page }) => {
     await page.goto("/dashboard/student");
     await page.waitForTimeout(1500);
-    await page.getByRole("link", { name: /Settings/ }).first().click();
+    await page
+      .getByRole("link", { name: /Settings/ })
+      .first()
+      .click();
     await page.waitForURL(/\/dashboard\/student\/settings/, { timeout: 10000 });
     await expect(page.locator("body")).toContainText("Settings");
   });
@@ -330,7 +372,8 @@ test.describe("Cross-role access guards", () => {
 // ══════════════════════════════════════════════════════════
 // REAL PIN LOGIN (requires DATABASE_URL)
 // ══════════════════════════════════════════════════════════
-const describeRealDB = process.env.PLAYWRIGHT_REAL_DB || process.env.DATABASE_URL ? test.describe : test.describe.skip;
+const describeRealDB =
+  process.env.PLAYWRIGHT_REAL_DB || process.env.DATABASE_URL ? test.describe : test.describe.skip;
 
 describeRealDB("Real PIN login", () => {
   test.setTimeout(60000);
@@ -392,7 +435,9 @@ describeRealDB("Real PIN login", () => {
         throw new Error("waiting for face verification");
     }).toPass({ timeout: 15000 });
     await page.waitForURL(/\/dashboard\/student/, { timeout: 20000 });
-    await expect(page.locator("body")).toContainText(/Student Dashboard|Welcome/i, { timeout: 15000 });
+    await expect(page.locator("body")).toContainText(/Student Dashboard|Welcome/i, {
+      timeout: 15000,
+    });
   });
 
   test("student can login via student_id", async ({ page }) => {

@@ -30,7 +30,12 @@ import {
   useProfile,
   useRfidScanner,
 } from "@/components/lms";
-import { findProfileByCredential, updateProfile, updateSessionProfile, uploadAvatar } from "@/lib/lms";
+import {
+  findProfileByCredential,
+  updateProfile,
+  updateSessionProfile,
+  uploadAvatar,
+} from "@/lib/lms";
 import {
   applyFontSize,
   applyHighContrast,
@@ -51,9 +56,16 @@ export const Route = createFileRoute("/dashboard/student/settings")({
   head: () => ({
     meta: [
       { title: "Student Settings | MIOW - MSU-IIT IDS Online Workspace" },
-      { name: "description", content: "Manage your profile, RFID card, face verification, notifications, and accessibility preferences." },
+      {
+        name: "description",
+        content:
+          "Manage your profile, RFID card, face verification, notifications, and accessibility preferences.",
+      },
       { property: "og:title", content: "Student Settings | MIOW - MSU-IIT IDS Online Workspace" },
-      { property: "og:description", content: "Manage your profile, hardware, notifications, and accessibility preferences." },
+      {
+        property: "og:description",
+        content: "Manage your profile, hardware, notifications, and accessibility preferences.",
+      },
     ],
   }),
   component: StudentSettings,
@@ -71,7 +83,9 @@ const TABS: Array<{ value: Tab; label: string; icon: React.ReactNode }> = [
 function Field({ label, ...props }: { label: string } & InputHTMLAttributes<HTMLInputElement>) {
   return (
     <label className="block">
-      <span className="mb-1 block text-xs font-semibold uppercase tracking-wide text-muted-foreground">{label}</span>
+      <span className="mb-1 block text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+        {label}
+      </span>
       <input
         {...props}
         className="w-full rounded-xl border border-input bg-background/70 px-3 py-2 text-sm outline-none backdrop-blur-sm transition-shadow focus:ring-2 focus:ring-ring"
@@ -282,7 +296,10 @@ function StudentSettings() {
       setCapturing(false);
       setFaceOpen(false);
       persist(
-        { ...settings, faceStatus: `Active — Re-enrolled ${new Date().toLocaleDateString("en-PH")}` },
+        {
+          ...settings,
+          faceStatus: `Active — Re-enrolled ${new Date().toLocaleDateString("en-PH")}`,
+        },
         "Facial profile updated",
       );
       logAudit("Face re-enrollment", `${profile.full_name} retook their face snapshot`);
@@ -308,7 +325,9 @@ function StudentSettings() {
       }
       await updateProfile(profile.id, { pin: newPin });
       // Rotate the session token to the freshly issued one.
-      updateSessionProfile({ session_token: verified.session_token ?? profile.session_token ?? "" });
+      updateSessionProfile({
+        session_token: verified.session_token ?? profile.session_token ?? "",
+      });
       setOldPin("");
       setNewPin("");
       setConfirmPin("");
@@ -391,7 +410,9 @@ function StudentSettings() {
                         // Clear the stored photo too, and sync every surface.
                         updateSessionProfile({ avatar_url: null });
                         void updateProfile(profile.id, { avatar_url: null })
-                          .then(() => queryClient.invalidateQueries({ queryKey: ["demo-profiles"] }))
+                          .then(() =>
+                            queryClient.invalidateQueries({ queryKey: ["demo-profiles"] }),
+                          )
                           .catch(() => toast.error("Could not remove the stored photo"));
                       }}
                       className="flex items-center gap-1.5 rounded-xl border border-border bg-card px-3 py-2 text-xs font-semibold text-rose-600 transition-colors hover:bg-rose-50 dark:hover:bg-rose-500/10"
@@ -399,7 +420,9 @@ function StudentSettings() {
                       <X className="h-3.5 w-3.5" /> Remove
                     </button>
                   )}
-                  <span className="self-center text-xs text-muted-foreground">JPG/PNG/WebP/GIF, under 2 MB</span>
+                  <span className="self-center text-xs text-muted-foreground">
+                    JPG/PNG/WebP/GIF, under 2 MB
+                  </span>
                 </div>
               </div>
 
@@ -410,8 +433,18 @@ function StudentSettings() {
                 }}
               >
                 <div className="grid gap-4 sm:grid-cols-2">
-                  <Field label="Full name" value={name} onChange={(e) => setName(e.target.value)} maxLength={200} />
-                  <Field label="Student ID" value={profile.student_id ?? "—"} disabled aria-readonly />
+                  <Field
+                    label="Full name"
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    maxLength={200}
+                  />
+                  <Field
+                    label="Student ID"
+                    value={profile.student_id ?? "—"}
+                    disabled
+                    aria-readonly
+                  />
                   <Field
                     label="Email address"
                     type="email"
@@ -463,7 +496,9 @@ function StudentSettings() {
                       Tap a new card on the kiosk reader to re-link it to your account.
                     </p>
                   </div>
-                  <Badge tone={listening ? "green" : "slate"}>{listening ? "Listening…" : "Idle"}</Badge>
+                  <Badge tone={listening ? "green" : "slate"}>
+                    {listening ? "Listening…" : "Idle"}
+                  </Badge>
                 </div>
                 <div className="mt-4 flex flex-wrap gap-2">
                   <button
@@ -495,7 +530,8 @@ function StudentSettings() {
                 </div>
                 {listening && (
                   <p className="mt-3 animate-pulse text-xs text-muted-foreground">
-                    Waiting for card… type the digits on any keyboard-emulating reader and press Enter.
+                    Waiting for card… type the digits on any keyboard-emulating reader and press
+                    Enter.
                   </p>
                 )}
               </Card>
@@ -504,7 +540,9 @@ function StudentSettings() {
                 <div className="flex items-start justify-between gap-3">
                   <div>
                     <h2 className="font-display text-lg font-bold">Facial Recognition</h2>
-                    <p className="text-xs text-muted-foreground">Biometric profile used at the sign-in kiosk.</p>
+                    <p className="text-xs text-muted-foreground">
+                      Biometric profile used at the sign-in kiosk.
+                    </p>
                   </div>
                   <Badge tone="green">
                     <ScanFace className="h-3 w-3" /> {settings.faceStatus}
@@ -521,7 +559,8 @@ function StudentSettings() {
               <Card className="p-6">
                 <h2 className="font-display text-lg font-bold">Reset Account PIN</h2>
                 <p className="mb-4 text-xs text-muted-foreground">
-                  Your current PIN is verified first; the new PIN is stored as a bcrypt hash and your session token is rotated.
+                  Your current PIN is verified first; the new PIN is stored as a bcrypt hash and
+                  your session token is rotated.
                 </p>
                 <form
                   onSubmit={(e) => {
@@ -530,9 +569,33 @@ function StudentSettings() {
                   }}
                 >
                   <div className="grid gap-4 sm:grid-cols-3">
-                    <Field label="Current PIN" type="password" inputMode="numeric" autoComplete="current-password" value={oldPin} onChange={(e) => setOldPin(e.target.value)} maxLength={8} />
-                    <Field label="New PIN" type="password" inputMode="numeric" autoComplete="new-password" value={newPin} onChange={(e) => setNewPin(e.target.value)} maxLength={8} />
-                    <Field label="Confirm new PIN" type="password" inputMode="numeric" autoComplete="new-password" value={confirmPin} onChange={(e) => setConfirmPin(e.target.value)} maxLength={8} />
+                    <Field
+                      label="Current PIN"
+                      type="password"
+                      inputMode="numeric"
+                      autoComplete="current-password"
+                      value={oldPin}
+                      onChange={(e) => setOldPin(e.target.value)}
+                      maxLength={8}
+                    />
+                    <Field
+                      label="New PIN"
+                      type="password"
+                      inputMode="numeric"
+                      autoComplete="new-password"
+                      value={newPin}
+                      onChange={(e) => setNewPin(e.target.value)}
+                      maxLength={8}
+                    />
+                    <Field
+                      label="Confirm new PIN"
+                      type="password"
+                      inputMode="numeric"
+                      autoComplete="new-password"
+                      value={confirmPin}
+                      onChange={(e) => setConfirmPin(e.target.value)}
+                      maxLength={8}
+                    />
                   </div>
                   <div className="mt-4 flex justify-end">
                     <button
@@ -552,37 +615,49 @@ function StudentSettings() {
           {tab === "notifications" && (
             <Card className="p-6">
               <h2 className="font-display text-lg font-bold">Notifications</h2>
-              <p className="mb-4 text-xs text-muted-foreground">Choose which alerts you receive and where.</p>
+              <p className="mb-4 text-xs text-muted-foreground">
+                Choose which alerts you receive and where.
+              </p>
               <div className="space-y-2">
                 <Toggle
                   label="Deadline reminder — 24 hours"
                   description="Get alerted a day before an assignment is due"
                   checked={settings.notif.deadline24h}
-                  onChange={(v) => persist({ ...settings, notif: { ...settings.notif, deadline24h: v } })}
+                  onChange={(v) =>
+                    persist({ ...settings, notif: { ...settings.notif, deadline24h: v } })
+                  }
                 />
                 <Toggle
                   label="Deadline reminder — 1 hour"
                   description="Last-call alert before submission closes"
                   checked={settings.notif.deadline1h}
-                  onChange={(v) => persist({ ...settings, notif: { ...settings.notif, deadline1h: v } })}
+                  onChange={(v) =>
+                    persist({ ...settings, notif: { ...settings.notif, deadline1h: v } })
+                  }
                 />
                 <Toggle
                   label="Grade released"
                   description="Notify me when a teacher publishes a new grade"
                   checked={settings.notif.gradeReleased}
-                  onChange={(v) => persist({ ...settings, notif: { ...settings.notif, gradeReleased: v } })}
+                  onChange={(v) =>
+                    persist({ ...settings, notif: { ...settings.notif, gradeReleased: v } })
+                  }
                 />
                 <Toggle
                   label="Attendance confirmations"
                   description="Confirm each gate tap-in / tap-out"
                   checked={settings.notif.attendanceConfirm}
-                  onChange={(v) => persist({ ...settings, notif: { ...settings.notif, attendanceConfirm: v } })}
+                  onChange={(v) =>
+                    persist({ ...settings, notif: { ...settings.notif, attendanceConfirm: v } })
+                  }
                 />
                 <Toggle
                   label="Urgent announcements"
                   description="School-wide emergency broadcasts"
                   checked={settings.notif.urgentBroadcast}
-                  onChange={(v) => persist({ ...settings, notif: { ...settings.notif, urgentBroadcast: v } })}
+                  onChange={(v) =>
+                    persist({ ...settings, notif: { ...settings.notif, urgentBroadcast: v } })
+                  }
                 />
               </div>
 
@@ -598,7 +673,10 @@ function StudentSettings() {
                   <button
                     key={key}
                     onClick={() =>
-                      persist({ ...settings, channels: { ...settings.channels, [key]: !settings.channels[key] } })
+                      persist({
+                        ...settings,
+                        channels: { ...settings.channels, [key]: !settings.channels[key] },
+                      })
                     }
                     aria-pressed={settings.channels[key]}
                     className={cn(
@@ -619,7 +697,9 @@ function StudentSettings() {
           {tab === "preferences" && (
             <Card className="p-6">
               <h2 className="font-display text-lg font-bold">Preferences & Accessibility</h2>
-              <p className="mb-5 text-xs text-muted-foreground">Applied immediately and remembered on this device.</p>
+              <p className="mb-5 text-xs text-muted-foreground">
+                Applied immediately and remembered on this device.
+              </p>
 
               <h3 className="mb-2 text-sm font-bold">Theme</h3>
               <div className="grid gap-2 sm:grid-cols-3">
@@ -697,7 +777,11 @@ function StudentSettings() {
       </div>
 
       {/* Face retake modal */}
-      <Modal open={faceOpen} onClose={() => !capturing && setFaceOpen(false)} title="Retake Face Snapshot">
+      <Modal
+        open={faceOpen}
+        onClose={() => !capturing && setFaceOpen(false)}
+        title="Retake Face Snapshot"
+      >
         <p className="mb-3 text-sm text-muted-foreground">
           Center your face in the frame and hold still while we capture a new biometric profile.
         </p>

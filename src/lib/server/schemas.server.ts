@@ -70,8 +70,16 @@ export const schemas = {
     employee_id: z.string().max(50).nullable().optional(),
     prefix: z.string().max(20).nullable().optional(),
     department: z.string().max(100).nullable().optional(),
-    pin: z.string().regex(/^\d{4,8}$/).nullable().optional(),
-    rfid_uid: z.string().regex(/^\d{6,20}$/).nullable().optional(),
+    pin: z
+      .string()
+      .regex(/^\d{4,8}$/)
+      .nullable()
+      .optional(),
+    rfid_uid: z
+      .string()
+      .regex(/^\d{6,20}$/)
+      .nullable()
+      .optional(),
     avatar_url: avatarUrl.nullable().optional(),
     ...token,
   }),
@@ -82,13 +90,21 @@ export const schemas = {
     employee_id: z.string().min(1).max(50),
     department: z.string().min(1).max(100),
     pin: z.string().regex(/^\d{4,6}$/),
-    rfid_uid: z.string().regex(/^\d{6,20}$/).nullable().optional(),
+    rfid_uid: z
+      .string()
+      .regex(/^\d{6,20}$/)
+      .nullable()
+      .optional(),
     ...token,
   }),
   biometrics: z.object({
     id: uuid,
     face_embedding: z.string().max(20000).nullable().optional(),
-    rfid_uid: z.string().regex(/^\d{6,20}$/).nullable().optional(),
+    rfid_uid: z
+      .string()
+      .regex(/^\d{6,20}$/)
+      .nullable()
+      .optional(),
     ...token,
   }),
   profilePatch: z.object({
@@ -103,8 +119,14 @@ export const schemas = {
         employee_id: z.string().max(50).nullable(),
         prefix: z.string().max(20).nullable(),
         department: z.string().max(100).nullable(),
-        pin: z.string().regex(/^\d{4,8}$/).nullable(),
-        rfid_uid: z.string().regex(/^\d{6,20}$/).nullable(),
+        pin: z
+          .string()
+          .regex(/^\d{4,8}$/)
+          .nullable(),
+        rfid_uid: z
+          .string()
+          .regex(/^\d{6,20}$/)
+          .nullable(),
         avatar_url: avatarUrl.nullable(),
       })
       .partial(),
@@ -116,8 +138,14 @@ export const schemas = {
         full_name: z.string().min(1).max(200),
         email: z.string().max(320).nullable(),
         avatar_url: avatarUrl.nullable(),
-        pin: z.string().regex(/^\d{4,6}$/).nullable(),
-        rfid_uid: z.string().regex(/^\d{6,20}$/).nullable(),
+        pin: z
+          .string()
+          .regex(/^\d{4,6}$/)
+          .nullable(),
+        rfid_uid: z
+          .string()
+          .regex(/^\d{6,20}$/)
+          .nullable(),
         face_embedding: z.string().max(20000).nullable(),
       })
       .partial(),
@@ -135,7 +163,7 @@ export const schemas = {
     title: z.string().min(1).max(200),
     code: z.string().min(1).max(20),
     grade_level: z.number().int().min(7).max(16),
-    education_level: z.enum(['jhs','shs','college']).optional(),
+    education_level: z.enum(["jhs", "shs", "college"]).optional(),
     college_year: z.number().int().min(1).max(4).nullable().optional(),
     strand: z.string().max(50).nullable().optional(),
     program: z.string().max(80).nullable().optional(),
@@ -151,7 +179,7 @@ export const schemas = {
         title: z.string().min(1).max(200),
         code: z.string().min(1).max(20),
         grade_level: z.number().int().min(7).max(16),
-        education_level: z.enum(['jhs','shs','college']).nullable().optional(),
+        education_level: z.enum(["jhs", "shs", "college"]).nullable().optional(),
         college_year: z.number().int().min(1).max(4).nullable().optional(),
         strand: z.string().max(50).nullable().optional(),
         program: z.string().max(80).nullable().optional(),

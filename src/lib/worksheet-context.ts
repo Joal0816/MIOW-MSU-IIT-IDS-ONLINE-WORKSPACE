@@ -18,5 +18,7 @@ export const WORKSHEET_CHAT_EVENT = "ids:open-worksheet-chat";
 
 /** Open the chat widget scoped to the active Create Worksheet form. */
 export function openWorksheetChat(ctx: WorksheetAssistContext) {
-  window.dispatchEvent(new CustomEvent<WorksheetAssistContext>(WORKSHEET_CHAT_EVENT, { detail: ctx }));
+  window.dispatchEvent(
+    new CustomEvent<WorksheetAssistContext>(WORKSHEET_CHAT_EVENT, { detail: ctx }),
+  );
 }

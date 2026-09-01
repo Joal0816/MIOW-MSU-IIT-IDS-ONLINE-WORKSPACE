@@ -15,7 +15,17 @@ import {
   type Course,
   type Grade,
 } from "@/lib/lms";
-import { AppShell, Badge, Card, EmptyState, Modal, ProgressBar, STUDENT_NAV, courseStyle, useProfile } from "@/components/lms";
+import {
+  AppShell,
+  Badge,
+  Card,
+  EmptyState,
+  Modal,
+  ProgressBar,
+  STUDENT_NAV,
+  courseStyle,
+  useProfile,
+} from "@/components/lms";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/dashboard/student/grades")({
@@ -24,7 +34,10 @@ export const Route = createFileRoute("/dashboard/student/grades")({
       { title: "My Grades | MIOW - MSU-IIT IDS Online Workspace" },
       { name: "description", content: "Quarterly grades with DepEd transmutation and remarks." },
       { property: "og:title", content: "My Grades | MIOW - MSU-IIT IDS Online Workspace" },
-      { property: "og:description", content: "Quarterly grades with DepEd transmutation and remarks." },
+      {
+        property: "og:description",
+        content: "Quarterly grades with DepEd transmutation and remarks.",
+      },
     ],
   }),
   component: GradesPage,
@@ -35,7 +48,11 @@ function GradesPage() {
   const [quarter, setQuarter] = useState(1);
   const [showTable, setShowTable] = useState(false);
   const [detail, setDetail] = useState<{ course: Course; grade: Grade | undefined } | null>(null);
-  const { data: courses } = useQuery({ queryKey: ["courses"], queryFn: listCourses, enabled: !!profile });
+  const { data: courses } = useQuery({
+    queryKey: ["courses"],
+    queryFn: listCourses,
+    enabled: !!profile,
+  });
   const { data: grades } = useQuery({
     queryKey: ["grades", profile?.id],
     queryFn: () => listGradesForStudent(profile!.id),
@@ -58,7 +75,11 @@ function GradesPage() {
   });
   const withGrades = rows.filter((r) => r.grade && transmutedOf(r.grade, att) != null);
   const gwa = withGrades.length
-    ? Math.round((withGrades.reduce((s, r) => s + (transmutedOf(r.grade!, att) ?? 0), 0) / withGrades.length) * 10) / 10
+    ? Math.round(
+        (withGrades.reduce((s, r) => s + (transmutedOf(r.grade!, att) ?? 0), 0) /
+          withGrades.length) *
+          10,
+      ) / 10
     : null;
 
   return (
@@ -67,7 +88,8 @@ function GradesPage() {
         <div>
           <h1 className="font-display text-2xl font-bold sm:text-3xl">Report Card</h1>
           <p className="mt-1 text-sm text-muted-foreground">
-            Weighted 10% Attendance · 20% Written Work · 30% Periodical Exam · 40% Performance Tasks, then transmuted per DepEd DO 8, s. 2015. Tap a subject for the full breakdown.
+            Weighted 10% Attendance · 20% Written Work · 30% Periodical Exam · 40% Performance
+            Tasks, then transmuted per DepEd DO 8, s. 2015. Tap a subject for the full breakdown.
           </p>
         </div>
         <button
@@ -117,12 +139,17 @@ function GradesPage() {
           <p className="mt-1 font-display text-3xl font-bold">{gwa ?? "—"}</p>
         </div>
         {gwa != null && (
-          <Badge tone={gwa >= 90 ? "green" : gwa >= 75 ? "indigo" : "red"}>{gradeRemarks(gwa)}</Badge>
+          <Badge tone={gwa >= 90 ? "green" : gwa >= 75 ? "indigo" : "red"}>
+            {gradeRemarks(gwa)}
+          </Badge>
         )}
       </Card>
 
       {rows.every((r) => !r.grade) ? (
-        <EmptyState title={`No grades encoded for Quarter ${quarter} yet`} sub="Check back after your teachers finalize the gradebook." />
+        <EmptyState
+          title={`No grades encoded for Quarter ${quarter} yet`}
+          sub="Check back after your teachers finalize the gradebook."
+        />
       ) : (
         <Card className="overflow-x-auto">
           <h2 className="px-4 pt-4 font-display text-base font-bold">
@@ -165,15 +192,24 @@ function GradesPage() {
                     <td className="p-4 text-center">{grade?.written_work_score ?? "—"}</td>
                     <td className="p-4 text-center">{grade?.performance_task_score ?? "—"}</td>
                     <td className="p-4 text-center">{grade?.exam_score ?? "—"}</td>
-                    <td className="p-4 text-center">{initial != null ? initial.toFixed(1) : "—"}</td>
                     <td className="p-4 text-center">
-                      <span className={cn("font-display text-base font-bold", t != null && t < 75 && "text-rose-600")}>
+                      {initial != null ? initial.toFixed(1) : "—"}
+                    </td>
+                    <td className="p-4 text-center">
+                      <span
+                        className={cn(
+                          "font-display text-base font-bold",
+                          t != null && t < 75 && "text-rose-600",
+                        )}
+                      >
                         {t ?? "—"}
                       </span>
                     </td>
                     <td className="p-4">
                       {t != null ? (
-                        <Badge tone={t >= 90 ? "green" : t >= 80 ? "indigo" : t >= 75 ? "amber" : "red"}>
+                        <Badge
+                          tone={t >= 90 ? "green" : t >= 80 ? "indigo" : t >= 75 ? "amber" : "red"}
+                        >
                           {gradeRemarks(t)}
                         </Badge>
                       ) : (
@@ -200,12 +236,17 @@ function GradesPage() {
 }
 
 function GradeBreakdown({ grade, att }: { grade: Grade | undefined; att: number | null }) {
-  if (!grade) return <p className="text-sm text-muted-foreground">No scores encoded for this quarter yet.</p>;
+  if (!grade)
+    return <p className="text-sm text-muted-foreground">No scores encoded for this quarter yet.</p>;
   const components = [
     { label: "Attendance", weight: WEIGHTS.attendance, score: att },
     { label: "Written Work", weight: WEIGHTS.written_work, score: grade.written_work_score },
     { label: "Periodical Exam", weight: WEIGHTS.quarterly_exam, score: grade.exam_score },
-    { label: "Performance Tasks", weight: WEIGHTS.performance_task, score: grade.performance_task_score },
+    {
+      label: "Performance Tasks",
+      weight: WEIGHTS.performance_task,
+      score: grade.performance_task_score,
+    },
   ];
   const initial = initialOf(grade, att);
   const t = transmutedOf(grade, att);
@@ -234,12 +275,23 @@ function GradeBreakdown({ grade, att }: { grade: Grade | undefined; att: number 
       </div>
       <div className="grid grid-cols-2 gap-3">
         <div className="rounded-xl bg-muted p-4 text-center">
-          <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Initial grade</p>
-          <p className="mt-1 font-display text-2xl font-bold">{initial != null ? initial.toFixed(1) : "—"}</p>
+          <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+            Initial grade
+          </p>
+          <p className="mt-1 font-display text-2xl font-bold">
+            {initial != null ? initial.toFixed(1) : "—"}
+          </p>
         </div>
         <div className="rounded-xl bg-muted p-4 text-center">
-          <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Transmuted</p>
-          <p className={cn("mt-1 font-display text-2xl font-bold", t != null && t < 75 && "text-rose-600")}>
+          <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+            Transmuted
+          </p>
+          <p
+            className={cn(
+              "mt-1 font-display text-2xl font-bold",
+              t != null && t < 75 && "text-rose-600",
+            )}
+          >
             {t ?? "—"}
           </p>
         </div>

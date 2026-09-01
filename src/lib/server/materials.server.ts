@@ -55,9 +55,12 @@ async function removeMaterialObjects(items: Attachment[]) {
 
 async function detectMimeByMagic(buf: Buffer): Promise<string | null> {
   if (buf.length < 4) return null;
-  if (buf[0] === 0x25 && buf[1] === 0x50 && buf[2] === 0x44 && buf[3] === 0x46) return "application/pdf";
-  if (buf[0] === 0x50 && buf[1] === 0x4b && (buf[2] === 0x03 || buf[2] === 0x05 || buf[2] === 0x07)) return "application/zip";
-  if (buf[0] === 0xd0 && buf[1] === 0xcf && buf[2] === 0x11 && buf[3] === 0xe0) return "application/msword";
+  if (buf[0] === 0x25 && buf[1] === 0x50 && buf[2] === 0x44 && buf[3] === 0x46)
+    return "application/pdf";
+  if (buf[0] === 0x50 && buf[1] === 0x4b && (buf[2] === 0x03 || buf[2] === 0x05 || buf[2] === 0x07))
+    return "application/zip";
+  if (buf[0] === 0xd0 && buf[1] === 0xcf && buf[2] === 0x11 && buf[3] === 0xe0)
+    return "application/msword";
   if (buf[0] === 0x89 && buf[1] === 0x50 && buf[2] === 0x4e && buf[3] === 0x47) return "image/png";
   if (buf[0] === 0xff && buf[1] === 0xd8 && buf[2] === 0xff) return "image/jpeg";
   return null;
@@ -71,7 +74,9 @@ async function sniffMime(buffer: Buffer): Promise<string | null> {
       const ft = await fn(buffer);
       if (ft?.mime) return ft.mime as string;
     }
-  } catch { /* file-type unavailable */ }
+  } catch {
+    /* file-type unavailable */
+  }
   return detectMimeByMagic(buffer);
 }
 
@@ -90,7 +95,9 @@ export async function uploadCourseMaterial(
   if (buffer.byteLength > MAX_MATERIAL_BYTES) throw new Error("File must be under 15 MB");
   const sniffed = await sniffMime(buffer);
   if (!sniffed || !MATERIAL_ALLOWED_MIMES.has(sniffed)) {
-    throw new Error(`Unsupported file content (${sniffed ?? "unknown"}) — use PDF, DOCX, PNG, JPG, or ZIP`);
+    throw new Error(
+      `Unsupported file content (${sniffed ?? "unknown"}) — use PDF, DOCX, PNG, JPG, or ZIP`,
+    );
   }
   const zipFamily = new Set([
     "application/zip",
@@ -220,9 +227,7 @@ export async function hardwareRoster() {
   return { synced_at: new Date().toISOString(), count: users.length, users };
 }
 
-export async function countRows(
-  table: string,
-): Promise<number> {
+export async function countRows(table: string): Promise<number> {
   const { count, error } = await db.from(table).select("*", { count: "exact", head: true });
   if (error) {
     console.error("[lms] count error:", error);

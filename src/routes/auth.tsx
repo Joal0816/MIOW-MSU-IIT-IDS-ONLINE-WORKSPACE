@@ -1,12 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import {
-  KeyRound,
-  Nfc,
-  ScanFace,
-  ShieldCheck,
-} from "lucide-react";
+import { KeyRound, Nfc, ScanFace, ShieldCheck } from "lucide-react";
 import { toast } from "sonner";
 import { dbg, dbgError } from "@/lib/debug";
 import {
@@ -44,7 +39,12 @@ export const Route = createFileRoute("/auth")({
   component: AuthPage,
 });
 
-const VERIFY_STEPS = ["Locating face…", "Matching biometrics…", "Liveness check…", "Identity confirmed"];
+const VERIFY_STEPS = [
+  "Locating face…",
+  "Matching biometrics…",
+  "Liveness check…",
+  "Identity confirmed",
+];
 
 function AuthPage() {
   const navigate = useNavigate();
@@ -86,9 +86,7 @@ function AuthPage() {
         setDone(true);
         saveSession(p);
         toast.success(`Welcome, ${p.full_name.split(" ")[0]}!`);
-        timers.current.push(
-          setTimeout(() => navigate({ to: dashboardPathFor(p.role) }), 900),
-        );
+        timers.current.push(setTimeout(() => navigate({ to: dashboardPathFor(p.role) }), 900));
       }, VERIFY_STEPS.length * 700),
     );
   };
@@ -117,7 +115,11 @@ function AuthPage() {
     setBusy(true);
     try {
       const res = await pinLogin(login.trim(), pin.trim());
-      dbg("auth", "pinLogin result", { ok: res.ok, reason: (res as any).reason, profile: (res as any).profile?.role });
+      dbg("auth", "pinLogin result", {
+        ok: res.ok,
+        reason: (res as any).reason,
+        profile: (res as any).profile?.role,
+      });
       if (res.ok) {
         startVerify(res.profile);
       } else if (res.reason === "locked") {
@@ -172,7 +174,9 @@ function AuthPage() {
         </div>
         <div className="relative overflow-hidden rounded-xl border border-sidebar-border bg-sidebar-accent/60 py-2.5">
           <div className="animate-marquee whitespace-nowrap text-xs font-medium text-sidebar-foreground/70">
-            <span className="px-4">{marqueeText || "Welcome to MIOW — SY 2026–2027 enrollment now open"}</span>
+            <span className="px-4">
+              {marqueeText || "Welcome to MIOW — SY 2026–2027 enrollment now open"}
+            </span>
           </div>
         </div>
       </div>
@@ -205,7 +209,9 @@ function AuthPage() {
                       onClick={() => setMode(m)}
                       className={cn(
                         "flex items-center justify-center gap-2 rounded-lg px-3 py-2 text-sm font-semibold transition-colors",
-                        mode === m ? "bg-card shadow-sm" : "text-muted-foreground hover:text-foreground",
+                        mode === m
+                          ? "bg-card shadow-sm"
+                          : "text-muted-foreground hover:text-foreground",
                       )}
                     >
                       <Icon className="h-4 w-4" />
@@ -294,7 +300,9 @@ function AuthPage() {
                     <ScanFace className="h-5 w-5 animate-pulse text-primary" />
                   )}
                   <p className={cn("text-sm font-semibold", done && "text-emerald-600")}>
-                    {done ? `Verified — welcome, ${verifying.full_name.split(" ")[0]}!` : VERIFY_STEPS[step]}
+                    {done
+                      ? `Verified — welcome, ${verifying.full_name.split(" ")[0]}!`
+                      : VERIFY_STEPS[step]}
                   </p>
                 </div>
                 <p className="mt-1 text-xs text-muted-foreground">

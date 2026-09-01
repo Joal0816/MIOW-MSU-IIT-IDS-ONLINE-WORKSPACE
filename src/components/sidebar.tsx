@@ -33,17 +33,33 @@ export const STUDENT_NAV: NavItem[] = [
   { to: "/dashboard/student", label: "Dashboard", icon: <LayoutDashboard className="h-4 w-4" /> },
   { to: "/dashboard/student/courses", label: "Courses", icon: <BookOpen className="h-4 w-4" /> },
   { to: "/dashboard/student/grades", label: "Grades", icon: <BarChart3 className="h-4 w-4" /> },
-  { to: "/dashboard/student/assignments", label: "Activities", icon: <ClipboardList className="h-4 w-4" /> },
-  { to: "/dashboard/student/attendance", label: "Attendance", icon: <CalendarCheck className="h-4 w-4" /> },
+  {
+    to: "/dashboard/student/assignments",
+    label: "Activities",
+    icon: <ClipboardList className="h-4 w-4" />,
+  },
+  {
+    to: "/dashboard/student/attendance",
+    label: "Attendance",
+    icon: <CalendarCheck className="h-4 w-4" />,
+  },
   { to: "/dashboard/student/settings", label: "Settings", icon: <Settings className="h-4 w-4" /> },
 ];
 
 export const ADMIN_NAV: NavItem[] = [
   { to: "/dashboard/admin", label: "Dashboard", icon: <LayoutDashboard className="h-4 w-4" /> },
   { to: "/dashboard/admin/students", label: "Students", icon: <Users className="h-4 w-4" /> },
-  { to: "/dashboard/admin/teachers", label: "Teachers", icon: <GraduationCap className="h-4 w-4" /> },
+  {
+    to: "/dashboard/admin/teachers",
+    label: "Teachers",
+    icon: <GraduationCap className="h-4 w-4" />,
+  },
   { to: "/dashboard/admin/courses", label: "Courses", icon: <BookOpen className="h-4 w-4" /> },
-  { to: "/dashboard/admin/announcements", label: "Announcements", icon: <Megaphone className="h-4 w-4" /> },
+  {
+    to: "/dashboard/admin/announcements",
+    label: "Announcements",
+    icon: <Megaphone className="h-4 w-4" />,
+  },
   { to: "/dashboard/admin/settings", label: "Settings", icon: <Settings className="h-4 w-4" /> },
 ];
 
@@ -51,9 +67,17 @@ export const TEACHER_NAV: NavItem[] = [
   { to: "/dashboard/teacher", label: "Dashboard", icon: <LayoutDashboard className="h-4 w-4" /> },
   { to: "/dashboard/teacher/students", label: "Students", icon: <Users className="h-4 w-4" /> },
   { to: "/dashboard/admin/courses", label: "Courses", icon: <BookOpen className="h-4 w-4" /> },
-  { to: "/dashboard/admin/announcements", label: "Announcements", icon: <Megaphone className="h-4 w-4" /> },
+  {
+    to: "/dashboard/admin/announcements",
+    label: "Announcements",
+    icon: <Megaphone className="h-4 w-4" />,
+  },
   { to: "/dashboard/admin/grades", label: "Gradebook", icon: <Layers className="h-4 w-4" /> },
-  { to: "/dashboard/admin/attendance", label: "Attendance", icon: <CalendarCheck className="h-4 w-4" /> },
+  {
+    to: "/dashboard/admin/attendance",
+    label: "Attendance",
+    icon: <CalendarCheck className="h-4 w-4" />,
+  },
   { to: "/dashboard/teacher/settings", label: "Settings", icon: <Settings className="h-4 w-4" /> },
 ];
 
@@ -122,37 +146,34 @@ export function AppShell({
   const links = nav.map((n) => {
     const active = pathname === n.to;
     return (
-    <Link
-      key={n.to}
-      to={n.to}
-      title={collapsed ? n.label : undefined}
-      aria-label={n.label}
-      className={cn(
-        "relative flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-colors",
-        collapsed && "justify-center px-0",
-        active
-          ? "bg-sidebar-primary text-sidebar-primary-foreground shadow-lift"
-          : "text-sidebar-foreground/80 hover:bg-sidebar-accent hover:text-sidebar-foreground",
-      )}
-    >
-      {n.icon}
-      {!collapsed && <span className="truncate">{n.label}</span>}
-      {active && !collapsed && (
-        <motion.span
-          layoutId="nav-active"
-          className="absolute left-0.5 top-1/2 h-5 w-1 -translate-y-1/2 rounded-full bg-sidebar-primary-foreground/70"
-        />
-      )}
-    </Link>
+      <Link
+        key={n.to}
+        to={n.to}
+        title={collapsed ? n.label : undefined}
+        aria-label={n.label}
+        className={cn(
+          "relative flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-colors",
+          collapsed && "justify-center px-0",
+          active
+            ? "bg-sidebar-primary text-sidebar-primary-foreground shadow-lift"
+            : "text-sidebar-foreground/80 hover:bg-sidebar-accent hover:text-sidebar-foreground",
+        )}
+      >
+        {n.icon}
+        {!collapsed && <span className="truncate">{n.label}</span>}
+        {active && !collapsed && (
+          <motion.span
+            layoutId="nav-active"
+            className="absolute left-0.5 top-1/2 h-5 w-1 -translate-y-1/2 rounded-full bg-sidebar-primary-foreground/70"
+          />
+        )}
+      </Link>
     );
   });
 
   return (
     <div className="relative min-h-screen bg-background lg:flex">
-      <div
-        aria-hidden
-        className="pointer-events-none fixed inset-0 -z-10 overflow-hidden"
-      >
+      <div aria-hidden className="pointer-events-none fixed inset-0 -z-10 overflow-hidden">
         <div className="absolute -top-40 right-[-10%] h-[28rem] w-[28rem] rounded-full bg-indigo-400/15 blur-3xl dark:bg-indigo-500/10" />
         <div className="absolute bottom-[-20%] left-[-10%] h-[26rem] w-[26rem] rounded-full bg-sky-400/10 blur-3xl dark:bg-violet-500/10" />
       </div>
@@ -163,12 +184,19 @@ export function AppShell({
           collapsed ? "w-[84px]" : "w-64",
         )}
       >
-        <div className={cn("mb-6 flex items-center gap-2.5 px-2 pt-2", collapsed && "justify-center px-0")}>
+        <div
+          className={cn(
+            "mb-6 flex items-center gap-2.5 px-2 pt-2",
+            collapsed && "justify-center px-0",
+          )}
+        >
           <MiowMark className="h-9 w-9 shrink-0 rounded-xl shadow-lift" />
           {!collapsed && (
             <div className="min-w-0">
               <MiowWordmark size="sm" tone="sidebar" />
-              <p className="mt-1 truncate text-xs font-semibold text-sidebar-foreground/70">{subtitle}</p>
+              <p className="mt-1 truncate text-xs font-semibold text-sidebar-foreground/70">
+                {subtitle}
+              </p>
             </div>
           )}
         </div>
@@ -190,8 +218,12 @@ export function AppShell({
             />
             {!collapsed && (
               <div className="min-w-0 flex-1">
-                <p className="truncate text-sm font-semibold text-sidebar-foreground">{profile.full_name}</p>
-                <p className="truncate text-xs capitalize text-sidebar-foreground/60">{profile.role}</p>
+                <p className="truncate text-sm font-semibold text-sidebar-foreground">
+                  {profile.full_name}
+                </p>
+                <p className="truncate text-xs capitalize text-sidebar-foreground/60">
+                  {profile.role}
+                </p>
               </div>
             )}
             <Link
@@ -210,7 +242,6 @@ export function AppShell({
             >
               <LogOut className="h-4 w-4" />
             </button>
-
           </div>
         </div>
       </aside>
@@ -270,7 +301,9 @@ export function AppShell({
               aria-label={n.label}
               className={cn(
                 "flex items-center gap-1.5 whitespace-nowrap rounded-full px-3 py-1.5 text-xs font-semibold",
-                pathname === n.to ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground",
+                pathname === n.to
+                  ? "bg-primary text-primary-foreground"
+                  : "bg-muted text-muted-foreground",
               )}
             >
               {n.icon}

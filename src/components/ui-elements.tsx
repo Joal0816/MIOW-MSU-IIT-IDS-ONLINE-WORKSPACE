@@ -71,9 +71,39 @@ export function ThemeToggle({ className }: { className?: string }) {
           className="flex"
         >
           {dark ? (
-            <svg className="h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/></svg>
+            <svg
+              className="h-4 w-4"
+              xmlns="http://www.w3.org/2000/svg"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <circle cx="12" cy="12" r="4" />
+              <path d="M12 2v2" />
+              <path d="M12 20v2" />
+              <path d="m4.93 4.93 1.41 1.41" />
+              <path d="m17.66 17.66 1.41 1.41" />
+              <path d="M2 12h2" />
+              <path d="M20 12h2" />
+              <path d="m6.34 17.66-1.41 1.41" />
+              <path d="m19.07 4.93-1.41 1.41" />
+            </svg>
           ) : (
-            <svg className="h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg>
+            <svg
+              className="h-4 w-4"
+              xmlns="http://www.w3.org/2000/svg"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z" />
+            </svg>
           )}
         </motion.span>
       </AnimatePresence>
@@ -188,7 +218,15 @@ export function ProgressBar({ value, barClass }: { value: number; barClass?: str
   );
 }
 
-export function EmptyState({ icon, title, sub }: { icon?: ReactNode; title: string; sub?: string }) {
+export function EmptyState({
+  icon,
+  title,
+  sub,
+}: {
+  icon?: ReactNode;
+  title: string;
+  sub?: string;
+}) {
   return (
     <div className="flex flex-col items-center justify-center gap-2 rounded-2xl border border-dashed border-border bg-card/40 p-10 text-center backdrop-blur-sm">
       <div className="text-muted-foreground">{icon}</div>
@@ -273,8 +311,19 @@ export function CameraPanel({
   }, [ref]);
 
   return (
-    <div className={cn("relative overflow-hidden rounded-2xl border border-border bg-slate-900", className)}>
-      <video ref={ref} autoPlay playsInline muted className={cn("h-full w-full object-cover", !live && "hidden")} />
+    <div
+      className={cn(
+        "relative overflow-hidden rounded-2xl border border-border bg-slate-900",
+        className,
+      )}
+    >
+      <video
+        ref={ref}
+        autoPlay
+        playsInline
+        muted
+        className={cn("h-full w-full object-cover", !live && "hidden")}
+      />
       {!live && (
         <div className="flex h-full w-full flex-col items-center justify-center gap-2 text-slate-400">
           <ScanFace className="h-10 w-10" />
