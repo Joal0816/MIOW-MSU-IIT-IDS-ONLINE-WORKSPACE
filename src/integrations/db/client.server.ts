@@ -16,26 +16,11 @@ export function getPool(): Pool {
   if (_pool) return _pool;
   if (!DATABASE_URL) {
     if (!_warnedNoDb) {
-      console.warn("[db] DATABASE_URL not set — using in-memory mock (no persistence). Set DATABASE_URL for real Postgres.");
+      console.error("[db] DATABASE_URL not set — cannot connect to database. Set DATABASE_URL for production.");
       _warnedNoDb = true;
     }
-    // Return a mock pool that keeps dev server + Playwright happy without a real DB.
-    // Real queries will get empty results / no-ops instead of crashing.
-    _pool = new Proxy({} as Pool, {
-      get(_target, prop) {
-        if (prop === "query") {
-          return async (sql: string) => {
-            const isSelect = /^\s*SELECT/i.test(sql);
-            if (isSelect) return { rows: [], rowCount: 0 } as unknown as QueryResult;
-            // INSERT/UPDATE/DELETE: return empty RETURNING
-            return { rows: [], rowCount: 0 } as unknown as QueryResult;
-          };
-        }
-        if (prop === "on") return () => {};
-        return () => {};
-      },
-    }) as unknown as Pool;
-    return _pool;
+    // Production: throw on any query — no mock fallback.
+    throw new Error("[db] DATABASE_URL not configured. Cannot serve requests without a database.");
   }
   _pool = new Pool({
     connectionString: DATABASE_URL,
