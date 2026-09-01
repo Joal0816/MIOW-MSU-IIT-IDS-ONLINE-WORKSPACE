@@ -8,15 +8,18 @@ type ChatRequestBody = {
   worksheetContext?: unknown;
 };
 
-function parseWorksheetContext(raw: unknown): { course?: string; title?: string } | undefined {
+/** Sanitize the optional Create Worksheet form context (course/title/sourceMaterial). */
+function parseWorksheetContext(raw: unknown): { course?: string; title?: string; sourceMaterial?: string } | undefined {
   if (!raw || typeof raw !== "object") return undefined;
   const o = raw as Record<string, unknown>;
   const course = typeof o["course"] === "string" ? o["course"].slice(0, 200) : undefined;
   const title = typeof o["title"] === "string" ? o["title"].slice(0, 200) : undefined;
-  if (!course && !title) return undefined;
-  const ctx: { course?: string; title?: string } = {};
+  const sourceMaterial = typeof o["sourceMaterial"] === "string" ? o["sourceMaterial"].slice(0, 15000) : undefined;
+  if (!course && !title && !sourceMaterial) return undefined;
+  const ctx: { course?: string; title?: string; sourceMaterial?: string } = {};
   if (course) ctx.course = course;
   if (title) ctx.title = title;
+  if (sourceMaterial) ctx.sourceMaterial = sourceMaterial;
   return ctx;
 }
 

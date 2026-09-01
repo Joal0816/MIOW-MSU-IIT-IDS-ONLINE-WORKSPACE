@@ -309,10 +309,14 @@ export function ChatWidget({ profile }: { profile: Profile }) {
     const onAssist = (e: Event) => {
       const detail = (e as CustomEvent<WorksheetAssistContext>).detail;
       if (detail && typeof detail === "object") {
-        setAssistCtx({
+        const ctx: WorksheetAssistContext = {
           course: String(detail.course ?? "").slice(0, 200),
           title: String(detail.title ?? "").slice(0, 200),
-        });
+        };
+        if (typeof detail.sourceMaterial === "string" && detail.sourceMaterial) {
+          ctx.sourceMaterial = detail.sourceMaterial.slice(0, 15000);
+        }
+        setAssistCtx(ctx);
       }
       setOpen(true);
     };

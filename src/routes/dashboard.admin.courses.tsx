@@ -102,6 +102,17 @@ const EMPTY_POLICY = {
   retake_score_policy: "highest_score" as RetakePolicy,
 };
 
+type QuizMode = "classmate" | "manual";
+
+interface ManualQuestion {
+  kind: "mc" | "fill" | "matching" | "essay";
+  question: string;
+  options: string[];
+  correct_answer: string;
+}
+
+const EMPTY_MANUAL_Q: ManualQuestion = { kind: "mc", question: "", options: ["", "", "", ""], correct_answer: "" };
+
 /** Parse the policy form into the API payload (unlimited → max_attempts 0). */
 function policyPayload(f: typeof EMPTY_POLICY) {
   return {
@@ -126,6 +137,10 @@ function CoursesPage() {
   const [courseForm, setCourseForm] = useState(EMPTY_COURSE);
   const [assignForm, setAssignForm] = useState({ course_id: "", title: "", description: "", due_date: "", total_points: "100", component_type: "written_work" as const });
   const [quizForm, setQuizForm] = useState({ ...EMPTY_POLICY, course_id: "", title: "", duration_minutes: "15", questions: "" });
+  const [quizMode, setQuizMode] = useState<QuizMode>("classmate");
+  const [manualQuestions, setManualQuestions] = useState<ManualQuestion[]>([]);
+  const [quizFileDrag, setQuizFileDrag] = useState(false);
+  const [quizFileName, setQuizFileName] = useState<string | null>(null);
   // Files staged in the "Post assignment" form, uploaded once the row exists.
   const [assignFiles, setAssignFiles] = useState<File[]>([]);
   const [assignUploadPct, setAssignUploadPct] = useState(0);
@@ -139,8 +154,6 @@ function CoursesPage() {
   const [editAssign, setEditAssign] = useState<Assignment | null>(null);
   const [editAssignForm, setEditAssignForm] = useState({ title: "", description: "", due_date: "", total_points: "100", component_type: "written_work" as Assignment["component_type"] });
   const [removeTarget, setRemoveTarget] = useState<{ kind: "quiz" | "assignment"; id: string; title: string } | null>(null);
-  const [docsImportOpen, setDocsImportOpen] = useState(false);
-  const [docsMarkdown, setDocsMarkdown] = useState("");
 
   if (!profile) return null;
 
@@ -281,18 +294,36 @@ function CoursesPage() {
       toast.error("Course and title are required.");
       return;
     }
-    // Accepts the strict four-section format from ClassMate (Sections I–IV +
-    // Answer Key) as well as legacy "Question | A, B, C, D | answer" lines.
-    const { questions, dropped } = parseWorksheet(quizForm.questions);
-    if (!questions.length) {
-      toast.error(
-        "No valid questions found — paste the four-section worksheet (with its Answer Key) or use 'Question | A, B, C, D | answer' lines.",
-      );
-      return;
+
+    let questions: Array<{ question: string; options: string[]; correct_answer: string }>;
+
+    if (quizMode === "manual") {
+      // Manual mode: convert structured questions directly
+      const valid = manualQuestions.filter((q) => q.question.trim() && q.correct_answer.trim());
+      if (valid.length === 0) {
+        toast.error("Add at least one question with a question text and correct answer.");
+        return;
+      }
+      questions = valid.map((q) => ({
+        question: q.question.trim(),
+        options: q.kind === "mc" ? q.options.filter(Boolean) : [],
+        correct_answer: q.correct_answer.trim(),
+      }));
+    } else {
+      // ClassMate mode: parse the textarea content
+      const parsed = parseWorksheet(quizForm.questions);
+      if (!parsed.questions.length) {
+        toast.error(
+          "No valid questions found — paste the four-section worksheet (with its Answer Key), upload a file, or use 'Generate with ClassMate'.",
+        );
+        return;
+      }
+      if (parsed.dropped > 0) {
+        toast.warning(`${parsed.dropped} item${parsed.dropped > 1 ? "s were" : " was"} skipped — check their numbering against the Answer Key.`);
+      }
+      questions = parsed.questions;
     }
-    if (dropped > 0) {
-      toast.warning(`${dropped} item${dropped > 1 ? "s were" : " was"} skipped — check their numbering against the Answer Key.`);
-    }
+
     setSaving(true);
     try {
       await createQuizWithQuestions(
@@ -308,6 +339,8 @@ function CoursesPage() {
       qc.invalidateQueries({ queryKey: ["quizzes"] });
       setModal(null);
       setQuizForm({ ...EMPTY_POLICY, course_id: "", title: "", duration_minutes: "15", questions: "" });
+      setManualQuestions([]);
+      setQuizMode("classmate");
     } catch {
       toast.error("Could not create worksheet.");
     } finally {
@@ -476,12 +509,6 @@ function CoursesPage() {
           </button>
           <button onClick={() => setModal("quiz")} className="flex items-center gap-1.5 rounded-xl border border-border bg-card px-4 py-2.5 text-sm font-semibold hover:bg-muted">
             <FileQuestion className="h-4 w-4" /> Worksheet
-          </button>
-          <button
-            onClick={() => setDocsImportOpen(true)}
-            className="flex items-center gap-1.5 rounded-xl border border-border bg-card px-4 py-2.5 text-sm font-semibold hover:bg-muted"
-          >
-            <Upload className="h-4 w-4" /> Import from Google Docs
           </button>
         </div>
       </div>
@@ -951,7 +978,7 @@ function CoursesPage() {
         </button>
       </Modal>
 
-      <Modal open={modal === "quiz"} onClose={() => setModal(null)} title="Create worksheet" wide>
+      <Modal open={modal === "quiz"} onClose={() => { setModal(null); setQuizMode("classmate"); setManualQuestions([]); setQuizFileName(null); }} title="Create worksheet" wide>
         <div className="grid gap-3">
           <div className="grid gap-3 sm:grid-cols-3">
             <select value={quizForm.course_id} onChange={(e) => setQuizForm((f) => ({ ...f, course_id: e.target.value }))} className="h-11 rounded-xl border border-input bg-background px-3 text-sm outline-none focus:ring-2 focus:ring-ring sm:col-span-2">
@@ -962,33 +989,292 @@ function CoursesPage() {
           </div>
           <input value={quizForm.title} onChange={(e) => setQuizForm((f) => ({ ...f, title: e.target.value }))} placeholder="Worksheet title *" className="h-11 rounded-xl border border-input bg-background px-3 text-sm outline-none focus:ring-2 focus:ring-ring" />
           <PolicyFields value={quizForm} onChange={(patch) => setQuizForm((f) => ({ ...f, ...patch }))} />
-          <textarea
-            value={quizForm.questions}
-            onChange={(e) => setQuizForm((f) => ({ ...f, questions: e.target.value }))}
-            rows={9}
-            placeholder={"Paste a ClassMate worksheet (Sections I–IV + Answer Key):\n\nSection I: Multiple Choice\n1. What is 7 × 8?\nA. 54\nB. 56\nC. 63\nD. 48\n\nSection II: Fill in the Blank\n2. Water boils at ______ °C.\n…\n\nAnswer Key:\n1. B - 7 groups of 8 make 56\n2. 100 (Acceptable: one hundred)\n\n—or one per line: Question | A, B, C, D | answer"}
-            className="rounded-xl border border-input bg-background p-3 font-mono text-xs outline-none focus:ring-2 focus:ring-ring"
-          />
+
+          {/* ── Mode tabs ────────────────────────────────────────────── */}
+          <div className="flex gap-2 rounded-xl border border-border bg-muted/30 p-1">
+            <button
+              type="button"
+              onClick={() => setQuizMode("classmate")}
+              className={cn("flex flex-1 items-center justify-center gap-1.5 rounded-lg px-3 py-2 text-xs font-semibold transition", quizMode === "classmate" ? "bg-primary text-primary-foreground shadow-sm" : "text-muted-foreground hover:bg-muted")}
+            >
+              <Sparkles className="h-3.5 w-3.5" /> Generate with ClassMate
+            </button>
+            <button
+              type="button"
+              onClick={() => setQuizMode("manual")}
+              className={cn("flex flex-1 items-center justify-center gap-1.5 rounded-lg px-3 py-2 text-xs font-semibold transition", quizMode === "manual" ? "bg-primary text-primary-foreground shadow-sm" : "text-muted-foreground hover:bg-muted")}
+            >
+              <FileText className="h-3.5 w-3.5" /> Manual Entry
+            </button>
+          </div>
+
+          {/* ── ClassMate mode: file upload + textarea ─────────────── */}
+          {quizMode === "classmate" && (
+            <>
+              {/* ── File dropzone ──────────────────────────────────────── */}
+              {quizFileName ? (
+                <div className="flex items-center gap-2 rounded-xl border border-emerald-500/30 bg-emerald-500/10 px-3 py-2.5">
+                  <FileText className="h-4 w-4 shrink-0 text-emerald-600 dark:text-emerald-400" />
+                  <span className="flex-1 truncate text-xs font-semibold">{quizFileName}</span>
+                  <button
+                    type="button"
+                    onClick={() => { setQuizFileName(null); setQuizForm((f) => ({ ...f, questions: "" })); }}
+                    className="rounded-md p-1 text-muted-foreground hover:bg-rose-50 hover:text-rose-600 dark:hover:bg-rose-500/10"
+                  >
+                    <X className="h-3.5 w-3.5" />
+                  </button>
+                </div>
+              ) : (
+                <label
+                  onDragOver={(e) => { e.preventDefault(); setQuizFileDrag(true); }}
+                  onDragLeave={() => setQuizFileDrag(false)}
+                  onDrop={(e) => {
+                    e.preventDefault();
+                    setQuizFileDrag(false);
+                    const file = e.dataTransfer.files?.[0];
+                    if (!file) return;
+                    if (!/\.(txt|md)$/i.test(file.name)) {
+                      toast.error("Only .txt and .md files are supported. For DOCX/PDF, use 'Import from Google Docs' or paste the content.");
+                      return;
+                    }
+                    if (file.size > 10 * 1024 * 1024) {
+                      toast.error("File is too large (max 10MB).");
+                      return;
+                    }
+                    file.text().then((text) => {
+                      setQuizFileName(file.name);
+                      setQuizForm((f) => ({ ...f, questions: text }));
+                      const { questions, dropped } = parseWorksheet(text);
+                      toast.success(`Loaded ${questions.length} question(s) from file${dropped ? ` (${dropped} skipped)` : ""}`);
+                    }).catch(() => toast.error("Could not read the file."));
+                  }}
+                  className={cn("flex cursor-pointer flex-col items-center justify-center gap-1 rounded-xl border-2 border-dashed px-3 py-5 text-center transition", quizFileDrag ? "border-primary bg-primary/10 ring-2 ring-primary/40" : "border-border hover:border-primary/50 hover:bg-muted/60")}
+                >
+                  <CloudUpload className={cn("h-5 w-5", quizFileDrag ? "text-primary" : "text-muted-foreground")} />
+                  <p className="text-xs font-semibold">Drag & drop a file here, or click to browse</p>
+                  <p className="text-[11px] text-muted-foreground">Supports .txt, .md (Max 10MB). For DOCX/PDF, use Google Docs import below.</p>
+                  <input
+                    type="file"
+                    accept=".txt,.md"
+                    className="hidden"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      if (!file) return;
+                      file.text().then((text) => {
+                        setQuizFileName(file.name);
+                        setQuizForm((f) => ({ ...f, questions: text }));
+                        const { questions, dropped } = parseWorksheet(text);
+                        toast.success(`Loaded ${questions.length} question(s)${dropped ? ` (${dropped} skipped)` : ""}`);
+                      }).catch(() => toast.error("Could not read the file."));
+                      e.target.value = "";
+                    }}
+                  />
+                </label>
+              )}
+              <div className="flex items-center gap-2">
+                <label className="text-xs font-semibold text-muted-foreground flex-1">Or paste questions &amp; answer key</label>
+                <button
+                  type="button"
+                  onClick={() => {
+                    openGooglePicker(async (docIds) => {
+                      if (!docIds.length) return;
+                      toast.info(`Fetching doc ${docIds[0]}…`);
+                      try {
+                        const text = await exportDocAsText(docIds[0]!);
+                        if (text) {
+                          const { questions, dropped } = parseWorksheet(text);
+                          setQuizForm((f) => ({ ...f, questions: text }));
+                          toast.success(`Loaded ${questions.length} question(s) from Google Doc${dropped ? ` (${dropped} skipped)` : ""}`);
+                        } else {
+                          toast.error("Could not read the doc — check sharing permissions or try pasting instead.");
+                        }
+                      } catch (e) {
+                        toast.error(e instanceof Error ? e.message : "Export failed");
+                      }
+                    });
+                  }}
+                  className="flex h-8 items-center gap-1 rounded-lg border border-border px-2.5 text-[11px] font-semibold hover:bg-muted"
+                >
+                  <Upload className="h-3 w-3" /> Import from Google Docs
+                </button>
+              </div>
+              <textarea
+                value={quizForm.questions}
+                onChange={(e) => setQuizForm((f) => ({ ...f, questions: e.target.value }))}
+                rows={9}
+                placeholder={"Paste a ClassMate worksheet (Sections I–IV + Answer Key):\n\nSection I: Multiple Choice\n1. What is 7 × 8?\nA. 54\nB. 56\nC. 63\nD. 48\n\nSection II: Fill in the Blank\n2. Water boils at ______ °C.\n…\n\nAnswer Key:\n1. B - 7 groups of 8 make 56\n2. 100 (Acceptable: one hundred)"}
+                className="rounded-xl border border-input bg-background p-3 font-mono text-xs outline-none focus:ring-2 focus:ring-ring"
+              />
+              <button
+                type="button"
+                disabled={!quizFileName}
+                onClick={() => {
+                  const course = (courses ?? []).find((c) => c.id === quizForm.course_id);
+                  if (!course) {
+                    toast.error("Select a course first — ClassMate will use it as the worksheet context.");
+                    return;
+                  }
+                  openWorksheetChat({
+                    course: `${course.code} — ${course.title}`,
+                    title: quizForm.title.trim(),
+                    ...(quizForm.questions ? { sourceMaterial: quizForm.questions } : {}),
+                  });
+                  toast.success("ClassMate has your file & course — tell it the topic and item count.");
+                }}
+                className={cn(
+                  "flex h-10 items-center justify-center gap-1.5 rounded-xl px-4 text-sm font-semibold transition",
+                  quizFileName
+                    ? "border border-primary/40 bg-primary/10 text-primary hover:bg-primary/15"
+                    : "cursor-not-allowed border border-border bg-muted/50 text-muted-foreground/50",
+                )}
+              >
+                <Sparkles className="h-4 w-4" />
+                {quizFileName ? "Generate from uploaded file" : "Upload a file first"}
+              </button>
+            </>
+          )}
+
+          {/* ── Manual Entry mode: structured question builder ─────── */}
+          {quizMode === "manual" && (
+            <>
+              {manualQuestions.length === 0 && (
+                <div className="rounded-xl border border-dashed border-border bg-muted/30 p-6 text-center">
+                  <FileText className="mx-auto h-8 w-8 text-muted-foreground/50" />
+                  <p className="mt-2 text-sm font-semibold">No questions yet</p>
+                  <p className="mt-1 text-xs text-muted-foreground">Click "Add Question" below to start building your worksheet.</p>
+                </div>
+              )}
+              <div className="space-y-3 max-h-[50vh] overflow-y-auto pr-1">
+                {manualQuestions.map((q, qi) => (
+                  <div key={qi} className="rounded-xl border border-border p-3 space-y-2">
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="text-xs font-bold text-muted-foreground">Q{qi + 1}</span>
+                      <div className="flex items-center gap-2">
+                        <select
+                          value={q.kind}
+                          onChange={(e) => {
+                            const kind = e.target.value as ManualQuestion["kind"];
+                            setManualQuestions((prev) => prev.map((pq, i) => i === qi ? { ...pq, kind, options: kind === "mc" ? (pq.options.length >= 4 ? pq.options : ["", "", "", ""]) : [] } : pq));
+                          }}
+                          className="h-8 rounded-lg border border-input bg-background px-2 text-xs"
+                        >
+                          <option value="mc">Multiple Choice</option>
+                          <option value="fill">Fill in the Blank</option>
+                          <option value="essay">Essay / Short Answer</option>
+                          <option value="matching">Matching</option>
+                        </select>
+                        <button
+                          type="button"
+                          onClick={() => setManualQuestions((prev) => prev.filter((_, i) => i !== qi))}
+                          className="rounded-lg p-1 text-muted-foreground hover:bg-rose-50 hover:text-rose-600 dark:hover:bg-rose-500/10"
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </button>
+                      </div>
+                    </div>
+                    <input
+                      value={q.question}
+                      onChange={(e) => setManualQuestions((prev) => prev.map((pq, i) => i === qi ? { ...pq, question: e.target.value } : pq))}
+                      placeholder={q.kind === "fill" ? "Sentence with ______ blank" : q.kind === "essay" ? "Essay prompt or question" : "Question text"}
+                      className="h-9 w-full rounded-lg border border-input bg-background px-2.5 text-xs outline-none focus:ring-2 focus:ring-ring"
+                    />
+                    {q.kind === "mc" && (
+                      <div className="grid grid-cols-2 gap-1.5">
+                        {["A", "B", "C", "D"].map((letter, oi) => (
+                          <div key={letter} className="flex items-center gap-1">
+                            <span className="text-[11px] font-bold text-muted-foreground w-4">{letter}.</span>
+                            <input
+                              value={q.options[oi] ?? ""}
+                              onChange={(e) => setManualQuestions((prev) => {
+                                const opts = [...(prev[qi]?.options ?? ["", "", "", ""])];
+                                opts[oi] = e.target.value;
+                                return prev.map((pq, i) => i === qi ? { ...pq, options: opts } : pq);
+                              })}
+                              placeholder={`Option ${letter}`}
+                              className="h-8 flex-1 rounded-lg border border-input bg-background px-2 text-xs outline-none focus:ring-2 focus:ring-ring"
+                            />
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                    {q.kind === "mc" && (
+                      <div className="flex items-center gap-2">
+                        <span className="text-[11px] font-semibold text-muted-foreground">Correct:</span>
+                        <select
+                          value={q.correct_answer}
+                          onChange={(e) => setManualQuestions((prev) => prev.map((pq, i) => i === qi ? { ...pq, correct_answer: e.target.value } : pq))}
+                          className="h-8 rounded-lg border border-input bg-background px-2 text-xs"
+                        >
+                          <option value="">Select answer</option>
+                          {q.options.filter(Boolean).map((opt, oi) => (
+                            <option key={oi} value={opt}>{String.fromCharCode(65 + oi)}. {opt}</option>
+                          ))}
+                        </select>
+                      </div>
+                    )}
+                    {q.kind === "fill" && (
+                      <input
+                        value={q.correct_answer}
+                        onChange={(e) => setManualQuestions((prev) => prev.map((pq, i) => i === qi ? { ...pq, correct_answer: e.target.value } : pq))}
+                        placeholder="Correct answer (e.g. 100)"
+                        className="h-8 w-full rounded-lg border border-input bg-background px-2.5 text-xs outline-none focus:ring-2 focus:ring-ring"
+                      />
+                    )}
+                    {q.kind === "essay" && (
+                      <textarea
+                        value={q.correct_answer}
+                        onChange={(e) => setManualQuestions((prev) => prev.map((pq, i) => i === qi ? { ...pq, correct_answer: e.target.value } : pq))}
+                        placeholder="Rubric / key points (e.g. Must mention: photosynthesis, sunlight, chlorophyll)"
+                        rows={2}
+                        className="w-full rounded-lg border border-input bg-background px-2.5 py-1.5 text-xs outline-none focus:ring-2 focus:ring-ring"
+                      />
+                    )}
+                    {q.kind === "matching" && (
+                      <div className="grid grid-cols-2 gap-2">
+                        <div>
+                          <p className="mb-1 text-[10px] font-semibold text-muted-foreground">Column A (premises)</p>
+                          <textarea
+                            value={q.question}
+                            onChange={(e) => setManualQuestions((prev) => prev.map((pq, i) => i === qi ? { ...pq, question: e.target.value } : pq))}
+                            placeholder={"1. Premise A\n2. Premise B"}
+                            rows={3}
+                            className="w-full rounded-lg border border-input bg-background px-2 py-1.5 text-xs outline-none focus:ring-2 focus:ring-ring"
+                          />
+                        </div>
+                        <div>
+                          <p className="mb-1 text-[10px] font-semibold text-muted-foreground">Column B (options)</p>
+                          <textarea
+                            value={q.options.join("\n")}
+                            onChange={(e) => setManualQuestions((prev) => prev.map((pq, i) => i === qi ? { ...pq, options: e.target.value.split("\n") } : pq))}
+                            placeholder={"A. Option 1\nB. Option 2\nC. Option 3\nD. Option 4"}
+                            rows={3}
+                            className="w-full rounded-lg border border-input bg-background px-2 py-1.5 text-xs outline-none focus:ring-2 focus:ring-ring"
+                          />
+                        </div>
+                      </div>
+                    )}
+                    {q.kind === "matching" && (
+                      <input
+                        value={q.correct_answer}
+                        onChange={(e) => setManualQuestions((prev) => prev.map((pq, i) => i === qi ? { ...pq, correct_answer: e.target.value } : pq))}
+                        placeholder="Correct pairs (e.g. 1-A, 2-C, 3-B)"
+                        className="h-8 w-full rounded-lg border border-input bg-background px-2.5 text-xs outline-none focus:ring-2 focus:ring-ring"
+                      />
+                    )}
+                  </div>
+                ))}
+              </div>
+              <button
+                type="button"
+                onClick={() => setManualQuestions((prev) => [...prev, { ...EMPTY_MANUAL_Q }])}
+                className="flex h-10 items-center justify-center gap-1.5 rounded-xl border border-dashed border-border text-sm font-semibold text-muted-foreground hover:bg-muted hover:text-foreground"
+              >
+                <Plus className="h-4 w-4" /> Add Question
+              </button>
+            </>
+          )}
         </div>
-        <div className="mt-4 flex flex-col gap-2 sm:flex-row">
-          <button
-            type="button"
-            onClick={() => {
-              const course = (courses ?? []).find((c) => c.id === quizForm.course_id);
-              if (!course) {
-                toast.error("Select a course first — ClassMate will use it as the worksheet context.");
-                return;
-              }
-              openWorksheetChat({
-                course: `${course.code} — ${course.title}`,
-                title: quizForm.title.trim(),
-              });
-              toast.success("ClassMate has your course & title — tell it the topic and item count.");
-            }}
-            className="flex h-11 items-center justify-center gap-1.5 rounded-xl border border-primary/40 bg-primary/10 px-4 text-sm font-semibold text-primary hover:bg-primary/15"
-          >
-            <Sparkles className="h-4 w-4" /> Generate with ClassMate
-          </button>
+        <div className="mt-4 flex justify-end">
           <button onClick={saveQuiz} disabled={saving} className="h-11 flex-1 rounded-xl bg-primary text-sm font-semibold text-primary-foreground hover:opacity-90 disabled:opacity-50">
             {saving ? "Creating…" : "Create worksheet"}
           </button>
@@ -1145,69 +1431,6 @@ function CoursesPage() {
         {rosterQuiz && <AttemptRoster quizId={rosterQuiz.id} />}
       </Modal>
 
-      {/* Task 26: Google Docs import stub */}
-      <Modal open={docsImportOpen} onClose={() => setDocsImportOpen(false)} title="Import from Google Docs" wide>
-        <p className="mb-3 text-xs text-muted-foreground">
-          Select a Google Doc via the picker, or paste exported text below — we&apos;ll run <code className="font-mono">parseWorksheet</code> and preview the detected items.
-        </p>
-        <button
-          type="button"
-          onClick={() => openGooglePicker(async (docIds) => {
-            if (!docIds.length) return;
-            toast.info(`Fetching doc ${docIds[0]}…`);
-            try {
-              const text = await exportDocAsText(docIds[0]!);
-              if (text) {
-                setDocsMarkdown(text);
-                toast.success("Doc loaded — review the preview below.");
-              } else {
-                toast.error("Could not read the doc (check permissions or try pasting instead).");
-              }
-            } catch (e) {
-              toast.error(e instanceof Error ? e.message : "Export failed");
-            }
-          })}
-          className="mb-3 flex h-9 items-center gap-1.5 rounded-lg border border-border px-3 text-xs font-semibold hover:bg-muted"
-        >
-          <Upload className="h-3.5 w-3.5" /> Open Google Picker
-        </button>
-        <textarea
-          value={docsMarkdown}
-          onChange={(e) => setDocsMarkdown(e.target.value)}
-          rows={8}
-          placeholder="Paste Google Doc text / markdown here..."
-          className="w-full rounded-xl border border-input bg-background p-3 font-mono text-xs outline-none focus:ring-2 focus:ring-ring"
-        />
-        {docsMarkdown.trim() && (() => {
-          const { questions, dropped } = parseWorksheet(docsMarkdown);
-          return (
-            <div className="mt-3 rounded-xl border border-border bg-muted/30 p-3">
-              <p className="text-xs font-semibold">Preview: {questions.length} question(s) detected{dropped ? ` · ${dropped} dropped` : ""}</p>
-              {questions.length > 0 && (
-                <ol className="mt-2 list-decimal space-y-1 pl-5 text-xs">
-                  {questions.slice(0, 6).map((q, i) => (
-                    <li key={i} className="truncate">{q.question.slice(0, 90)}{q.question.length > 90 ? "…" : ""}</li>
-                  ))}
-                  {questions.length > 6 && <li className="text-muted-foreground">…and {questions.length - 6} more</li>}
-                </ol>
-              )}
-              <button
-                type="button"
-                onClick={() => {
-                  setQuizForm((f) => ({ ...f, questions: docsMarkdown }));
-                  setDocsImportOpen(false);
-                  setModal("quiz");
-                  toast.success(`Loaded ${questions.length} question(s) into the worksheet form`);
-                }}
-                disabled={questions.length === 0}
-                className="mt-3 h-9 rounded-lg bg-primary px-4 text-xs font-semibold text-primary-foreground hover:opacity-90 disabled:opacity-50"
-              >
-                Use in worksheet
-              </button>
-            </div>
-          );
-        })()}
-      </Modal>
     </AppShell>
   );
 }
