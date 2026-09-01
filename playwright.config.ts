@@ -9,7 +9,7 @@ export default defineConfig({
   reporter: [['list'], ['html', { open: 'never' }]],
   use: {
     baseURL: 'http://localhost:3000',
-    headless: false,
+    headless: process.env.CI ? true : false,
     trace: 'on-first-retry',
     screenshot: 'only-on-failure',
   },
@@ -24,7 +24,7 @@ export default defineConfig({
     url: 'http://localhost:3000',
     reuseExistingServer: !process.env.CI,
     timeout: 120000,
-    cwd: 'C:/Users/kent/Documents/lmslatest',
+    cwd: process.cwd(),
     env: {
       SESSION_SECRET: 'test-session-secret-32-chars-hex-1234567890ab',
       HARDWARE_API_KEY: 'test-hardware-key',
