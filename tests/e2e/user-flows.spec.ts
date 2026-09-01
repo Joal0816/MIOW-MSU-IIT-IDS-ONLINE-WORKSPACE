@@ -286,9 +286,9 @@ test.describe("Student dashboard flow", () => {
     await page.waitForTimeout(2000);
     const nav = page.locator("nav").first();
     await expect(nav).toContainText("Dashboard");
-    await expect(nav).toContainText("Activities");
-    await expect(nav).toContainText("Worksheets");
+    await expect(nav).toContainText("Courses");
     await expect(nav).toContainText("Grades");
+    await expect(nav).toContainText("Activities");
     await expect(nav).toContainText("Attendance");
     await expect(nav).toContainText("Settings");
   });
@@ -304,15 +304,16 @@ test.describe("Student dashboard flow", () => {
     await expect(page.locator("body")).toContainText(/Activities|Assignments/i);
   });
 
-  test("student can navigate to Worksheets page", async ({ page }) => {
+  test("student can navigate to Worksheets tab on Courses page", async ({ page }) => {
     await page.goto("/dashboard/student");
     await page.waitForTimeout(1500);
     await page
-      .getByRole("link", { name: /Worksheets/ })
+      .getByRole("link", { name: /Courses/ })
       .first()
       .click();
-    await page.waitForURL(/\/dashboard\/student\/quizzes/, { timeout: 10000 });
-    await expect(page.locator("body")).toContainText(/Worksheets|Quizzes/i);
+    await page.waitForURL(/\/dashboard\/student\/courses/, { timeout: 10000 });
+    // Worksheets is a tab inside the courses page
+    await expect(page.locator("body")).toContainText(/Worksheets|Courses/i);
   });
 
   test("student can navigate to Grades page", async ({ page }) => {
@@ -378,6 +379,20 @@ const describeRealDB =
 describeRealDB("Real PIN login", () => {
   test.setTimeout(60000);
 
+  async function waitForFaceVerification(page: import("@playwright/test").Page) {
+    await expect(async () => {
+      const txt = await page.locator("body").textContent();
+      if (/Sign-in failed|Invalid credentials|Account locked|Too many attempts/.test(txt || ""))
+        throw new Error("login failed: " + txt?.slice(0, 200));
+      if (
+        !/Locating face|Matching biometrics|Liveness check|Identity confirmed|Verified/.test(
+          txt || "",
+        )
+      )
+        throw new Error("waiting for face verification");
+    }).toPass({ timeout: 20000 });
+  }
+
   test("admin logs in via PIN and sees Campus Overview", async ({ page }) => {
     await page.goto("/auth");
     await page.evaluate(() => localStorage.clear());
@@ -388,12 +403,7 @@ describeRealDB("Real PIN login", () => {
     await page.locator("#login-id").fill("ana.reyes@northview.edu");
     await page.locator("#login-pin").fill("0000");
     await page.getByRole("button", { name: /Continue to face verification/ }).click();
-    await expect(async () => {
-      const txt = await page.locator("body").textContent();
-      if (/Sign-in failed|Invalid credentials/.test(txt || "")) throw new Error("login failed");
-      if (!/Locating face|Matching biometrics|Liveness check|Identity confirmed/.test(txt || ""))
-        throw new Error("waiting for face verification");
-    }).toPass({ timeout: 15000 });
+    await waitForFaceVerification(page);
     await page.waitForURL(/\/dashboard\/admin/, { timeout: 20000 });
     await expect(page.locator("body")).toContainText("Campus Overview", { timeout: 15000 });
   });
@@ -405,15 +415,10 @@ describeRealDB("Real PIN login", () => {
     await page.waitForTimeout(1000);
     await page.getByRole("button", { name: /PIN Login/ }).click();
     await page.waitForTimeout(500);
-    await page.locator("#login-id").fill("maria.santos@northview.edu");
-    await page.locator("#login-pin").fill("1111");
+    await page.locator("#login-id").fill("alan.vergara@g.msuiit.edu.ph");
+    await page.locator("#login-pin").fill("3333");
     await page.getByRole("button", { name: /Continue to face verification/ }).click();
-    await expect(async () => {
-      const txt = await page.locator("body").textContent();
-      if (/Sign-in failed|Invalid credentials/.test(txt || "")) throw new Error("login failed");
-      if (!/Locating face|Matching biometrics|Liveness check|Identity confirmed/.test(txt || ""))
-        throw new Error("waiting for face verification");
-    }).toPass({ timeout: 15000 });
+    await waitForFaceVerification(page);
     await page.waitForURL(/\/dashboard\/teacher/, { timeout: 20000 });
     await expect(page.locator("body")).toContainText("Teacher Dashboard", { timeout: 15000 });
   });
@@ -425,15 +430,10 @@ describeRealDB("Real PIN login", () => {
     await page.waitForTimeout(1000);
     await page.getByRole("button", { name: /PIN Login/ }).click();
     await page.waitForTimeout(500);
-    await page.locator("#login-id").fill("juan.delacruz@student.northview.edu");
+    await page.locator("#login-id").fill("josephalan.vergara@g.msuiit.edu.ph");
     await page.locator("#login-pin").fill("1234");
     await page.getByRole("button", { name: /Continue to face verification/ }).click();
-    await expect(async () => {
-      const txt = await page.locator("body").textContent();
-      if (/Sign-in failed|Invalid credentials/.test(txt || "")) throw new Error("login failed");
-      if (!/Locating face|Matching biometrics|Liveness check|Identity confirmed/.test(txt || ""))
-        throw new Error("waiting for face verification");
-    }).toPass({ timeout: 15000 });
+    await waitForFaceVerification(page);
     await page.waitForURL(/\/dashboard\/student/, { timeout: 20000 });
     await expect(page.locator("body")).toContainText(/Student Dashboard|Welcome/i, {
       timeout: 15000,
@@ -447,15 +447,10 @@ describeRealDB("Real PIN login", () => {
     await page.waitForTimeout(1000);
     await page.getByRole("button", { name: /PIN Login/ }).click();
     await page.waitForTimeout(500);
-    await page.locator("#login-id").fill("2024-0001");
+    await page.locator("#login-id").fill("2026-0000");
     await page.locator("#login-pin").fill("1234");
     await page.getByRole("button", { name: /Continue to face verification/ }).click();
-    await expect(async () => {
-      const txt = await page.locator("body").textContent();
-      if (/Sign-in failed|Invalid credentials/.test(txt || "")) throw new Error("login failed");
-      if (!/Locating face|Matching biometrics|Liveness check|Identity confirmed/.test(txt || ""))
-        throw new Error("waiting for face verification");
-    }).toPass({ timeout: 15000 });
+    await waitForFaceVerification(page);
     await page.waitForURL(/\/dashboard\/student/, { timeout: 20000 });
   });
 });
