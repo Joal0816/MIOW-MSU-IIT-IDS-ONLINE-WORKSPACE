@@ -388,8 +388,16 @@ describeRealDB("Real PIN login", () => {
         !/Locating face|Matching biometrics|Liveness check|Identity confirmed|Verified/.test(
           txt || "",
         )
-      )
-        throw new Error("waiting for face verification");
+      ) {
+        if (/\/dashboard\//.test(page.url())) return;
+        throw new Error(
+          "waiting for face verification (url=" +
+            page.url() +
+            " body=" +
+            (txt?.slice(0, 300) ?? "") +
+            ")",
+        );
+      }
     }).toPass({ timeout: 20000 });
   }
 
