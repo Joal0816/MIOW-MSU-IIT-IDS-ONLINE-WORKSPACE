@@ -1,9 +1,6 @@
 // ClassMate Assistant streaming chat endpoint.
-// The browser sends the signed kiosk session token; the caller's profile is
-// resolved from it server-side, so chat tools always reflect the real role —
-// a client can no longer pass an arbitrary profile id to impersonate anyone.
+// Calls OpenCode Go directly (bypasses AI SDK streaming which breaks on reasoning models).
 import { createFileRoute } from "@tanstack/react-router";
-import { convertToModelMessages, stepCountIs, streamText, type UIMessage } from "ai";
 
 type ChatRequestBody = {
   messages?: unknown;
@@ -11,7 +8,6 @@ type ChatRequestBody = {
   worksheetContext?: unknown;
 };
 
-/** Sanitize the optional Create Worksheet form context (course/title strings). */
 function parseWorksheetContext(raw: unknown): { course?: string; title?: string } | undefined {
   if (!raw || typeof raw !== "object") return undefined;
   const o = raw as Record<string, unknown>;
@@ -22,6 +18,23 @@ function parseWorksheetContext(raw: unknown): { course?: string; title?: string 
   if (course) ctx.course = course;
   if (title) ctx.title = title;
   return ctx;
+}
+
+/** Convert AI SDK UIMessage[] to OpenAI chat message format. */
+function toOpenAIMessages(messages: any[], systemPrompt: string) {
+  const out: Array<{ role: string; content: string }> = [{ role: "system", content: systemPrompt }];
+  for (const m of messages) {
+    if (m.role === "user" || m.role === "assistant") {
+      // Extract text from parts or content
+      let text = "";
+      if (typeof m.content === "string") text = m.content;
+      else if (Array.isArray(m.parts)) {
+        text = m.parts.filter((p: any) => p.type === "text").map((p: any) => p.text).join("");
+      }
+      if (text.trim()) out.push({ role: m.role, content: text });
+    }
+  }
+  return out;
 }
 
 export const Route = createFileRoute("/api/chat")({
@@ -42,17 +55,14 @@ export const Route = createFileRoute("/api/chat")({
           return new Response("Sign in to chat", { status: 401 });
         }
 
-        const key = process.env["OPENCODE_API_KEY"] ?? process.env["AI_GATEWAY_KEY"];
-        if (!key) {
+        const apiKey = process.env["OPENCODE_API_KEY"] ?? process.env["AI_GATEWAY_KEY"];
+        if (!apiKey) {
           return new Response("Missing OPENCODE_API_KEY", { status: 500 });
         }
 
-        // Server-only modules are loaded inside the handler so this route
-        // module stays import-safe for the client bundle.
-        const [{ requireSession }, { buildChatTools, systemPromptFor }, gateway] = await Promise.all([
+        const [{ requireSession }, { systemPromptFor }] = await Promise.all([
           import("@/lib/lms.server"),
           import("@/lib/chat-tools.server"),
-          import("@/lib/ai-gateway.server"),
         ]);
 
         let profile;
@@ -62,23 +72,74 @@ export const Route = createFileRoute("/api/chat")({
           return new Response("Session expired — please sign in again", { status: 401 });
         }
 
-        const provider = gateway.createAiGatewayProvider(
-          key,
-          gateway.getAiGatewayRunId(request),
-        );
-        const model = provider("mimo-v2.5");
+        // Build system prompt
+        const ctx = parseWorksheetContext(body.worksheetContext);
+        const systemPrompt = systemPromptFor(profile, ctx);
 
-        const result = streamText({
-          model,
-          system: systemPromptFor(profile, parseWorksheetContext(body.worksheetContext)),
-          messages: await convertToModelMessages(messages as UIMessage[]),
-          tools: buildChatTools(profile),
-          stopWhen: stepCountIs(6),
+        // Call OpenCode Go directly
+        const oaMessages = toOpenAIMessages(messages, systemPrompt);
+
+        const apiRes = await fetch("https://opencode.ai/zen/go/v1/chat/completions", {
+          method: "POST",
+          headers: {
+            "Authorization": `Bearer ${apiKey}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            model: "mimo-v2.5",
+            messages: oaMessages,
+            stream: true,
+            max_tokens: 4096,
+          }),
         });
 
-        return result.toUIMessageStreamResponse({
-          originalMessages: messages as UIMessage[],
-          headers: gateway.getAiGatewayResponseHeaders(undefined),
+        if (!apiRes.ok) {
+          const err = await apiRes.text();
+          console.error("[chat] OpenCode Go error:", apiRes.status, err);
+          return new Response(`AI service error: ${apiRes.status}`, { status: 502 });
+        }
+
+        // Transform OpenCode Go SSE → AI SDK text stream format
+        // AI SDK client expects: "0:\"text\"\n" for text deltas, "e:...\n" for finish
+        const encoder = new TextEncoder();
+        const decoder = new TextDecoder();
+
+        const transform = new TransformStream({
+          transform(chunk, controller) {
+            const raw = decoder.decode(chunk, { stream: true });
+            const lines = raw.split("\n");
+            for (const line of lines) {
+              if (!line.startsWith("data: ")) continue;
+              const data = line.slice(6).trim();
+              if (data === "[DONE]") {
+                controller.enqueue(encoder.encode("e: \"{\\\"finishReason\\\":\\\"stop\\\"}\"\n"));
+                continue;
+              }
+              try {
+                const parsed = JSON.parse(data);
+                const delta = parsed.choices?.[0]?.delta;
+                if (!delta) continue;
+
+                // Skip null content (reasoning model reasoning phase)
+                if (delta.content === null || delta.content === undefined) continue;
+                if (delta.content === "") continue;
+
+                // Send as AI SDK text stream format: 0:"text content"
+                controller.enqueue(encoder.encode(`0:${JSON.stringify(delta.content)}\n`));
+              } catch {
+                // skip unparseable chunks
+              }
+            }
+          },
+        });
+
+        const body_ = apiRes.body!.pipeThrough(transform);
+
+        return new Response(body_, {
+          headers: {
+            "Content-Type": "text/plain; charset=utf-8",
+            "X-Vercel-AI-Data-Stream": "v1",
+          },
         });
       },
     },
