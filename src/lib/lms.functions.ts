@@ -1,4 +1,4 @@
-// Thin RPC wrappers around the server-only LMS data layer (lms.server.ts).
+// Thin RPC wrappers around the server-only LMS data layer.
 // Module scope intentionally contains only imports and server-function
 // declarations so code splitting never ships runtime helpers to the client.
 //
@@ -12,7 +12,7 @@
 //   gradebook editing, staff-only for other management writes, self-or-staff
 //   for student-scoped records, any valid session for catalog reads.
 import { createServerFn } from "@tanstack/react-start";
-import * as server from "./lms.server";
+import * as server from "./server";
 
 /* ---------- Profiles & kiosk auth (public — they issue tokens) ---------- */
 

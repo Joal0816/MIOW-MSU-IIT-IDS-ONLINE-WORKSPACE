@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import * as server from "@/lib/lms.server";
+import * as server from "@/lib/server";
 
 /**
  * PATCH /api/teacher/settings
