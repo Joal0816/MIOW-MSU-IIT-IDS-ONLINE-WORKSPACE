@@ -290,20 +290,22 @@ export function CameraPanel({
   useEffect(() => {
     let stream: MediaStream | null = null;
     let cancelled = false;
-    navigator.mediaDevices
-      ?.getUserMedia({ video: { facingMode: "user" } })
-      .then((s: MediaStream) => {
-        if (cancelled) {
-          s.getTracks().forEach((t) => t.stop());
-          return;
-        }
-        stream = s;
-        if (ref.current) {
-          ref.current.srcObject = s;
-          setLive(true);
-        }
-      })
-      .catch(() => setLive(false));
+    if (navigator.mediaDevices?.getUserMedia) {
+      navigator.mediaDevices
+        .getUserMedia({ video: { facingMode: "user" } })
+        .then((s: MediaStream) => {
+          if (cancelled) {
+            s.getTracks().forEach((t) => t.stop());
+            return;
+          }
+          stream = s;
+          if (ref.current) {
+            ref.current.srcObject = s;
+            setLive(true);
+          }
+        })
+        .catch(() => setLive(false));
+    }
     return () => {
       cancelled = true;
       stream?.getTracks().forEach((t) => t.stop());
