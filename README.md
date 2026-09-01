@@ -1,78 +1,160 @@
-# MIOW- MSU-IIT I D S ONLINE WORKSPACE
+# MIOW — MSU-IIT IDS Online Workspace
 
-Build a comprehensive, modern Learning Management System (LMS) for Junior and Senior High School using React, TypeScript, Tailwind CSS, Lucide React, and Supabase. Implement the entire database schema, responsive UI, mock data, and functional routing in this single build.
+A modern Learning Management System (LMS) for Junior and Senior High School. Built with TanStack Start, Vite, React, TypeScript, and Tailwind CSS.
 
-### 1. Database Schema & Supabase Setup
-
-Generate the SQL schema and types for:
-
-- `profiles`: id, full_name, role ('student' | 'teacher' | 'admin'), rfid_uid, avatar_url, face_embedding (text/vector), grade_level, section.
-
-- `announcements`: id, title, content, category ('urgent' | 'event' | 'academic'), target_audience, author_id, created_at.
-
-- `courses`: id, title, code, grade_level, teacher_id.
-
-- `assignments`: id, course_id, title, description, due_date, total_points, component_type ('written_work' | 'performance_task' | 'quarterly_exam').
-
-- `submissions`: id, assignment_id, student_id, file_url, content, score, feedback, status ('pending' | 'submitted' | 'graded').
-
-- `quizzes` & `quiz_questions`: id, course_id, title, duration_minutes, questions (JSON or relational), correct_answers.
-
-- `grades`: id, student_id, course_id, quarter (1-4), written_work_score, performance_task_score, exam_score, transmuted_final_grade.
-
-- `attendance_logs`: id, student_id, timestamp, scan_type ('in' | 'out'), status ('on-time' | 'late').
-
-### 2. Dual Role Dashboards & Pages
-
-* **Student View (`/student`):**
-
-  - **Dashboard:** Modern welcome banner, daily class schedule, attendance streak card, GPA overview, and urgent announcement ticker.
-
-  - **Academic Hub (`/student/courses`):** Course list with progress bars; module viewer; assignment submission modal with file upload UI and status tags.
-
-  - **Quiz Interface (`/student/quizzes/:id`):** Full-screen timed assessment view, question stepper, instant auto-save, and score review screen.
-
-  - **Grade Portal (`/student/grades`):** Visual DepEd grading matrix breakdown (Written 40%, Performance 40%, Exam 20%), raw-to-transmuted grade tables, and quarterly remarks.
-
-* **Teacher & Admin View (`/admin`):**
-
-  - **Announcement Manager:** Rich markdown editor with audience filters and priority badges.
-
-  - **Gradebook Matrix:** Editable spreadsheet-style table with real-time weighted grade calculation, transmuted score previews, and bulk export to CSV.
-
-  - **Assessment Creator:** Form builder for both file-based assignments and multiple-choice auto-graded quizzes.
-
-  - **Hardware & Student Registry:** Table to view student profiles, bind physical RFID cards, and manage live photo enrollments.
-
-### 3. Passwordless Hardware Authentication (`/auth`)
-
-* **Kiosk Terminal Login:**
-
-  - Auto-focused input listener that immediately captures 10-to-13-digit RFID card scanner keystrokes (USB keyboard emulation).
-
-  - Integrated WebRTC camera interface showing live video stream with an animated scanning overlay for facial verification.
-
-  - Mock client-side biometric matching logic verifying RFID UID + camera capture before auto-redirecting to the role dashboard.
-
-  - Manual fallback toggle for Student ID / Email + PIN.
-
-* **Onboarding & Sign-Up:**
-
-  - Step-by-step registration wizard: Step 1 (Personal Info & Grade Level) -> Step 2 (RFID Tap Capture) -> Step 3 (Webcam Photo Capture) -> Step 4 (Account Summary & Confirmation).
-
-### 4. UI/UX & Design Standards
-
-- Aesthetic: Clean modern aesthetic (Slate/Indigo palette, rounded-2xl cards, micro-interactions with Framer Motion, accessible high-contrast text).
-
-- Include comprehensive mock seed data across all views so the app is fully testable immediately after generation.
-
-## Development
-
-Prefer working locally? You need Node.js and npm — [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating).
+## Quick Start
 
 ```sh
-git clone <this-repository-url>
-cd <repository-name>
-npm i
-npm run dev
+git clone https://github.com/MIOW-CODES/lms.git
+cd lms
+bun install
+cp .env.example .env   # edit with your values
+bun run dev
 ```
+
+Open `http://127.0.0.1:3000` — you'll see the login page.
+
+### Seed PINs (test accounts)
+
+| Email | Role | PIN |
+|---|---|---|
+| `ana.reyes@northview.edu` | Admin | `0000` |
+| `maria.santos@northview.edu` | Teacher | `1111` |
+| `juan.delacruz@student.northview.edu` | Student | `1234` |
+
+## Database Setup
+
+The app supports **two backends** — pick one:
+
+### Option A: Supabase (cloud)
+
+1. Create a project at [supabase.com](https://supabase.com)
+2. Run the SQL migrations in `supabase/migrations/` via the SQL Editor
+3. In `.env`, set:
+   ```
+   SUPABASE_URL=https://your-project.supabase.co
+   SUPABASE_SERVICE_ROLE_KEY=eyJ...
+   VITE_SUPABASE_URL=https://your-project.supabase.co
+   VITE_SUPABASE_PUBLISHABLE_KEY=eyJ...
+   ```
+
+### Option B: Local Postgres (self-hosted)
+
+1. Run Postgres (Docker recommended):
+   ```sh
+   docker run -d --name miow-postgres \
+     -e POSTGRES_USER=miow \
+     -e POSTGRES_PASSWORD=miow_dev_password \
+     -e POSTGRES_DB=miow \
+     -p 5432:5432 postgres:16-alpine
+   ```
+2. Run migrations:
+   ```sh
+   bun run db:migrate
+   ```
+3. In `.env`, set:
+   ```
+   DATABASE_URL=postgres://miow:miow_dev_password@localhost:5432/miow
+   ```
+
+The app auto-detects which backend to use based on your env vars.
+
+## Environment Variables
+
+See `.env.example` for the full list. Required:
+
+| Variable | Description |
+|---|---|
+| `SESSION_SECRET` | HMAC key for session tokens (`openssl rand -hex 32`) |
+| `DATABASE_URL` | Postgres connection string (Option B) |
+| `SUPABASE_URL` + `SUPABASE_SERVICE_ROLE_KEY` | Supabase credentials (Option A) |
+
+## Features
+
+### Authentication
+
+- **RFID tap** — auto-captures 10-13 digit card scanner keystrokes
+- **PIN login** — manual fallback with rate limiting (5 attempts / 15 min)
+- **Face verification** — WebRTC camera capture (placeholder for ML models)
+- HMAC-SHA256 session tokens with JTI revocation
+
+### Admin Dashboard
+
+- **Students** — view roster, bind RFID cards, manage profiles
+- **Teachers** — teacher directory and assignment
+- **Courses** — create courses with CED program dropdown (12 MSU-IIT programs), Google Docs import
+- **Announcements** — create with file attachments, audience targeting
+- **Grades** — editable gradebook with DepEd transmutation
+- **Settings** — system configuration, audit log
+
+### Teacher Dashboard
+
+- Create worksheets (ClassMate AI or manual entry)
+- Grade submissions
+- View student attendance
+
+### Student Dashboard
+
+- **Courses** — enrolled courses with worksheets and activities
+- **Grades** — quarterly grade breakdown
+- **Activities** — submit assignments
+- **Attendance** — view attendance history
+
+### ClassMate Chatbot
+
+AI-powered academic assistant using mimo-v2.5 via OpenCode Go. Restricted to academic topics only (course content, LMS features, DepEd standards).
+
+Requires `OPENCODE_API_KEY` in `.env`.
+
+### Google Docs Integration
+
+Import Google Docs as worksheet source material.
+
+**Setup:**
+
+1. Go to [Google Cloud Console](https://console.cloud.google.com)
+2. Create a project → enable **Google Picker API** + **Google Docs API**
+3. **OAuth consent screen** → External → add your Gmail as test user
+4. **Credentials** → OAuth Client ID (Web app):
+   - Authorized origins: `http://127.0.0.1:3000`
+   - Copy the Client ID
+5. **Credentials** → API key → restrict to Picker + Docs APIs
+6. In `.env`:
+   ```
+   VITE_GOOGLE_CLIENT_ID=your-client-id.apps.googleusercontent.com
+   VITE_GOOGLE_API_KEY=***
+   ```
+
+### Security
+
+- Content Security Policy (CSP) with Google APIs whitelisted
+- Rate limiting (Redis optional, in-memory fallback)
+- RLS policies on all database tables
+- Session tokens with JTI revocation
+- Input validation and sanitization
+
+## Scripts
+
+```sh
+bun run dev          # Start dev server
+bun run build        # Production build
+bun run lint         # ESLint
+bun run format       # Prettier
+bun run test:e2e     # Playwright tests (headed mode)
+bun run db:migrate   # Run Postgres migrations
+bun run db:seed      # Seed test data
+```
+
+## Tech Stack
+
+- **Framework:** TanStack Start + Vite 8
+- **UI:** React, Tailwind CSS, Framer Motion, Lucide icons
+- **Database:** Supabase OR local Postgres (auto-detected)
+- **Auth:** HMAC-SHA256 session tokens, RFID + PIN
+- **Chat:** mimo-v2.5 via OpenCode Go
+- **Testing:** Playwright (headed mode)
+- **Runtime:** Bun
+
+## License
+
+Private — MSU-IIT IDS
