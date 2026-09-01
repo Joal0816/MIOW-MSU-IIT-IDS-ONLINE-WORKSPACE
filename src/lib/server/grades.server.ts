@@ -3,6 +3,7 @@
 import { z } from "zod";
 import { db } from "@/integrations/db/client.server";
 import { unwrap, withoutToken } from "@/lib/server/utils.server";
+import { schemas } from "@/lib/server/schemas.server";
 
 export async function listGradesForStudent(studentId: string) {
   return unwrap<any[]>(db.from("grades").select("*").eq("student_id", studentId));
@@ -14,16 +15,7 @@ export async function listGradesForCourse(courseId: string, quarter: number) {
   );
 }
 
-export async function upsertGrade(input: {
-  student_id: string;
-  course_id: string;
-  quarter: number;
-  written_work_score: number | null;
-  performance_task_score: number | null;
-  exam_score: number | null;
-  transmuted_final_grade?: number | null;
-  token: string;
-}) {
+export async function upsertGrade(input: z.infer<typeof schemas.gradeInput>) {
   const existing = await unwrap<{ id: string } | null>(
     db
       .from("grades")

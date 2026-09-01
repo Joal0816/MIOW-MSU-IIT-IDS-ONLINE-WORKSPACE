@@ -46,7 +46,6 @@ export const updateProfileFn = createServerFn({ method: "POST" })
     return server.updateProfile(data.id, patch);
   });
 
-
 // User removal is ADMIN-only (teachers cannot remove accounts) and runs
 // as a soft delete with self-deletion and last-admin safeguards.
 export const deleteProfileFn = createServerFn({ method: "POST" })
@@ -122,7 +121,6 @@ export const enrollBiometricsFn = createServerFn({ method: "POST" })
     if ("rfid_uid" in data) fields.rfid_uid = data.rfid_uid ?? null;
     return server.enrollBiometrics(data.id, fields);
   });
-
 
 // Role administration is ADMIN-only (teachers cannot reassign roles).
 export const listAllUsersFn = createServerFn({ method: "POST" })
@@ -206,7 +204,6 @@ export const deleteCourseFn = createServerFn({ method: "POST" })
     return server.deleteCourse(data.id);
   });
 
-
 export const listAssignmentsFn = createServerFn({ method: "POST" })
   .inputValidator((data) => server.schemas.session.parse(data))
   .handler(async ({ data }) => {
@@ -221,7 +218,6 @@ export const createAssignmentFn = createServerFn({ method: "POST" })
     await server.requireCourseOwnerOrAdmin(data.token, data.course_id);
     return server.createAssignment(data);
   });
-
 
 export const enrollmentsForCourseFn = createServerFn({ method: "POST" })
   .inputValidator((data) => server.schemas.courseScoped.parse(data))
@@ -329,7 +325,6 @@ export const createQuizWithQuestionsFn = createServerFn({ method: "POST" })
     return server.createQuizWithQuestions(data.quiz, data.questions);
   });
 
-
 /* ---------- Grades ---------- */
 
 export const listGradesForStudentFn = createServerFn({ method: "POST" })
@@ -417,7 +412,13 @@ export const countRowsFn = createServerFn({ method: "POST" })
 export const uploadCourseMaterialFn = createServerFn({ method: "POST" })
   .inputValidator((data) => server.schemas.materialUpload.parse(data))
   .handler(async ({ data }) =>
-    server.uploadCourseMaterial(data.token, data.course_id, data.name, data.data, data.content_type),
+    server.uploadCourseMaterial(
+      data.token,
+      data.course_id,
+      data.name,
+      data.data,
+      data.content_type,
+    ),
   );
 
 export const attachCourseMaterialFn = createServerFn({ method: "POST" })
@@ -428,7 +429,9 @@ export const attachCourseMaterialFn = createServerFn({ method: "POST" })
 
 export const removeCourseMaterialFn = createServerFn({ method: "POST" })
   .inputValidator((data) => server.schemas.materialRemove.parse(data))
-  .handler(async ({ data }) => server.removeCourseMaterial(data.token, data.target, data.id, data.path));
+  .handler(async ({ data }) =>
+    server.removeCourseMaterial(data.token, data.target, data.id, data.path),
+  );
 
 export const updateQuizFn = createServerFn({ method: "POST" })
   .inputValidator((data) => server.schemas.quizUpdate.parse(data))

@@ -1,3 +1,4 @@
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-nocheck
 import { describe, it, expect, beforeEach, afterEach } from "bun:test";
 import { createHmac } from "node:crypto";

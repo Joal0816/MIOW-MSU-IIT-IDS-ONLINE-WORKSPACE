@@ -43,7 +43,9 @@ async function main() {
       // try without schema
       try {
         await pool.query(`CREATE EXTENSION IF NOT EXISTS pgcrypto`);
-      } catch { /* pgcrypto may already exist or be unavailable */ }
+      } catch {
+        /* pgcrypto may already exist or be unavailable */
+      }
     }
     // storage schema for Supabase storage migrations (local uses filesystem, but migrations reference storage.objects)
     await pool.query(`CREATE SCHEMA IF NOT EXISTS storage`);

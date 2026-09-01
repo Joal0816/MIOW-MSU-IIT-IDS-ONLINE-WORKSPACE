@@ -82,11 +82,7 @@ export {
   parseKeywordCategories,
 } from "./quizzes.server";
 
-export {
-  listGradesForStudent,
-  listGradesForCourse,
-  upsertGrade,
-} from "./grades.server";
+export { listGradesForStudent, listGradesForCourse, upsertGrade } from "./grades.server";
 
 export {
   listAttendance,

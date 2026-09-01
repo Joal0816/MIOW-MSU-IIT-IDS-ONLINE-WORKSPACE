@@ -1,6 +1,13 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { AlertTriangle, ArrowRight, CalendarCheck, ClipboardList, Megaphone, TrendingUp } from "lucide-react";
+import {
+  AlertTriangle,
+  ArrowRight,
+  CalendarCheck,
+  ClipboardList,
+  Megaphone,
+  TrendingUp,
+} from "lucide-react";
 import {
   attendancePercent,
   attendanceStreak,
@@ -33,7 +40,10 @@ export const Route = createFileRoute("/dashboard/student/")({
       { title: "Student Dashboard | MIOW - MSU-IIT IDS Online Workspace" },
       { name: "description", content: "Your classes, grades, tasks and attendance at a glance." },
       { property: "og:title", content: "Student Dashboard | MIOW - MSU-IIT IDS Online Workspace" },
-      { property: "og:description", content: "Your classes, grades, tasks and attendance at a glance." },
+      {
+        property: "og:description",
+        content: "Your classes, grades, tasks and attendance at a glance.",
+      },
     ],
   }),
   component: StudentDashboard,
@@ -41,19 +51,31 @@ export const Route = createFileRoute("/dashboard/student/")({
 
 function StudentDashboard() {
   const profile = useProfile(["student"]);
-  const { data: courses } = useQuery({ queryKey: ["courses"], queryFn: listCourses, enabled: !!profile });
+  const { data: courses } = useQuery({
+    queryKey: ["courses"],
+    queryFn: listCourses,
+    enabled: !!profile,
+  });
   const { data: grades } = useQuery({
     queryKey: ["grades", profile?.id],
     queryFn: () => listGradesForStudent(profile!.id),
     enabled: !!profile,
   });
-  const { data: assignments } = useQuery({ queryKey: ["assignments"], queryFn: listAssignments, enabled: !!profile });
+  const { data: assignments } = useQuery({
+    queryKey: ["assignments"],
+    queryFn: listAssignments,
+    enabled: !!profile,
+  });
   const { data: submissions } = useQuery({
     queryKey: ["submissions", profile?.id],
     queryFn: () => listSubmissionsForStudent(profile!.id),
     enabled: !!profile,
   });
-  const { data: announcements } = useQuery({ queryKey: ["announcements"], queryFn: listAnnouncements, enabled: !!profile });
+  const { data: announcements } = useQuery({
+    queryKey: ["announcements"],
+    queryFn: listAnnouncements,
+    enabled: !!profile,
+  });
   const { data: logs } = useQuery({
     queryKey: ["attendance", profile?.id],
     queryFn: () => listAttendance(profile!.id),
@@ -62,14 +84,20 @@ function StudentDashboard() {
 
   if (!profile) return null;
 
-  const myCourses = (courses ?? []).filter((c) => String(c.grade_level) === String(profile.grade_level));
+  const myCourses = (courses ?? []).filter(
+    (c) => String(c.grade_level) === String(profile.grade_level),
+  );
   const courseIds = new Set(myCourses.map((c) => c.id));
   const submittedIds = new Set(
     (submissions ?? []).filter((s) => s.status !== "pending").map((s) => s.assignment_id),
   );
-  const pending = (assignments ?? []).filter((a) => courseIds.has(a.course_id) && !submittedIds.has(a.id));
+  const pending = (assignments ?? []).filter(
+    (a) => courseIds.has(a.course_id) && !submittedIds.has(a.id),
+  );
   const att = attendancePercent(logs ?? []);
-  const graded = (grades ?? []).map((g) => ({ g, t: transmutedOf(g, att) })).filter((x) => x.t != null);
+  const graded = (grades ?? [])
+    .map((g) => ({ g, t: transmutedOf(g, att) }))
+    .filter((x) => x.t != null);
   const gwa = graded.length
     ? Math.round((graded.reduce((s, x) => s + (x.t ?? 0), 0) / graded.length) * 10) / 10
     : null;
@@ -80,21 +108,40 @@ function StudentDashboard() {
   const urgent = visible.filter((a) => a.category === "urgent");
 
   const stats = [
-    { label: "General Average", value: gwa ?? "—", sub: "Transmuted, all subjects", icon: <TrendingUp className="h-4 w-4 text-primary" /> },
-    { label: "Attendance Streak", value: `${streak} days`, sub: "Consecutive school days present", icon: <CalendarCheck className="h-4 w-4 text-emerald-500" /> },
-    { label: "Pending Tasks", value: pending.length, sub: "Assignments awaiting submission", icon: <ClipboardList className="h-4 w-4 text-amber-500" /> },
-    { label: "Subjects", value: myCourses.length, sub: "Enrolled this semester", icon: <Megaphone className="h-4 w-4 text-sky-500" /> },
+    {
+      label: "General Average",
+      value: gwa ?? "—",
+      sub: "Transmuted, all subjects",
+      icon: <TrendingUp className="h-4 w-4 text-primary" />,
+    },
+    {
+      label: "Attendance Streak",
+      value: `${streak} days`,
+      sub: "Consecutive school days present",
+      icon: <CalendarCheck className="h-4 w-4 text-emerald-500" />,
+    },
+    {
+      label: "Pending Tasks",
+      value: pending.length,
+      sub: "Assignments awaiting submission",
+      icon: <ClipboardList className="h-4 w-4 text-amber-500" />,
+    },
+    {
+      label: "Subjects",
+      value: myCourses.length,
+      sub: "Enrolled this semester",
+      icon: <Megaphone className="h-4 w-4 text-sky-500" />,
+    },
   ];
 
   return (
     <AppShell nav={STUDENT_NAV} profile={profile} subtitle="Student Portal">
       <FadeIn>
         <div className="mb-6">
-          <h1 className="font-display text-2xl font-bold sm:text-3xl">
-            Student Dashboard
-          </h1>
+          <h1 className="font-display text-2xl font-bold sm:text-3xl">Student Dashboard</h1>
           <p className="mt-1 text-sm text-muted-foreground">
-            Kumusta, {profile.full_name.split(" ")[0]}! · Grade {profile.grade_level} · {profile.section} · {profile.student_id}
+            Kumusta, {profile.full_name.split(" ")[0]}! · Grade {profile.grade_level} ·{" "}
+            {profile.section} · {profile.student_id}
           </p>
         </div>
       </FadeIn>
@@ -110,7 +157,9 @@ function StudentDashboard() {
                 <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0 text-rose-600 dark:text-rose-400" />
                 <div>
                   <p className="text-sm font-bold text-rose-800 dark:text-rose-200">{a.title}</p>
-                  <p className="mt-0.5 text-sm text-rose-700/90 dark:text-rose-300/80">{a.content}</p>
+                  <p className="mt-0.5 text-sm text-rose-700/90 dark:text-rose-300/80">
+                    {a.content}
+                  </p>
                 </div>
               </div>
             ))}
@@ -122,7 +171,9 @@ function StudentDashboard() {
         {stats.map((s, i) => (
           <MotionCard key={s.label} delay={0.05 * i} className="p-5">
             <div className="flex items-center justify-between">
-              <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{s.label}</p>
+              <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                {s.label}
+              </p>
               {s.icon}
             </div>
             <p className="mt-2 font-display text-3xl font-bold">{s.value}</p>
@@ -137,7 +188,10 @@ function StudentDashboard() {
             <section>
               <div className="mb-3 flex items-center justify-between">
                 <h2 className="font-display text-lg font-bold">My Subjects</h2>
-                <Link to="/dashboard/student/grades" className="flex items-center gap-1 text-xs font-semibold text-primary hover:underline">
+                <Link
+                  to="/dashboard/student/grades"
+                  className="flex items-center gap-1 text-xs font-semibold text-primary hover:underline"
+                >
                   View grades <ArrowRight className="h-3 w-3" />
                 </Link>
               </div>
@@ -150,12 +204,17 @@ function StudentDashboard() {
                     const grade = (grades ?? []).find((g) => g.course_id === c.id);
                     const t = grade ? transmutedOf(grade, att) : null;
                     return (
-                      <Card key={c.id} className="p-4 transition-transform duration-150 hover:-translate-y-0.5">
+                      <Card
+                        key={c.id}
+                        className="p-4 transition-transform duration-150 hover:-translate-y-0.5"
+                      >
                         <div className="flex items-start justify-between gap-2">
                           <div>
                             <p className="text-xs font-bold text-muted-foreground">{c.code}</p>
                             <p className="font-semibold leading-snug">{c.title}</p>
-                            <p className="mt-0.5 text-xs text-muted-foreground">{c.teacher_name ?? "TBA"}</p>
+                            <p className="mt-0.5 text-xs text-muted-foreground">
+                              {c.teacher_name ?? "TBA"}
+                            </p>
                           </div>
                           <span className={`rounded-lg px-2 py-1 text-xs font-bold ${st.soft}`}>
                             {t != null ? t : "—"}
@@ -176,7 +235,10 @@ function StudentDashboard() {
             <section>
               <div className="mb-3 flex items-center justify-between">
                 <h2 className="font-display text-lg font-bold">Upcoming Tasks</h2>
-                <Link to="/dashboard/student/assignments" className="flex items-center gap-1 text-xs font-semibold text-primary hover:underline">
+                <Link
+                  to="/dashboard/student/assignments"
+                  className="flex items-center gap-1 text-xs font-semibold text-primary hover:underline"
+                >
                   All assignments <ArrowRight className="h-3 w-3" />
                 </Link>
               </div>
@@ -195,7 +257,15 @@ function StudentDashboard() {
                             {c?.code} · {fmtDate(a.due_date)}
                           </p>
                         </div>
-                        <Badge tone={due === "Overdue" ? "red" : due.includes("today") || due.includes("tomorrow") ? "amber" : "slate"}>
+                        <Badge
+                          tone={
+                            due === "Overdue"
+                              ? "red"
+                              : due.includes("today") || due.includes("tomorrow")
+                                ? "amber"
+                                : "slate"
+                          }
+                        >
                           {due}
                         </Badge>
                       </div>
@@ -214,7 +284,15 @@ function StudentDashboard() {
               {visible.slice(0, 4).map((a) => (
                 <Card key={a.id} className="p-4">
                   <div className="flex items-center gap-2">
-                    <Badge tone={a.category === "urgent" ? "red" : a.category === "event" ? "green" : "indigo"}>
+                    <Badge
+                      tone={
+                        a.category === "urgent"
+                          ? "red"
+                          : a.category === "event"
+                            ? "green"
+                            : "indigo"
+                      }
+                    >
                       {a.category}
                     </Badge>
                     <p className="text-xs text-muted-foreground">{fmtDate(a.created_at)}</p>

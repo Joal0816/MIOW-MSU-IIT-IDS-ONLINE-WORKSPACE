@@ -57,9 +57,17 @@ export const Route = createFileRoute("/dashboard/admin/settings")({
   head: () => ({
     meta: [
       { title: "Admin Settings | MIOW - MSU-IIT IDS Online Workspace" },
-      { name: "description", content: "Configure grading weights, kiosk hardware, role permissions, backups, and audit logs." },
+      {
+        name: "description",
+        content:
+          "Configure grading weights, kiosk hardware, role permissions, backups, and audit logs.",
+      },
       { property: "og:title", content: "Admin Settings | MIOW - MSU-IIT IDS Online Workspace" },
-      { property: "og:description", content: "Configure grading weights, kiosk hardware, role permissions, backups, and audit logs." },
+      {
+        property: "og:description",
+        content:
+          "Configure grading weights, kiosk hardware, role permissions, backups, and audit logs.",
+      },
     ],
   }),
   component: AdminSettings,
@@ -90,7 +98,9 @@ CREATE TABLE attendance_logs (id uuid PRIMARY KEY, student_id uuid REFERENCES pr
 function Field({ label, ...props }: { label: string } & InputHTMLAttributes<HTMLInputElement>) {
   return (
     <label className="block">
-      <span className="mb-1 block text-xs font-semibold uppercase tracking-wide text-muted-foreground">{label}</span>
+      <span className="mb-1 block text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+        {label}
+      </span>
       <input
         {...props}
         className="w-full rounded-xl border border-input bg-background/70 px-3 py-2 text-sm outline-none backdrop-blur-sm transition-shadow focus:ring-2 focus:ring-ring"
@@ -175,9 +185,21 @@ function AdminSettings() {
   const [deleteBusy, setDeleteBusy] = useState(false);
 
   // Course-lead pickers list TEACHERS only — admins never appear there.
-  const { data: teachers } = useQuery({ queryKey: ["teachers"], queryFn: listTeachers, enabled: !!profile });
-  const { data: courses } = useQuery({ queryKey: ["courses"], queryFn: listCourses, enabled: !!profile });
-  const { data: students } = useQuery({ queryKey: ["students"], queryFn: listStudents, enabled: !!profile });
+  const { data: teachers } = useQuery({
+    queryKey: ["teachers"],
+    queryFn: listTeachers,
+    enabled: !!profile,
+  });
+  const { data: courses } = useQuery({
+    queryKey: ["courses"],
+    queryFn: listCourses,
+    enabled: !!profile,
+  });
+  const { data: students } = useQuery({
+    queryKey: ["students"],
+    queryFn: listStudents,
+    enabled: !!profile,
+  });
   const { data: directory } = useQuery({
     queryKey: ["directory"],
     queryFn: listAllUsers,
@@ -222,8 +244,10 @@ function AdminSettings() {
       return;
     }
     let parsed = raw;
-    if (cfg.rfidPrefix && parsed.startsWith(cfg.rfidPrefix)) parsed = parsed.slice(cfg.rfidPrefix.length);
-    if (cfg.rfidSuffix && parsed.endsWith(cfg.rfidSuffix)) parsed = parsed.slice(0, -cfg.rfidSuffix.length);
+    if (cfg.rfidPrefix && parsed.startsWith(cfg.rfidPrefix))
+      parsed = parsed.slice(cfg.rfidPrefix.length);
+    if (cfg.rfidSuffix && parsed.endsWith(cfg.rfidSuffix))
+      parsed = parsed.slice(0, -cfg.rfidSuffix.length);
     if (cfg.audioChime) {
       try {
         const ctx = new AudioContext();
@@ -265,7 +289,11 @@ function AdminSettings() {
         const grades = await listGradesForCourse(c.id, cfg.activeQuarter);
         out.push({ course: c.code, title: c.title, quarter: cfg.activeQuarter, grades });
       }
-      downloadFile(`northview-gradebook-q${cfg.activeQuarter}.json`, JSON.stringify(out, null, 2), "application/json");
+      downloadFile(
+        `northview-gradebook-q${cfg.activeQuarter}.json`,
+        JSON.stringify(out, null, 2),
+        "application/json",
+      );
       logAudit("Data export", `Complete gradebook JSON exported (Q${cfg.activeQuarter})`);
       setAudit(listAudit());
       toast.success("Gradebook exported");
@@ -319,7 +347,9 @@ function AdminSettings() {
     if (dirRole !== "all" && u.role !== dirRole) return false;
     const q = dirQuery.trim().toLowerCase();
     if (!q) return true;
-    return [u.full_name, u.email ?? "", u.student_id ?? ""].some((f) => f.toLowerCase().includes(q));
+    return [u.full_name, u.email ?? "", u.student_id ?? ""].some((f) =>
+      f.toLowerCase().includes(q),
+    );
   });
 
   /** Context-aware confirmation copy for each role transition. */
@@ -335,7 +365,9 @@ function AdminSettings() {
     }
     const leads = (courses ?? []).filter((c) => c.teacher_id === user.id).length;
     return `Changing role from ${ROLE_LABEL[user.role]} to Student revokes faculty tools.${
-      leads > 0 ? ` ${leads} active course lead${leads > 1 ? "s" : ""} will be unassigned automatically.` : ""
+      leads > 0
+        ? ` ${leads} active course lead${leads > 1 ? "s" : ""} will be unassigned automatically.`
+        : ""
     }`;
   };
 
@@ -408,7 +440,8 @@ function AdminSettings() {
 
   const gradeCounts = new Map<number, number>();
   (students ?? []).forEach((s) => {
-    if (s.grade_level != null) gradeCounts.set(s.grade_level, (gradeCounts.get(s.grade_level) ?? 0) + 1);
+    if (s.grade_level != null)
+      gradeCounts.set(s.grade_level, (gradeCounts.get(s.grade_level) ?? 0) + 1);
   });
 
   return (
@@ -495,14 +528,18 @@ function AdminSettings() {
                       <div className="flex items-center gap-2">
                         <MiowMark plate={false} className="h-7 w-7" />
                         <div>
-                          <p className="font-display text-sm font-extrabold tracking-[0.1em]">MIOW</p>
+                          <p className="font-display text-sm font-extrabold tracking-[0.1em]">
+                            MIOW
+                          </p>
                           <p className="text-[8px] uppercase tracking-[0.18em] opacity-80">
                             MSU-IIT IDS Online Workspace
                           </p>
                         </div>
                       </div>
                       <div className="absolute bottom-5 left-5">
-                        <p className="text-[9px] uppercase tracking-[0.2em] opacity-70">Learner ID</p>
+                        <p className="text-[9px] uppercase tracking-[0.2em] opacity-70">
+                          Learner ID
+                        </p>
                         <p className="font-display text-base font-bold">2026-00417</p>
                       </div>
                       <div
@@ -518,7 +555,6 @@ function AdminSettings() {
               </Card>
 
               <Card className="p-6">
-
                 <h2 className="font-display text-lg font-bold">Academic Calendar</h2>
                 <div className="mt-4 grid gap-4 sm:grid-cols-2">
                   <label className="block">
@@ -531,7 +567,9 @@ function AdminSettings() {
                       className="w-full rounded-xl border border-input bg-background/70 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring"
                     >
                       {["2023–2024", "2024–2025", "2025–2026", "2026–2027"].map((y) => (
-                        <option key={y} value={y}>{y}</option>
+                        <option key={y} value={y}>
+                          {y}
+                        </option>
                       ))}
                     </select>
                   </label>
@@ -545,7 +583,9 @@ function AdminSettings() {
                       className="w-full rounded-xl border border-input bg-background/70 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring"
                     >
                       {[1, 2, 3, 4].map((q) => (
-                        <option key={q} value={q}>Quarter {q}</option>
+                        <option key={q} value={q}>
+                          Quarter {q}
+                        </option>
                       ))}
                     </select>
                   </label>
@@ -557,7 +597,8 @@ function AdminSettings() {
                   <div>
                     <h2 className="font-display text-lg font-bold">Grading Weights</h2>
                     <p className="text-xs text-muted-foreground">
-                      Standard scheme: 10% Attendance · 20% Written Work · 30% Periodical Exam · 40% Performance Tasks. The total must equal 100%.
+                      Standard scheme: 10% Attendance · 20% Written Work · 30% Periodical Exam · 40%
+                      Performance Tasks. The total must equal 100%.
                     </p>
                   </div>
                   <Badge tone={weightsValid ? "green" : "red"}>Total: {weightSum}%</Badge>
@@ -569,7 +610,12 @@ function AdminSettings() {
                     min={0}
                     max={100}
                     value={cfg.weights.attendance}
-                    onChange={(e) => setCfg({ ...cfg, weights: { ...cfg.weights, attendance: Number(e.target.value) } })}
+                    onChange={(e) =>
+                      setCfg({
+                        ...cfg,
+                        weights: { ...cfg.weights, attendance: Number(e.target.value) },
+                      })
+                    }
                   />
                   <Field
                     label="Written Work %"
@@ -577,7 +623,9 @@ function AdminSettings() {
                     min={0}
                     max={100}
                     value={cfg.weights.ww}
-                    onChange={(e) => setCfg({ ...cfg, weights: { ...cfg.weights, ww: Number(e.target.value) } })}
+                    onChange={(e) =>
+                      setCfg({ ...cfg, weights: { ...cfg.weights, ww: Number(e.target.value) } })
+                    }
                   />
                   <Field
                     label="Periodical Exam %"
@@ -585,7 +633,9 @@ function AdminSettings() {
                     min={0}
                     max={100}
                     value={cfg.weights.exam}
-                    onChange={(e) => setCfg({ ...cfg, weights: { ...cfg.weights, exam: Number(e.target.value) } })}
+                    onChange={(e) =>
+                      setCfg({ ...cfg, weights: { ...cfg.weights, exam: Number(e.target.value) } })
+                    }
                   />
                   <Field
                     label="Performance Tasks %"
@@ -593,12 +643,15 @@ function AdminSettings() {
                     min={0}
                     max={100}
                     value={cfg.weights.pt}
-                    onChange={(e) => setCfg({ ...cfg, weights: { ...cfg.weights, pt: Number(e.target.value) } })}
+                    onChange={(e) =>
+                      setCfg({ ...cfg, weights: { ...cfg.weights, pt: Number(e.target.value) } })
+                    }
                   />
                 </div>
                 {!weightsValid && (
                   <p className="mt-2 flex items-center gap-1.5 text-xs font-semibold text-rose-600 dark:text-rose-400">
-                    <TriangleAlert className="h-3.5 w-3.5" /> Weights must sum to exactly 100% before saving.
+                    <TriangleAlert className="h-3.5 w-3.5" /> Weights must sum to exactly 100%
+                    before saving.
                   </p>
                 )}
                 <div className="mt-4">
@@ -629,13 +682,18 @@ function AdminSettings() {
                 </p>
                 <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
                   {TRANSMUTATION_TABLE.slice(0, 8).map(([min, t]) => (
-                    <div key={min} className="rounded-xl border border-border/60 bg-muted/40 px-3 py-2 text-center">
+                    <div
+                      key={min}
+                      className="rounded-xl border border-border/60 bg-muted/40 px-3 py-2 text-center"
+                    >
                       <p className="text-xs text-muted-foreground">≥ {min}</p>
                       <p className="font-display text-lg font-bold">{t}</p>
                     </div>
                   ))}
                 </div>
-                <p className="mt-2 text-xs text-muted-foreground">…down to initial 0 → transmuted 60.</p>
+                <p className="mt-2 text-xs text-muted-foreground">
+                  …down to initial 0 → transmuted 60.
+                </p>
               </Card>
             </>
           )}
@@ -752,7 +810,10 @@ function AdminSettings() {
                   <button
                     onClick={() => {
                       persistCfg(cfg, "Kiosk configuration saved");
-                      logAudit("Kiosk config updated", `Sensitivity ${cfg.faceSensitivity}% · timeout ${cfg.detectTimeout}s`);
+                      logAudit(
+                        "Kiosk config updated",
+                        `Sensitivity ${cfg.faceSensitivity}% · timeout ${cfg.detectTimeout}s`,
+                      );
                       setAudit(listAudit());
                     }}
                     className="flex items-center gap-2 rounded-xl bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground shadow-lift transition-opacity hover:opacity-90"
@@ -774,7 +835,8 @@ function AdminSettings() {
                       <UserCog className="h-5 w-5 text-primary" /> User Directory & Role Assignment
                     </h2>
                     <p className="text-xs text-muted-foreground">
-                      Reassign roles instantly — course leads are unassigned automatically when a teacher becomes a student.
+                      Reassign roles instantly — course leads are unassigned automatically when a
+                      teacher becomes a student.
                     </p>
                   </div>
                   <div className="relative">
@@ -788,7 +850,11 @@ function AdminSettings() {
                     />
                   </div>
                 </div>
-                <div className="mb-4 flex flex-wrap gap-1.5" role="group" aria-label="Filter by role">
+                <div
+                  className="mb-4 flex flex-wrap gap-1.5"
+                  role="group"
+                  aria-label="Filter by role"
+                >
                   {(["all", "student", "teacher", "admin"] as const).map((r) => (
                     <button
                       key={r}
@@ -806,134 +872,151 @@ function AdminSettings() {
                   ))}
                 </div>
                 <div className="overflow-x-auto">
-                    <table className="w-full min-w-[560px] text-sm">
-                      <thead>
-                        <tr className="border-b border-border text-left text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                          <th className="pb-2 pr-3">Name</th>
-                          <th className="pb-2 pr-3">Email / ID</th>
-                          <th className="pb-2 pr-3">Current Role</th>
-                          <th className="pb-2">Action</th>
-                        </tr>
-                      </thead>
-                      <tbody className="divide-y divide-border">
-                        {filteredDirectory.map((u) => (
-                          <tr key={u.id}>
-                            <td className="py-2.5 pr-3">
-                              <div className="flex items-center gap-2.5">
-                                {u.avatar_url ? (
-                                  <img
-                                    src={u.avatar_url}
-                                    alt=""
-                                    className="h-8 w-8 shrink-0 rounded-full object-cover"
-                                  />
-                                ) : (
-                                  <Initials name={u.full_name} />
+                  <table className="w-full min-w-[560px] text-sm">
+                    <thead>
+                      <tr className="border-b border-border text-left text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                        <th className="pb-2 pr-3">Name</th>
+                        <th className="pb-2 pr-3">Email / ID</th>
+                        <th className="pb-2 pr-3">Current Role</th>
+                        <th className="pb-2">Action</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-border">
+                      {filteredDirectory.map((u) => (
+                        <tr key={u.id}>
+                          <td className="py-2.5 pr-3">
+                            <div className="flex items-center gap-2.5">
+                              {u.avatar_url ? (
+                                <img
+                                  src={u.avatar_url}
+                                  alt=""
+                                  className="h-8 w-8 shrink-0 rounded-full object-cover"
+                                />
+                              ) : (
+                                <Initials name={u.full_name} />
+                              )}
+                              <span className="font-semibold">
+                                {u.full_name}
+                                {u.id === profile.id && (
+                                  <span className="ml-1.5 text-xs font-normal text-muted-foreground">
+                                    (you)
+                                  </span>
                                 )}
-                                <span className="font-semibold">
-                                  {u.full_name}
-                                  {u.id === profile.id && (
-                                    <span className="ml-1.5 text-xs font-normal text-muted-foreground">(you)</span>
-                                  )}
-                                </span>
-                              </div>
-                            </td>
-                            <td className="py-2.5 pr-3 text-xs text-muted-foreground">
-                              {u.email ?? "—"}
-                              {u.student_id && <span className="block">{u.student_id}</span>}
-                            </td>
-                            <td className="py-2.5 pr-3">
-                              <Badge tone={u.role === "admin" ? "indigo" : u.role === "teacher" ? "sky" : "slate"}>
-                                {ROLE_LABEL[u.role]}
-                              </Badge>
-                            </td>
-                            <td className="py-2.5">
-                              <div className="flex items-center gap-2">
-                                {u.role === "admin" ? (
-                                  // Dedicated admin demotion flow — confirmed via dialog.
-                                  <button
-                                    onClick={() => setRoleChange({ user: u, next: "teacher" })}
-                                    disabled={u.id === profile.id || activeAdmins <= 1}
-                                    aria-label={`Revoke administrator access for ${u.full_name}`}
-                                    title={
-                                      u.id === profile.id
-                                        ? "You can't change your own role"
-                                        : activeAdmins <= 1
-                                          ? "The last remaining admin can't be demoted"
-                                          : "Revoke administrator access (demote to Teacher)"
-                                    }
-                                    className="flex items-center gap-1.5 rounded-xl border border-border bg-background/70 px-2.5 py-1.5 text-xs font-semibold text-muted-foreground transition-colors hover:border-primary/40 hover:text-foreground disabled:cursor-not-allowed disabled:opacity-40"
+                              </span>
+                            </div>
+                          </td>
+                          <td className="py-2.5 pr-3 text-xs text-muted-foreground">
+                            {u.email ?? "—"}
+                            {u.student_id && <span className="block">{u.student_id}</span>}
+                          </td>
+                          <td className="py-2.5 pr-3">
+                            <Badge
+                              tone={
+                                u.role === "admin"
+                                  ? "indigo"
+                                  : u.role === "teacher"
+                                    ? "sky"
+                                    : "slate"
+                              }
+                            >
+                              {ROLE_LABEL[u.role]}
+                            </Badge>
+                          </td>
+                          <td className="py-2.5">
+                            <div className="flex items-center gap-2">
+                              {u.role === "admin" ? (
+                                // Dedicated admin demotion flow — confirmed via dialog.
+                                <button
+                                  onClick={() => setRoleChange({ user: u, next: "teacher" })}
+                                  disabled={u.id === profile.id || activeAdmins <= 1}
+                                  aria-label={`Revoke administrator access for ${u.full_name}`}
+                                  title={
+                                    u.id === profile.id
+                                      ? "You can't change your own role"
+                                      : activeAdmins <= 1
+                                        ? "The last remaining admin can't be demoted"
+                                        : "Revoke administrator access (demote to Teacher)"
+                                  }
+                                  className="flex items-center gap-1.5 rounded-xl border border-border bg-background/70 px-2.5 py-1.5 text-xs font-semibold text-muted-foreground transition-colors hover:border-primary/40 hover:text-foreground disabled:cursor-not-allowed disabled:opacity-40"
+                                >
+                                  <ShieldMinus className="h-3.5 w-3.5" /> Revoke admin
+                                </button>
+                              ) : (
+                                <>
+                                  {/* Inline switcher: Student ⇄ Teacher only. */}
+                                  <select
+                                    value={u.role}
+                                    disabled={u.id === profile.id}
+                                    onChange={(e) => {
+                                      const next = e.target.value as Role;
+                                      if (next !== u.role) setRoleChange({ user: u, next });
+                                    }}
+                                    aria-label={`Change role for ${u.full_name}`}
+                                    className="rounded-xl border border-input bg-background/70 px-2.5 py-1.5 text-xs font-semibold outline-none focus:ring-2 focus:ring-ring disabled:opacity-50"
                                   >
-                                    <ShieldMinus className="h-3.5 w-3.5" /> Revoke admin
-                                  </button>
-                                ) : (
-                                  <>
-                                    {/* Inline switcher: Student ⇄ Teacher only. */}
-                                    <select
-                                      value={u.role}
-                                      disabled={u.id === profile.id}
-                                      onChange={(e) => {
-                                        const next = e.target.value as Role;
-                                        if (next !== u.role) setRoleChange({ user: u, next });
-                                      }}
-                                      aria-label={`Change role for ${u.full_name}`}
-                                      className="rounded-xl border border-input bg-background/70 px-2.5 py-1.5 text-xs font-semibold outline-none focus:ring-2 focus:ring-ring disabled:opacity-50"
+                                    <option value="student">Student</option>
+                                    <option value="teacher">Teacher</option>
+                                  </select>
+                                  {u.id !== profile.id && (
+                                    // Dedicated admin promotion flow — confirmed via dialog.
+                                    <button
+                                      onClick={() => setRoleChange({ user: u, next: "admin" })}
+                                      aria-label={`Promote ${u.full_name} to Administrator`}
+                                      title="Promote to Administrator"
+                                      className="rounded-xl border border-border p-1.5 text-muted-foreground transition-colors hover:border-indigo-300 hover:bg-indigo-50 hover:text-indigo-600 dark:hover:border-indigo-500/40 dark:hover:bg-indigo-500/10 dark:hover:text-indigo-400"
                                     >
-                                      <option value="student">Student</option>
-                                      <option value="teacher">Teacher</option>
-                                    </select>
-                                    {u.id !== profile.id && (
-                                      // Dedicated admin promotion flow — confirmed via dialog.
-                                      <button
-                                        onClick={() => setRoleChange({ user: u, next: "admin" })}
-                                        aria-label={`Promote ${u.full_name} to Administrator`}
-                                        title="Promote to Administrator"
-                                        className="rounded-xl border border-border p-1.5 text-muted-foreground transition-colors hover:border-indigo-300 hover:bg-indigo-50 hover:text-indigo-600 dark:hover:border-indigo-500/40 dark:hover:bg-indigo-500/10 dark:hover:text-indigo-400"
-                                      >
-                                        <ShieldPlus className="h-4 w-4" />
-                                      </button>
-                                    )}
-                                  </>
-                                )}
-                                {u.id !== profile.id && (
-                                  <button
-                                    onClick={() => setDeleteTarget(u)}
-                                    disabled={u.role === "admin" && activeAdmins <= 1}
-                                    aria-label={`Remove ${u.full_name}`}
-                                    title={
-                                      u.role === "admin" && activeAdmins <= 1
-                                        ? "The last remaining admin can't be removed"
-                                        : `Remove ${u.full_name}`
-                                    }
-                                    className="rounded-xl border border-border p-1.5 text-muted-foreground transition-colors hover:border-rose-300 hover:bg-rose-50 hover:text-rose-600 disabled:cursor-not-allowed disabled:opacity-40 dark:hover:border-rose-500/40 dark:hover:bg-rose-500/10 dark:hover:text-rose-400"
-                                  >
-                                    <Trash2 className="h-4 w-4" />
-                                  </button>
-                                )}
-                              </div>
-                            </td>
-                          </tr>
-                        ))}
-                        {filteredDirectory.length === 0 && (
-                          <tr>
-                            <td colSpan={4} className="py-6 text-center text-sm text-muted-foreground">
-                              No users match this filter.
-                            </td>
-                          </tr>
-                        )}
-                      </tbody>
-                    </table>
+                                      <ShieldPlus className="h-4 w-4" />
+                                    </button>
+                                  )}
+                                </>
+                              )}
+                              {u.id !== profile.id && (
+                                <button
+                                  onClick={() => setDeleteTarget(u)}
+                                  disabled={u.role === "admin" && activeAdmins <= 1}
+                                  aria-label={`Remove ${u.full_name}`}
+                                  title={
+                                    u.role === "admin" && activeAdmins <= 1
+                                      ? "The last remaining admin can't be removed"
+                                      : `Remove ${u.full_name}`
+                                  }
+                                  className="rounded-xl border border-border p-1.5 text-muted-foreground transition-colors hover:border-rose-300 hover:bg-rose-50 hover:text-rose-600 disabled:cursor-not-allowed disabled:opacity-40 dark:hover:border-rose-500/40 dark:hover:bg-rose-500/10 dark:hover:text-rose-400"
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                </button>
+                              )}
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                      {filteredDirectory.length === 0 && (
+                        <tr>
+                          <td
+                            colSpan={4}
+                            className="py-6 text-center text-sm text-muted-foreground"
+                          >
+                            No users match this filter.
+                          </td>
+                        </tr>
+                      )}
+                    </tbody>
+                  </table>
                 </div>
               </Card>
 
               <Card className="p-6">
                 <h2 className="font-display text-lg font-bold">Teacher → Course Assignments</h2>
-                <p className="mb-4 text-xs text-muted-foreground">Assign a subject lead for each course.</p>
+                <p className="mb-4 text-xs text-muted-foreground">
+                  Assign a subject lead for each course.
+                </p>
                 <div className="divide-y divide-border">
                   {(courses ?? []).map((c) => (
                     <div key={c.id} className="flex flex-wrap items-center gap-3 py-3">
                       <div className="min-w-0 flex-1">
                         <p className="text-sm font-semibold">{c.title}</p>
-                        <p className="text-xs text-muted-foreground">{c.code} · Grade {c.grade_level}</p>
+                        <p className="text-xs text-muted-foreground">
+                          {c.code} · Grade {c.grade_level}
+                        </p>
                       </div>
                       <select
                         value={c.teacher_id ?? ""}
@@ -941,7 +1024,9 @@ function AdminSettings() {
                           const teacherId = e.target.value || null;
                           try {
                             await updateCourse(c.id, { teacher_id: teacherId });
-                            const name = (teachers ?? []).find((s) => s.id === teacherId)?.full_name ?? "Unassigned";
+                            const name =
+                              (teachers ?? []).find((s) => s.id === teacherId)?.full_name ??
+                              "Unassigned";
                             logAudit("Course reassigned", `${c.code} lead set to ${name}`);
                             setAudit(listAudit());
                             toast.success(`${c.code} → ${name}`);
@@ -955,7 +1040,9 @@ function AdminSettings() {
                       >
                         <option value="">Unassigned</option>
                         {(teachers ?? []).map((t) => (
-                          <option key={t.id} value={t.id}>{t.full_name}</option>
+                          <option key={t.id} value={t.id}>
+                            {t.full_name}
+                          </option>
                         ))}
                       </select>
                     </div>
@@ -965,18 +1052,30 @@ function AdminSettings() {
 
               <Card className="p-6">
                 <h2 className="font-display text-lg font-bold">Section Batching</h2>
-                <p className="mb-4 text-xs text-muted-foreground">Current roster sizes per grade level.</p>
+                <p className="mb-4 text-xs text-muted-foreground">
+                  Current roster sizes per grade level.
+                </p>
                 <div className="grid gap-2 sm:grid-cols-3">
-                  {[...gradeCounts.entries()].sort((a, b) => a[0] - b[0]).map(([grade, count]) => (
-                    <div key={grade} className="rounded-xl border border-border/60 bg-muted/40 px-4 py-3">
-                      <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Grade {grade}</p>
-                      <p className="font-display text-2xl font-bold">{count}</p>
-                    </div>
-                  ))}
+                  {[...gradeCounts.entries()]
+                    .sort((a, b) => a[0] - b[0])
+                    .map(([grade, count]) => (
+                      <div
+                        key={grade}
+                        className="rounded-xl border border-border/60 bg-muted/40 px-4 py-3"
+                      >
+                        <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                          Grade {grade}
+                        </p>
+                        <p className="font-display text-2xl font-bold">{count}</p>
+                      </div>
+                    ))}
                 </div>
                 <button
                   onClick={() => {
-                    logAudit("Batch promote requested", "End-of-year section batching queued for registrar approval");
+                    logAudit(
+                      "Batch promote requested",
+                      "End-of-year section batching queued for registrar approval",
+                    );
                     setAudit(listAudit());
                     toast.success("Batch promote queued for registrar approval");
                   }}
@@ -995,25 +1094,39 @@ function AdminSettings() {
                     label="Teachers can edit published grades"
                     description="Allow corrections after a quarter's grades are released"
                     checked={cfg.privileges.teacherEditPublished}
-                    onChange={(v) => persistCfg({ ...cfg, privileges: { ...cfg.privileges, teacherEditPublished: v } })}
+                    onChange={(v) =>
+                      persistCfg({
+                        ...cfg,
+                        privileges: { ...cfg.privileges, teacherEditPublished: v },
+                      })
+                    }
                   />
                   <Toggle
                     label="Students can view class rank"
                     description="Expose percentile ranking on the student grade page"
                     checked={cfg.privileges.studentViewRank}
-                    onChange={(v) => persistCfg({ ...cfg, privileges: { ...cfg.privileges, studentViewRank: v } })}
+                    onChange={(v) =>
+                      persistCfg({ ...cfg, privileges: { ...cfg.privileges, studentViewRank: v } })
+                    }
                   />
                   <Toggle
                     label="Teachers can post announcements"
                     description="Let teachers broadcast to their own sections"
                     checked={cfg.privileges.teacherPostAnnouncements}
-                    onChange={(v) => persistCfg({ ...cfg, privileges: { ...cfg.privileges, teacherPostAnnouncements: v } })}
+                    onChange={(v) =>
+                      persistCfg({
+                        ...cfg,
+                        privileges: { ...cfg.privileges, teacherPostAnnouncements: v },
+                      })
+                    }
                   />
                   <Toggle
                     label="Guardian portal access"
                     description="Allow parent/guardian read-only accounts"
                     checked={cfg.privileges.guardianAccess}
-                    onChange={(v) => persistCfg({ ...cfg, privileges: { ...cfg.privileges, guardianAccess: v } })}
+                    onChange={(v) =>
+                      persistCfg({ ...cfg, privileges: { ...cfg.privileges, guardianAccess: v } })
+                    }
                   />
                 </div>
               </Card>
@@ -1047,14 +1160,23 @@ function AdminSettings() {
                       <div className="text-right">
                         <p className="text-xs font-semibold">{e.actor}</p>
                         <p className="text-xs text-muted-foreground">
-                          {fmtDate(e.at)} {fmtTime(e.at)} · 10.8.{(i * 7) % 250 + 2}.{(i * 13) % 250 + 4}
+                          {fmtDate(e.at)} {fmtTime(e.at)} · 10.8.{((i * 7) % 250) + 2}.
+                          {((i * 13) % 250) + 4}
                         </p>
                       </div>
-                      <Badge tone={e.role === "admin" ? "indigo" : e.role === "teacher" ? "sky" : "slate"}>{e.role}</Badge>
+                      <Badge
+                        tone={
+                          e.role === "admin" ? "indigo" : e.role === "teacher" ? "sky" : "slate"
+                        }
+                      >
+                        {e.role}
+                      </Badge>
                     </div>
                   ))}
                   {filteredAudit.length === 0 && (
-                    <p className="py-6 text-center text-sm text-muted-foreground">No matching audit entries.</p>
+                    <p className="py-6 text-center text-sm text-muted-foreground">
+                      No matching audit entries.
+                    </p>
                   )}
                 </div>
               </Card>
@@ -1090,7 +1212,9 @@ function AdminSettings() {
                 <h2 className="flex items-center gap-2 font-display text-lg font-bold text-rose-700 dark:text-rose-300">
                   <Trash2 className="h-5 w-5" /> Data Reset Utilities
                 </h2>
-                <p className="mt-1 text-xs text-muted-foreground">Destructive actions — confirmation required.</p>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  Destructive actions — confirmation required.
+                </p>
                 <div className="mt-4 flex flex-wrap gap-2">
                   <button
                     onClick={() => setConfirmAction("reset")}
@@ -1172,20 +1296,42 @@ function AdminSettings() {
           <>
             <div className="flex items-center gap-3">
               {roleChange.user.avatar_url ? (
-                <img src={roleChange.user.avatar_url} alt="" className="h-10 w-10 rounded-full object-cover" />
+                <img
+                  src={roleChange.user.avatar_url}
+                  alt=""
+                  className="h-10 w-10 rounded-full object-cover"
+                />
               ) : (
                 <Initials name={roleChange.user.full_name} />
               )}
               <div>
                 <p className="text-sm font-semibold">{roleChange.user.full_name}</p>
-                <p className="text-xs text-muted-foreground">{roleChange.user.email ?? roleChange.user.student_id ?? ""}</p>
+                <p className="text-xs text-muted-foreground">
+                  {roleChange.user.email ?? roleChange.user.student_id ?? ""}
+                </p>
               </div>
               <div className="ml-auto flex items-center gap-1.5">
-                <Badge tone={roleChange.user.role === "admin" ? "indigo" : roleChange.user.role === "teacher" ? "sky" : "slate"}>
+                <Badge
+                  tone={
+                    roleChange.user.role === "admin"
+                      ? "indigo"
+                      : roleChange.user.role === "teacher"
+                        ? "sky"
+                        : "slate"
+                  }
+                >
                   {ROLE_LABEL[roleChange.user.role]}
                 </Badge>
                 <span className="text-muted-foreground">→</span>
-                <Badge tone={roleChange.next === "admin" ? "indigo" : roleChange.next === "teacher" ? "sky" : "slate"}>
+                <Badge
+                  tone={
+                    roleChange.next === "admin"
+                      ? "indigo"
+                      : roleChange.next === "teacher"
+                        ? "sky"
+                        : "slate"
+                  }
+                >
                   {ROLE_LABEL[roleChange.next]}
                 </Badge>
               </div>
@@ -1213,16 +1359,16 @@ function AdminSettings() {
       </Modal>
 
       {/* User removal confirmation (soft delete) */}
-      <Modal
-        open={deleteTarget !== null}
-        onClose={() => setDeleteTarget(null)}
-        title="Remove User"
-      >
+      <Modal open={deleteTarget !== null} onClose={() => setDeleteTarget(null)} title="Remove User">
         {deleteTarget && (
           <>
             <div className="flex items-center gap-3">
               {deleteTarget.avatar_url ? (
-                <img src={deleteTarget.avatar_url} alt="" className="h-10 w-10 rounded-full object-cover" />
+                <img
+                  src={deleteTarget.avatar_url}
+                  alt=""
+                  className="h-10 w-10 rounded-full object-cover"
+                />
               ) : (
                 <Initials name={deleteTarget.full_name} />
               )}
@@ -1234,7 +1380,11 @@ function AdminSettings() {
               </div>
               <Badge
                 tone={
-                  deleteTarget.role === "admin" ? "indigo" : deleteTarget.role === "teacher" ? "sky" : "slate"
+                  deleteTarget.role === "admin"
+                    ? "indigo"
+                    : deleteTarget.role === "teacher"
+                      ? "sky"
+                      : "slate"
                 }
               >
                 {ROLE_LABEL[deleteTarget.role]}

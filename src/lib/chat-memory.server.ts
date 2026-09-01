@@ -29,7 +29,10 @@ export function summarizeChat(messages: ChatMessageLite[], maxChars = 800): stri
   const tail = messages.slice(-20);
   const lines = tail.map((m) => {
     const role = m.role === "user" ? "Student" : m.role === "assistant" ? "ClassMate" : m.role;
-    const content = String(m.content ?? "").trim().replace(/\s+/g, " ").slice(0, 240);
+    const content = String(m.content ?? "")
+      .trim()
+      .replace(/\s+/g, " ")
+      .slice(0, 240);
     return `${role}: ${content}`;
   });
   const joined = lines.join(" | ");

@@ -4,6 +4,7 @@ import { z } from "zod";
 import { db } from "@/integrations/db/client.server";
 import { unwrap, withoutToken } from "@/lib/server/utils.server";
 import { requireStaff } from "@/lib/server/auth.server";
+import { schemas } from "@/lib/server/schemas.server";
 
 export async function listCourses() {
   const courses = await unwrap<any[]>(db.from("courses").select("*").order("code"));
@@ -31,7 +32,7 @@ async function assertTeacherAssignable(teacherId: unknown) {
   }
 }
 
-export async function createCourse(input: { title: string; code: string; grade_level: number; education_level?: string; college_year?: number | null; strand?: string | null; program?: string | null; teacher_id?: string | null; color?: string; days_of_week?: string[] | null; start_time?: string | null; end_time?: string | null; late_threshold_minutes?: number; token: string }) {
+export async function createCourse(input: z.infer<typeof schemas.courseInput>) {
   await assertTeacherAssignable(input["teacher_id"]);
   await unwrap(db.from("courses").insert(withoutToken(input)));
 }
@@ -67,7 +68,7 @@ export async function listAssignments() {
   return unwrap<any[]>(db.from("assignments").select("*").is("deleted_at", null).order("due_date"));
 }
 
-export async function createAssignment(input: { course_id: string; title: string; description?: string | null; due_date?: string | null; total_points?: number; component_type?: string; attachments?: unknown[]; token: string }) {
+export async function createAssignment(input: z.infer<typeof schemas.assignmentInput>) {
   await unwrap(db.from("assignments").insert(withoutToken(input)));
 }
 
@@ -101,7 +102,7 @@ export async function listSubmissionsForStudent(studentId: string) {
   return unwrap<any[]>(db.from("submissions").select("*").eq("student_id", studentId));
 }
 
-export async function submitAssignment(input: { assignment_id: string; student_id: string; content?: string | null; file_url?: string | null; status?: string; submitted_at?: string | null; token: string }) {
+export async function submitAssignment(input: z.infer<typeof schemas.submissionInput>) {
   const existing = await unwrap<{ id: string } | null>(
     db
       .from("submissions")

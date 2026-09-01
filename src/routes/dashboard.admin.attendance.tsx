@@ -36,9 +36,15 @@ export const Route = createFileRoute("/dashboard/admin/attendance")({
   head: () => ({
     meta: [
       { title: "Attendance Kiosk | MIOW - MSU-IIT IDS Online Workspace" },
-      { name: "description", content: "Gate kiosk: RFID tap-in/tap-out with face verification and live feed." },
+      {
+        name: "description",
+        content: "Gate kiosk: RFID tap-in/tap-out with face verification and live feed.",
+      },
       { property: "og:title", content: "Attendance Kiosk | MIOW - MSU-IIT IDS Online Workspace" },
-      { property: "og:description", content: "Gate kiosk: RFID tap-in/tap-out with face verification and live feed." },
+      {
+        property: "og:description",
+        content: "Gate kiosk: RFID tap-in/tap-out with face verification and live feed.",
+      },
     ],
   }),
   component: AttendanceKiosk,
@@ -78,8 +84,16 @@ function playTone(ok: boolean, muted: boolean) {
 function AttendanceKiosk() {
   const profile = useProfile(["teacher"]);
   const qc = useQueryClient();
-  const { data: logs } = useQuery({ queryKey: ["attendance-all"], queryFn: () => listAllAttendance(60), enabled: !!profile });
-  const { data: students } = useQuery({ queryKey: ["students"], queryFn: listStudents, enabled: !!profile });
+  const { data: logs } = useQuery({
+    queryKey: ["attendance-all"],
+    queryFn: () => listAllAttendance(60),
+    enabled: !!profile,
+  });
+  const { data: students } = useQuery({
+    queryKey: ["students"],
+    queryFn: listStudents,
+    enabled: !!profile,
+  });
 
   const [uid, setUid] = useState("");
   const [busy, setBusy] = useState(false);
@@ -205,39 +219,40 @@ function AttendanceKiosk() {
               </p>
             </div>
             <div className="flex items-center gap-3">
-            <img
-              src={lastScan.profile.avatar_url ?? ""}
-              alt={lastScan.profile.full_name}
-              className="h-12 w-12 rounded-full ring-2 ring-white/60"
-            />
-            <div className="min-w-0 flex-1">
-              <p className="truncate text-sm font-bold">{lastScan.profile.full_name}</p>
-              <p className="text-xs text-muted-foreground">
-                {lastScan.profile.student_id} · {lastScan.profile.section}
-              </p>
-              {lastScan.course && (
-                <p className="truncate text-[11px] font-medium text-muted-foreground">
-                  {lastScan.course.code} {lastScan.course.start_time.slice(0, 5)}–
-                  {lastScan.course.end_time.slice(0, 5)} · grace {lastScan.course.late_threshold_minutes}m
+              <img
+                src={lastScan.profile.avatar_url ?? ""}
+                alt={lastScan.profile.full_name}
+                className="h-12 w-12 rounded-full ring-2 ring-white/60"
+              />
+              <div className="min-w-0 flex-1">
+                <p className="truncate text-sm font-bold">{lastScan.profile.full_name}</p>
+                <p className="text-xs text-muted-foreground">
+                  {lastScan.profile.student_id} · {lastScan.profile.section}
                 </p>
-              )}
-            </div>
-            <p
-              className={cn(
-                "font-display text-lg font-extrabold",
-                lastScan.scan_type === "out"
-                  ? "text-sky-600 dark:text-sky-300"
-                  : lastScan.status === "late"
-                    ? "text-amber-600 dark:text-amber-300"
-                    : "text-emerald-600 dark:text-emerald-300",
-              )}
-            >
-              {lastScan.scan_type === "in"
-                ? lastScan.status === "late"
-                  ? "LATE"
-                  : "ON TIME"
-                : "OUT"}
-            </p>
+                {lastScan.course && (
+                  <p className="truncate text-[11px] font-medium text-muted-foreground">
+                    {lastScan.course.code} {lastScan.course.start_time.slice(0, 5)}–
+                    {lastScan.course.end_time.slice(0, 5)} · grace{" "}
+                    {lastScan.course.late_threshold_minutes}m
+                  </p>
+                )}
+              </div>
+              <p
+                className={cn(
+                  "font-display text-lg font-extrabold",
+                  lastScan.scan_type === "out"
+                    ? "text-sky-600 dark:text-sky-300"
+                    : lastScan.status === "late"
+                      ? "text-amber-600 dark:text-amber-300"
+                      : "text-emerald-600 dark:text-emerald-300",
+                )}
+              >
+                {lastScan.scan_type === "in"
+                  ? lastScan.status === "late"
+                    ? "LATE"
+                    : "ON TIME"
+                  : "OUT"}
+              </p>
             </div>
           </motion.div>
         )}
@@ -247,9 +262,9 @@ function AttendanceKiosk() {
         <div>
           <h1 className="font-display text-2xl font-bold sm:text-3xl">{KIOSK_TITLE}</h1>
           <p className="mt-1 text-sm text-muted-foreground">
-            Students tap their RFID ID at the gate. On-time vs late is evaluated against today's class
-            schedule (each course's grace period); with no scheduled class, the 7:30 AM gate cutoff applies.
-            Absent = no tap within the session window.
+            Students tap their RFID ID at the gate. On-time vs late is evaluated against today's
+            class schedule (each course's grace period); with no scheduled class, the 7:30 AM gate
+            cutoff applies. Absent = no tap within the session window.
           </p>
         </div>
         <button
@@ -295,7 +310,9 @@ function AttendanceKiosk() {
               type="button"
               disabled={busy}
               title="Dispatch a simulated reader payload"
-              onClick={() => void handleTapPayload(createMockTapPayload(uid.trim() || undefined), true)}
+              onClick={() =>
+                void handleTapPayload(createMockTapPayload(uid.trim() || undefined), true)
+              }
               className="flex h-11 items-center gap-1.5 rounded-xl border border-border bg-card px-4 text-sm font-semibold hover:bg-muted disabled:opacity-50"
             >
               <Zap className="h-4 w-4" /> Simulate
@@ -337,7 +354,11 @@ function AttendanceKiosk() {
                         : "bg-sky-100 text-sky-600 dark:bg-sky-500/15 dark:text-sky-300",
                     )}
                   >
-                    {l.scan_type === "in" ? <LogIn className="h-4 w-4" /> : <LogOut className="h-4 w-4" />}
+                    {l.scan_type === "in" ? (
+                      <LogIn className="h-4 w-4" />
+                    ) : (
+                      <LogOut className="h-4 w-4" />
+                    )}
                   </div>
                   <div className="min-w-0 flex-1">
                     <p className="truncate text-sm font-semibold">{s?.full_name ?? "Unknown"}</p>

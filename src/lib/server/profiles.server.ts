@@ -6,6 +6,7 @@ import { db, supabaseAdmin } from "@/integrations/db/client.server";
 import { getBucket } from "@/lib/rate-limit";
 import { unwrap, withoutToken } from "@/lib/server/utils.server";
 import { createSessionToken, revokeSessions, sessionSecret } from "@/lib/server/sessions.server";
+import { schemas } from "@/lib/server/schemas.server";
 
 /* ---------- Safe profile shaping (strip credentials/biometrics) ---------- */
 
@@ -128,8 +129,16 @@ export async function verifyPinLogin(login: string, secret: string) {
     );
     if (p) break;
   }
-  if (!p) { dbgS("profile not found", { identifier }); return { ok: false as const, reason: "invalid" as const }; }
-  dbgS("profile found", { email: p.email, role: p.role, hasPinHash: !!p.pin_hash, locked: !!p.locked_until });
+  if (!p) {
+    dbgS("profile not found", { identifier });
+    return { ok: false as const, reason: "invalid" as const };
+  }
+  dbgS("profile found", {
+    email: p.email,
+    role: p.role,
+    hasPinHash: !!p.pin_hash,
+    locked: !!p.locked_until,
+  });
 
   const now = Date.now();
   const lockedUntil = typeof p.locked_until === "string" ? Date.parse(p.locked_until) : 0;
@@ -187,7 +196,7 @@ export async function getProfileById(id: string) {
   return p ? safeProfile(p) : null;
 }
 
-export async function createProfile(input: z.infer<ReturnType<typeof getProfileInputSchema>>) {
+export async function createProfile(input: z.infer<typeof schemas.profileInput>) {
   const row: Record<string, unknown> = withoutToken(input);
   if (typeof row["email"] === "string")
     row["email"] = (row["email"] as string).trim().toLowerCase();
@@ -202,25 +211,6 @@ export async function createProfile(input: z.infer<ReturnType<typeof getProfileI
   }
   const p = await unwrap<any>(db.from("profiles").insert(row).select().single());
   return safeProfile(p);
-}
-
-// Schema getter so the schemas module can reference it without circular deps.
-function getProfileInputSchema() {
-  return z.object({
-    full_name: z.string().min(1).max(200),
-    student_id: z.string().max(50).nullable().optional(),
-    email: z.string().max(320).nullable().optional(),
-    role: z.enum(["student", "teacher", "admin"]).optional(),
-    grade_level: z.number().int().min(7).max(16).nullable().optional(),
-    section: z.string().max(50).nullable().optional(),
-    employee_id: z.string().max(50).nullable().optional(),
-    prefix: z.string().max(20).nullable().optional(),
-    department: z.string().max(100).nullable().optional(),
-    pin: z.string().regex(/^\d{4,8}$/).nullable().optional(),
-    rfid_uid: z.string().regex(/^\d{6,20}$/).nullable().optional(),
-    avatar_url: z.string().max(2048).regex(/^(https:\/\/|\/api\/public\/avatar\?p=)/).nullable().optional(),
-    token: z.string().min(1).max(4096),
-  });
 }
 
 const SELF_PATCH_KEYS = ["full_name", "email", "avatar_url", "pin", "rfid_uid"];
@@ -422,16 +412,7 @@ export async function assertUniqueIdentity(
   }
 }
 
-export async function createTeacher(input: {
-  full_name: string;
-  prefix?: string | null;
-  email: string;
-  employee_id: string;
-  department: string;
-  pin: string;
-  rfid_uid?: string | null;
-  token: string;
-}) {
+export async function createTeacher(input: z.infer<typeof schemas.teacherInput>) {
   const row = withoutToken(input) as Record<string, unknown>;
   const email = input.email.trim().toLowerCase();
   await assertUniqueIdentity({
