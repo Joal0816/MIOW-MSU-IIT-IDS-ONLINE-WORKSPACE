@@ -25,7 +25,6 @@ function toOpenAIMessages(messages: any[], systemPrompt: string) {
   const out: Array<{ role: string; content: string }> = [{ role: "system", content: systemPrompt }];
   for (const m of messages) {
     if (m.role === "user" || m.role === "assistant") {
-      // Extract text from parts or content
       let text = "";
       if (typeof m.content === "string") text = m.content;
       else if (Array.isArray(m.parts)) {
@@ -72,13 +71,11 @@ export const Route = createFileRoute("/api/chat")({
           return new Response("Session expired — please sign in again", { status: 401 });
         }
 
-        // Build system prompt
         const ctx = parseWorksheetContext(body.worksheetContext);
         const systemPrompt = systemPromptFor(profile, ctx);
-
-        // Call OpenCode Go directly
         const oaMessages = toOpenAIMessages(messages, systemPrompt);
 
+        // Call OpenCode Go directly
         const apiRes = await fetch("https://opencode.ai/zen/go/v1/chat/completions", {
           method: "POST",
           headers: {
@@ -99,10 +96,15 @@ export const Route = createFileRoute("/api/chat")({
           return new Response(`AI service error: ${apiRes.status}`, { status: 502 });
         }
 
-        // Transform OpenCode Go SSE → AI SDK text stream format
-        // AI SDK client expects: "0:\"text\"\n" for text deltas, "e:...\n" for finish
+        // Transform OpenCode Go SSE → AI SDK DataStream v1 format
+        // Client expects: data: {"type":"text-start","id":"txt-0"}\n\n
+        //                 data: {"type":"text-delta","id":"txt-0","delta":"chunk"}\n\n
+        //                 data: {"type":"text-end","id":"txt-0"}\n\n
+        //                 data: [DONE]\n\n
         const encoder = new TextEncoder();
         const decoder = new TextDecoder();
+        let textStarted = false;
+        let textId = 0;
 
         const transform = new TransformStream({
           transform(chunk, controller) {
@@ -112,7 +114,10 @@ export const Route = createFileRoute("/api/chat")({
               if (!line.startsWith("data: ")) continue;
               const data = line.slice(6).trim();
               if (data === "[DONE]") {
-                controller.enqueue(encoder.encode("e: \"{\\\"finishReason\\\":\\\"stop\\\"}\"\n"));
+                if (textStarted) {
+                  controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: "text-end", id: `txt-${textId}` })}\n\n`));
+                }
+                controller.enqueue(encoder.encode("data: [DONE]\n\n"));
                 continue;
               }
               try {
@@ -120,12 +125,18 @@ export const Route = createFileRoute("/api/chat")({
                 const delta = parsed.choices?.[0]?.delta;
                 if (!delta) continue;
 
-                // Skip null content (reasoning model reasoning phase)
+                // Skip null/empty content (reasoning model reasoning phase)
                 if (delta.content === null || delta.content === undefined) continue;
                 if (delta.content === "") continue;
 
-                // Send as AI SDK text stream format: 0:"text content"
-                controller.enqueue(encoder.encode(`0:${JSON.stringify(delta.content)}\n`));
+                // Start text part on first content chunk
+                if (!textStarted) {
+                  controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: "text-start", id: `txt-${textId}` })}\n\n`));
+                  textStarted = true;
+                }
+
+                // Send text delta
+                controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: "text-delta", id: `txt-${textId}`, delta: delta.content })}\n\n`));
               } catch {
                 // skip unparseable chunks
               }
@@ -137,8 +148,10 @@ export const Route = createFileRoute("/api/chat")({
 
         return new Response(body_, {
           headers: {
-            "Content-Type": "text/plain; charset=utf-8",
-            "X-Vercel-AI-Data-Stream": "v1",
+            "Content-Type": "text/event-stream",
+            "Cache-Control": "no-cache",
+            "Connection": "keep-alive",
+            "X-Vercel-AI-UI-Message-Stream": "v1",
           },
         });
       },
