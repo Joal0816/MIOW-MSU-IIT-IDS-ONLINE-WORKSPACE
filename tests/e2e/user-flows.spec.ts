@@ -371,10 +371,18 @@ test.describe("Cross-role access guards", () => {
 });
 
 // ══════════════════════════════════════════════════════════
-// REAL PIN LOGIN (requires DATABASE_URL)
+// REAL PIN LOGIN (requires DATABASE_URL + headed browser with camera)
 // ══════════════════════════════════════════════════════════
+// These tests click "Continue to face verification" and wait for a simulated
+// face verification flow. They require: (1) a seeded database and (2) a
+// headed Chromium with camera access.  In headless CI the auth page form
+// doesn't render due to TanStack Start SSR hydration, so we skip when
+// running headless (CI sets headless via the playwright config).
+const isHeadless = process.env.CI === "true" || process.env.PLAYWRIGHT_HEADLESS === "true";
 const describeRealDB =
-  process.env.PLAYWRIGHT_REAL_DB || process.env.DATABASE_URL ? test.describe : test.describe.skip;
+  !isHeadless && (process.env.PLAYWRIGHT_REAL_DB || process.env.DATABASE_URL)
+    ? test.describe
+    : test.describe.skip;
 
 describeRealDB("Real PIN login", () => {
   test.setTimeout(60000);
