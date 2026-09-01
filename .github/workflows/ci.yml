@@ -54,6 +54,7 @@ jobs:
         with:
           bun-version: latest
       - run: bun install --frozen-lockfile
+      - run: npx playwright install --with-deps chromium
       - run: bun run db:migrate
       - run: bun run test:e2e
 
