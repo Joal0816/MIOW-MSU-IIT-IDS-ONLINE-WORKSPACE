@@ -1,7 +1,8 @@
 // Task 27: face recognition stub — gated by VITE_FACE_ENABLED
 // All operations are no-ops until the flag is set and models are provisioned.
 
-const ENABLED = import.meta.env['VITE_FACE_ENABLED'] === "true" || import.meta.env['VITE_FACE_ENABLED'] === "1";
+const ENABLED =
+  import.meta.env["VITE_FACE_ENABLED"] === "true" || import.meta.env["VITE_FACE_ENABLED"] === "1";
 
 export const FACE_ENABLED = ENABLED;
 
@@ -16,7 +17,9 @@ export async function loadModels(): Promise<void> {
  * Detect a single face and return a descriptor embedding (stub).
  * Returns null when disabled or no face found.
  */
-export async function detectFace(_image: HTMLImageElement | HTMLVideoElement | HTMLCanvasElement): Promise<Float32Array | null> {
+export async function detectFace(
+  _image: HTMLImageElement | HTMLVideoElement | HTMLCanvasElement,
+): Promise<Float32Array | null> {
   if (!ENABLED) return null;
   console.warn("[face-recognition] detectFace stub — not implemented");
   return null;
@@ -26,7 +29,10 @@ export async function detectFace(_image: HTMLImageElement | HTMLVideoElement | H
  * Enroll a face embedding for a profile (stub).
  * Returns the serialized descriptor placeholder.
  */
-export async function enrollFace(_embedding: Float32Array, _profileId: string): Promise<string | null> {
+export async function enrollFace(
+  _embedding: Float32Array,
+  _profileId: string,
+): Promise<string | null> {
   if (!ENABLED) return null;
   console.warn("[face-recognition] enrollFace stub — not implemented");
   return null;

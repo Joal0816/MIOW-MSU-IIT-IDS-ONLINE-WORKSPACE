@@ -9,12 +9,15 @@ type ChatRequestBody = {
 };
 
 /** Sanitize the optional Create Worksheet form context (course/title/sourceMaterial). */
-function parseWorksheetContext(raw: unknown): { course?: string; title?: string; sourceMaterial?: string } | undefined {
+function parseWorksheetContext(
+  raw: unknown,
+): { course?: string; title?: string; sourceMaterial?: string } | undefined {
   if (!raw || typeof raw !== "object") return undefined;
   const o = raw as Record<string, unknown>;
   const course = typeof o["course"] === "string" ? o["course"].slice(0, 200) : undefined;
   const title = typeof o["title"] === "string" ? o["title"].slice(0, 200) : undefined;
-  const sourceMaterial = typeof o["sourceMaterial"] === "string" ? o["sourceMaterial"].slice(0, 15000) : undefined;
+  const sourceMaterial =
+    typeof o["sourceMaterial"] === "string" ? o["sourceMaterial"].slice(0, 15000) : undefined;
   if (!course && !title && !sourceMaterial) return undefined;
   const ctx: { course?: string; title?: string; sourceMaterial?: string } = {};
   if (course) ctx.course = course;
@@ -30,7 +33,10 @@ function toOpenAIMessages(messages: any[], systemPrompt: string) {
       let text = "";
       if (typeof m.content === "string") text = m.content;
       else if (Array.isArray(m.parts)) {
-        text = m.parts.filter((p: any) => p.type === "text").map((p: any) => p.text).join("");
+        text = m.parts
+          .filter((p: any) => p.type === "text")
+          .map((p: any) => p.text)
+          .join("");
       }
       if (text.trim()) out.push({ role: m.role, content: text });
     }
@@ -79,7 +85,7 @@ export const Route = createFileRoute("/api/chat")({
         const apiRes = await fetch("https://opencode.ai/zen/go/v1/chat/completions", {
           method: "POST",
           headers: {
-            "Authorization": `Bearer ${apiKey}`,
+            Authorization: `Bearer ${apiKey}`,
             "Content-Type": "application/json",
           },
           body: JSON.stringify({
@@ -100,7 +106,7 @@ export const Route = createFileRoute("/api/chat")({
         const encoder = new TextEncoder();
         const decoder = new TextDecoder();
         let textStarted = false;
-        let textId = 0;
+        const textId = 0;
         let buffer = "";
 
         const transform = new TransformStream({
@@ -114,7 +120,11 @@ export const Route = createFileRoute("/api/chat")({
               const data = line.slice(6).trim();
               if (data === "[DONE]") {
                 if (textStarted) {
-                  controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: "text-end", id: `txt-${textId}` })}\n\n`));
+                  controller.enqueue(
+                    encoder.encode(
+                      `data: ${JSON.stringify({ type: "text-end", id: `txt-${textId}` })}\n\n`,
+                    ),
+                  );
                 }
                 controller.enqueue(encoder.encode("data: [DONE]\n\n"));
                 continue;
@@ -126,11 +136,21 @@ export const Route = createFileRoute("/api/chat")({
                 if (delta.content === null || delta.content === undefined) continue;
                 if (delta.content === "") continue;
                 if (!textStarted) {
-                  controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: "text-start", id: `txt-${textId}` })}\n\n`));
+                  controller.enqueue(
+                    encoder.encode(
+                      `data: ${JSON.stringify({ type: "text-start", id: `txt-${textId}` })}\n\n`,
+                    ),
+                  );
                   textStarted = true;
                 }
-                controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: "text-delta", id: `txt-${textId}`, delta: delta.content })}\n\n`));
-              } catch {}
+                controller.enqueue(
+                  encoder.encode(
+                    `data: ${JSON.stringify({ type: "text-delta", id: `txt-${textId}`, delta: delta.content })}\n\n`,
+                  ),
+                );
+              } catch {
+                /* skip malformed SSE lines */
+              }
             }
           },
         });
@@ -140,7 +160,7 @@ export const Route = createFileRoute("/api/chat")({
           headers: {
             "Content-Type": "text/event-stream",
             "Cache-Control": "no-cache",
-            "Connection": "keep-alive",
+            Connection: "keep-alive",
             "X-Vercel-AI-UI-Message-Stream": "v1",
           },
         });

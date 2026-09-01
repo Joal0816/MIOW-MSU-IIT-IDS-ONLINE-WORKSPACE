@@ -2,4 +2,4 @@
 // This file remains for backwards compat: it re-exports the pg-backed `db`.
 // New code should import from "@/integrations/db/client.server" directly.
 
-export { db, supabaseAdmin, getPool, pgPool } from "@/integrations/db/client.server";
+export { db, supabaseAdmin, getPoolRaw } from "@/integrations/db/client.server";

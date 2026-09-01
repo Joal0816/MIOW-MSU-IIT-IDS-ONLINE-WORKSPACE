@@ -3,9 +3,11 @@
 
 const enabled = (() => {
   try {
-    if (import.meta.env?.VITE_DEBUG_LOGS === "true") return true;
-    if (typeof process !== "undefined" && process.env?.DEBUG_LOGS === "true") return true;
-  } catch {}
+    if (import.meta.env?.["VITE_DEBUG_LOGS"] === "true") return true;
+    if (typeof process !== "undefined" && process.env?.["DEBUG_LOGS"] === "true") return true;
+  } catch {
+    /* import.meta.env unavailable — fall through to disabled */
+  }
   return false;
 })();
 

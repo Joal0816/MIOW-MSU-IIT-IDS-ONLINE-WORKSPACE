@@ -13,7 +13,6 @@ DELETE FROM public.attendance_logs;
 DELETE FROM public.announcements;
 DELETE FROM public.chat_memories;
 DELETE FROM public.submission_files;
-DELETE FROM public.score_releases;
 
 -- Delete parent records
 DELETE FROM public.courses;

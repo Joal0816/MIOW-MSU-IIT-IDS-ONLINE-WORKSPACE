@@ -197,7 +197,6 @@ export function saveTeacherSettings(profileId: string, s: TeacherSettings) {
   writeJson(teacherKey(profileId), s);
 }
 
-
 /* ---------- Admin configuration ---------- */
 
 export interface AdminConfig {

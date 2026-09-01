@@ -10,13 +10,19 @@
     "preview": "vite preview",
     "lint": "eslint .",
     "format": "prettier --write .",
+    "typecheck": "tsc --noEmit",
+    "test": "bun test src/",
+    "test:unit": "bun test src/",
+    "test:watch": "bun test --watch src/",
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui",
+    "ci": "bun run typecheck && bun run lint && bun run test:e2e",
     "db:up": "docker compose up -d postgres",
     "db:down": "docker compose down",
     "db:migrate": "bun run scripts/migrate.ts",
     "db:seed": "bun run scripts/seed.ts",
-    "db:reset": "docker compose down -v && docker compose up -d postgres && sleep 3 && bun run db:migrate"
+    "db:wait": "bun run scripts/wait-for-pg.ts",
+    "db:reset": "docker compose down -v && docker compose up -d postgres && bun run db:wait && bun run db:migrate"
   },
   "overrides": {
     "rolldown": "1.2.1"

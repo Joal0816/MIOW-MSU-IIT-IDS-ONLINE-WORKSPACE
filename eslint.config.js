@@ -34,6 +34,10 @@ export default tseslint.config(
       ],
       "react-refresh/only-export-components": ["warn", { allowConstantExport: true }],
       "@typescript-eslint/no-unused-vars": "off",
+      // Downgraded to "warn" pending the type-safety refactor (see audit):
+      // ~32 pre-existing `any` casts across the DB compat layer, google-docs
+      // globals, and route files will be typed in a dedicated follow-up phase.
+      "@typescript-eslint/no-explicit-any": "warn",
     },
   },
   eslintPluginPrettier,
