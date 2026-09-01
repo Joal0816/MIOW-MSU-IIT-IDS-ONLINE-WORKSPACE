@@ -461,7 +461,7 @@ export function AppShell({
       {active && !collapsed && (
         <motion.span
           layoutId="nav-active"
-          className="absolute left-0 top-1/2 h-5 w-1 -translate-y-1/2 rounded-full bg-sidebar-primary-foreground/70"
+          className="absolute left-0.5 top-1/2 h-5 w-1 -translate-y-1/2 rounded-full bg-sidebar-primary-foreground/70"
         />
       )}
     </Link>
