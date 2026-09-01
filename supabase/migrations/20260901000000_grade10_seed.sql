@@ -215,6 +215,11 @@ INSERT INTO public.enrollments (student_id, course_id)
 SELECT p.id, c.id FROM public.profiles p, public.courses c
 WHERE c.code = 'IT10' AND p.role = 'student';
 
+-- ── Admin profile (needed as announcement author) ──────────────────────────
+INSERT INTO public.profiles (id, student_id, email, pin, full_name, role, rfid_uid, avatar_url, face_embedding, grade_level, section) VALUES
+('a0000000-0000-4000-8000-000000000001', NULL, 'ana.reyes@northview.edu', '0000', 'Ana Reyes', 'admin', NULL, 'https://ui-avatars.com/api/?name=Ana+Reyes&background=dc2626&color=fff', NULL, NULL, NULL)
+ON CONFLICT (id) DO NOTHING;
+
 -- ── Announcements ───────────────────────────────────────────────────────────
 INSERT INTO public.announcements (id, title, content, category, target_audience, author_id, created_at) VALUES
 ('aa000000-0000-4000-8000-000000000001', 'Classes Suspended Tomorrow Due to Typhoon Signal', 'Per the advisory from the city government, all classes and office work are suspended tomorrow. Stay safe and monitor official channels for updates.', 'urgent', 'all', 'a0000000-0000-4000-8000-000000000001', NOW() - INTERVAL '2 hours'),
