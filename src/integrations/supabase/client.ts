@@ -1,12 +1,21 @@
-// LEGACY SHIM — client-side Supabase not used with local Postgres.
-// Frontend now talks to server functions only (src/lib/lms.functions.ts).
-// This stub keeps old imports from breaking during migration.
+// Client-side Supabase shim.
+// When using Supabase backend, this re-exports the client.
+// When using local Postgres, this is a no-op — all data goes through server functions.
 
-export const supabase = new Proxy({} as Record<string, unknown>, {
-  get() {
-    throw new Error(
-      "Supabase client is disabled in local-postgres mode. Use server functions from @/lib/lms instead. " +
-        "If you need Supabase, checkout main branch.",
-    );
-  },
-}) as unknown as { auth: unknown; from: unknown; storage: unknown };
+const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL ?? "";
+const SUPABASE_KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY ?? "";
+
+export const supabase = SUPABASE_URL && SUPABASE_KEY
+  ? (() => {
+      // Lazy import to avoid bundling @supabase/supabase-js when not needed
+      const { createClient } = require("@supabase/supabase-js");
+      return createClient(SUPABASE_URL, SUPABASE_KEY);
+    })()
+  : new Proxy({} as Record<string, unknown>, {
+      get() {
+        throw new Error(
+          "Supabase client not configured. Set VITE_SUPABASE_URL + VITE_SUPABASE_PUBLISHABLE_KEY, " +
+          "or use server functions from @/lib/lms instead.",
+        );
+      },
+    }) as unknown as { auth: unknown; from: unknown; storage: unknown };
