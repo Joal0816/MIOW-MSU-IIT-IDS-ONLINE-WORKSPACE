@@ -13,19 +13,23 @@ let gapiReady: Promise<void> | null = null;
 let gisReady: Promise<void> | null = null;
 let accessToken: string | null = null;
 
-/** Load gapi.client + picker via script tag. Returns when loaded. */
+/** Load gapi client + picker via script tag. Returns when loaded. */
 function ensureGapi(): Promise<void> {
   if (gapiReady) return gapiReady;
   gapiReady = new Promise<void>((resolve, reject) => {
     const s = document.createElement("script");
     s.src = "https://apis.google.com/js/api.js";
     s.onload = () => {
-      (window as any).gapi.load("client:picker", { callback: () => {
+      // Load client first, then picker — they're separate modules
+      (window as any).gapi.load("client", () => {
         (window as any).gapi.client.init({
           apiKey: GAPI_KEY,
           discoveryDocs: [GAPI_DISCOVERY],
-        }).then(() => resolve(), reject);
-      }});
+        }).then(() => {
+          // Now load the picker module
+          (window as any).gapi.load("picker", () => resolve());
+        }, reject);
+      });
     };
     s.onerror = () => reject(new Error("Failed to load gapi"));
     document.head.appendChild(s);
@@ -81,13 +85,13 @@ export function openGooglePicker(onPick: (docIds: string[]) => void): void {
     const token = await requestToken();
     await ensureGapi();
     const gapi = (window as any).gapi;
-    const picker = new gapi.picker.PickerBuilder()
-      .addView(gapi.picker.ViewId.DOCS)
+    const picker = new google.picker.PickerBuilder()
+      .addView(google.picker.ViewId.DOCS)
       .setOAuthToken(token)
       .setDeveloperKey(GAPI_KEY)
       .setTitle("Select a Google Doc to import")
       .setCallback((data: any) => {
-        if (data.action === gapi.picker.Action.PICKED) {
+        if (data.action === google.picker.Action.PICKED) {
           const ids = (data.docs ?? []).map((d: any) => d.id).filter(Boolean);
           if (ids.length) onPick(ids);
         }
