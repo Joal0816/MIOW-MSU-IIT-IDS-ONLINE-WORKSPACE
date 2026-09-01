@@ -7,10 +7,8 @@
 import { createHmac, timingSafeEqual, randomUUID } from "node:crypto";
 import bcrypt from "bcryptjs";
 import { z } from "zod";
-import { supabaseAdmin } from "@/integrations/supabase/client.server";
+import { db, supabaseAdmin } from "@/integrations/db/client.server";
 import { getBucket } from "@/lib/rate-limit";
-
-const db: any = supabaseAdmin;
 
 // PostgREST codes that are safe to retry. PGRST303 ("JWT issued at future")
 // is a transient gateway clock-skew rejection: the request is refused during
@@ -604,30 +602,37 @@ export async function findByRfid(uid: string) {
 }
 
 async function verifyPin(p: any, pin: string): Promise<boolean> {
-  // In-memory rate limit: 5 attempts per 15 min per profile (brute-force hardening)
-  const bucket = getBucket(`pin:${p.id ?? p.student_id ?? p.email ?? "unknown"}`);
-  if (!bucket.consume()) {
+  // Rate limit: 5 FAILED attempts per 15 min per profile.
+  // Check if already locked out first, but only consume on actual failure.
+  const key = `pin:${p.id ?? p.student_id ?? p.email ?? "unknown"}`;
+  const bucket = getBucket(key);
+  // Pre-check: if already exhausted, throw immediately
+  if (bucket.remaining === 0) {
     const err: any = new Error("Too many attempts");
     err.status = 429;
     throw err;
   }
+  let ok = false;
   if (typeof p.pin_hash === "string" && p.pin_hash) {
     try {
-      return await bcrypt.compare(pin, p.pin_hash);
+      ok = await bcrypt.compare(pin, p.pin_hash);
     } catch {
-      return false;
+      ok = false;
     }
   }
   // Legacy plaintext row not yet backfilled — compare, then opportunistically
   // upgrade to a bcrypt hash and clear the plaintext copy.
-  if (typeof p.pin === "string" && p.pin.length > 0 && p.pin === pin) {
+  if (!ok && typeof p.pin === "string" && p.pin.length > 0 && p.pin === pin) {
     await db
       .from("profiles")
       .update({ pin_hash: await bcrypt.hash(pin, 10), pin: null })
       .eq("id", p.id);
-    return true;
+    ok = true;
   }
-  return false;
+  // Only consume a bucket slot on FAILURE (brute-force protection).
+  // Successful logins never exhaust the bucket.
+  if (!ok) bucket.consume();
+  return ok;
 }
 
 /* ---------- Unified PIN/password sign-in (all roles) ---------- */
@@ -660,6 +665,10 @@ async function verifySecret(p: any, secret: string): Promise<boolean> {
 }
 
 export async function verifyPinLogin(login: string, secret: string) {
+  const dbgS = (msg: string, data?: unknown) => {
+    if (process.env.DEBUG_LOGS === "true") console.debug(`[auth:server] ${msg}`, data ?? "");
+  };
+  dbgS("verifyPinLogin called", { login: login.trim() });
   // Strip PostgREST ilike wildcards so the identifier is matched literally.
   const identifier = login.trim().replace(/[*%]/g, "");
   if (!identifier || !secret) return { ok: false as const, reason: "invalid" as const };
@@ -692,7 +701,8 @@ export async function verifyPinLogin(login: string, secret: string) {
   }
   // Unknown identifiers get the same generic failure as a wrong secret, so
   // the endpoint can't be used to enumerate accounts.
-  if (!p) return { ok: false as const, reason: "invalid" as const };
+  if (!p) { dbgS("profile not found", { identifier }); return { ok: false as const, reason: "invalid" as const }; }
+  dbgS("profile found", { email: p.email, role: p.role, hasPinHash: !!p.pin_hash, locked: !!p.locked_until });
 
   const now = Date.now();
   const lockedUntil = typeof p.locked_until === "string" ? Date.parse(p.locked_until) : 0;
@@ -739,6 +749,7 @@ export async function verifyPinLogin(login: string, secret: string) {
       .update({ failed_login_attempts: 0, locked_until: null })
       .eq("id", p.id);
   }
+  dbgS("login success", { email: p.email, role: p.role });
   return { ok: true as const, profile: safeProfile(p), token: createSessionToken(p.id) };
 }
 

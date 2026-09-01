@@ -11,7 +11,12 @@
     "lint": "eslint .",
     "format": "prettier --write .",
     "test:e2e": "playwright test",
-    "test:e2e:ui": "playwright test --ui"
+    "test:e2e:ui": "playwright test --ui",
+    "db:up": "docker compose up -d postgres",
+    "db:down": "docker compose down",
+    "db:migrate": "bun run scripts/migrate.ts",
+    "db:seed": "bun run scripts/seed.ts",
+    "db:reset": "docker compose down -v && docker compose up -d postgres && sleep 3 && bun run db:migrate"
   },
   "overrides": {
     "rolldown": "1.2.1"
@@ -50,7 +55,6 @@
     "@streamdown/code": "^1.1.1",
     "@streamdown/math": "^1.0.2",
     "@streamdown/mermaid": "^1.0.2",
-    "@supabase/supabase-js": "^2.112.3",
     "@tailwindcss/vite": "^4.2.1",
     "@tanstack/react-query": "^5.101.1",
     "@tanstack/react-router": "1.170.32",
@@ -62,6 +66,7 @@
     "clsx": "^2.1.1",
     "cmdk": "^1.1.1",
     "date-fns": "^4.1.0",
+    "dotenv": "^17.4.2",
     "embla-carousel-react": "^8.6.0",
     "file-type": "^22.0.2",
     "framer-motion": "^13.1.1",
@@ -69,6 +74,7 @@
     "lucide-react": "^0.575.0",
     "motion": "^13.1.1",
     "nanoid": "^6.0.1",
+    "pg": "^8.23.0",
     "react": "^19.2.0",
     "react-day-picker": "^9.14.0",
     "react-dom": "^19.2.0",
@@ -91,6 +97,7 @@
     "@playwright/test": "^1.62.1",
     "@types/bcryptjs": "^3.0.0",
     "@types/node": "^22.16.5",
+    "@types/pg": "^8.23.1",
     "@types/react": "^19.2.0",
     "@types/react-dom": "^19.2.0",
     "@vitejs/plugin-react": "^5.2.0",

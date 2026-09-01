@@ -39,3 +39,8 @@ dist-ssr
 /playwright-report
 /test-results
 /playwright/.cache
+# Local Postgres storage (avatars, course-materials)
+storage/
+pgdata/
+# Hermes
+.hermes/
