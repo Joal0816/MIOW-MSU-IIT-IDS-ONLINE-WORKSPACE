@@ -206,14 +206,12 @@ export async function hardwareRoster() {
   const rows = await unwrap<any[]>(
     db
       .from("profiles")
-      .select(
-        "id, full_name, student_id, section, grade_level, role, rfid_uid, face_embedding, avatar_url",
-      )
+      .select("id, full_name, student_id, section, grade_level, role, rfid_uid, avatar_url")
       .is("deleted_at", null)
       .order("full_name"),
   );
   const users = (rows ?? [])
-    .filter((p: any) => p.rfid_uid || p.face_embedding)
+    .filter((p: any) => p.rfid_uid)
     .map((p: any) => ({
       user_id: p.id as string,
       full_name: p.full_name as string,
@@ -222,7 +220,6 @@ export async function hardwareRoster() {
       grade_level: (p.grade_level ?? null) as number | null,
       role: p.role as string,
       rfid_uid: (p.rfid_uid ?? null) as string | null,
-      face_embedding: (p.face_embedding ?? null) as string | null,
     }));
   return { synced_at: new Date().toISOString(), count: users.length, users };
 }

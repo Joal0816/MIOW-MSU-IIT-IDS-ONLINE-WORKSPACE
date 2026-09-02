@@ -13,13 +13,11 @@ function fakeProfile(role: "admin" | "teacher" | "student") {
     role,
     rfid_uid: null,
     avatar_url: null,
-    face_embedding: null,
     grade_level: role === "student" ? 10 : null,
     section: role === "student" ? "A" : null,
     created_at: new Date().toISOString(),
     employee_id: role !== "student" ? `EMP-${role.toUpperCase()}` : null,
     department: role !== "student" ? "CS" : null,
-    biometric_enrolled_at: null,
     has_pin: true,
     has_rfid: false,
     session_token: "test-session-token",
@@ -373,11 +371,10 @@ test.describe("Cross-role access guards", () => {
 // ══════════════════════════════════════════════════════════
 // REAL PIN LOGIN (requires DATABASE_URL + headed browser with camera)
 // ══════════════════════════════════════════════════════════
-// These tests click "Continue to face verification" and wait for a simulated
-// face verification flow. They require: (1) a seeded database and (2) a
-// headed Chromium with camera access.  In headless CI the auth page form
-// doesn't render due to TanStack Start SSR hydration, so we skip when
-// running headless (CI sets headless via the playwright config).
+// These tests click "Sign In" and wait for redirect to the dashboard. They
+// require: (1) a seeded database and (2) a headed Chromium.  In headless CI
+// the auth page form doesn't render due to TanStack Start SSR hydration, so
+// we skip when running headless (CI sets headless via the playwright config).
 const isHeadless = process.env.CI === "true" || process.env.PLAYWRIGHT_HEADLESS === "true";
 const describeRealDB =
   !isHeadless && (process.env.PLAYWRIGHT_REAL_DB || process.env.DATABASE_URL)
@@ -386,28 +383,6 @@ const describeRealDB =
 
 describeRealDB("Real PIN login", () => {
   test.setTimeout(60000);
-
-  async function waitForFaceVerification(page: import("@playwright/test").Page) {
-    await expect(async () => {
-      const txt = await page.locator("body").textContent();
-      if (/Sign-in failed|Invalid credentials|Account locked|Too many attempts/.test(txt || ""))
-        throw new Error("login failed: " + txt?.slice(0, 200));
-      if (
-        !/Locating face|Matching biometrics|Liveness check|Identity confirmed|Verified/.test(
-          txt || "",
-        )
-      ) {
-        if (/\/dashboard\//.test(page.url())) return;
-        throw new Error(
-          "waiting for face verification (url=" +
-            page.url() +
-            " body=" +
-            (txt?.slice(0, 300) ?? "") +
-            ")",
-        );
-      }
-    }).toPass({ timeout: 20000 });
-  }
 
   test("admin logs in via PIN and sees Campus Overview", async ({ page }) => {
     await page.goto("/auth");
@@ -418,8 +393,7 @@ describeRealDB("Real PIN login", () => {
     await page.waitForTimeout(500);
     await page.locator("#login-id").fill("ana.reyes@northview.edu");
     await page.locator("#login-pin").fill("0000");
-    await page.getByRole("button", { name: /Continue to face verification/ }).click();
-    await waitForFaceVerification(page);
+    await page.getByRole("button", { name: /Sign In/ }).click();
     await page.waitForURL(/\/dashboard\/admin/, { timeout: 20000 });
     await expect(page.locator("body")).toContainText("Campus Overview", { timeout: 15000 });
   });
@@ -433,8 +407,7 @@ describeRealDB("Real PIN login", () => {
     await page.waitForTimeout(500);
     await page.locator("#login-id").fill("alan.vergara@g.msuiit.edu.ph");
     await page.locator("#login-pin").fill("3333");
-    await page.getByRole("button", { name: /Continue to face verification/ }).click();
-    await waitForFaceVerification(page);
+    await page.getByRole("button", { name: /Sign In/ }).click();
     await page.waitForURL(/\/dashboard\/teacher/, { timeout: 20000 });
     await expect(page.locator("body")).toContainText("Teacher Dashboard", { timeout: 15000 });
   });
@@ -448,8 +421,7 @@ describeRealDB("Real PIN login", () => {
     await page.waitForTimeout(500);
     await page.locator("#login-id").fill("josephalan.vergara@g.msuiit.edu.ph");
     await page.locator("#login-pin").fill("1234");
-    await page.getByRole("button", { name: /Continue to face verification/ }).click();
-    await waitForFaceVerification(page);
+    await page.getByRole("button", { name: /Sign In/ }).click();
     await page.waitForURL(/\/dashboard\/student/, { timeout: 20000 });
     await expect(page.locator("body")).toContainText(/Student Dashboard|Welcome/i, {
       timeout: 15000,
@@ -465,8 +437,7 @@ describeRealDB("Real PIN login", () => {
     await page.waitForTimeout(500);
     await page.locator("#login-id").fill("2026-0000");
     await page.locator("#login-pin").fill("1234");
-    await page.getByRole("button", { name: /Continue to face verification/ }).click();
-    await waitForFaceVerification(page);
+    await page.getByRole("button", { name: /Sign In/ }).click();
     await page.waitForURL(/\/dashboard\/student/, { timeout: 20000 });
   });
 });
