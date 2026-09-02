@@ -203,8 +203,8 @@ function CoursesPage() {
       start_time: c.start_time ? c.start_time.slice(0, 5) : "",
       end_time: c.end_time ? c.end_time.slice(0, 5) : "",
       grace: String(c.late_threshold_minutes ?? 10),
-      strand: (c as any).strand ?? "",
-      program: (c as any).program ?? "",
+      strand: c.strand ?? "",
+      program: c.program ?? "",
     });
     setModal("course");
   };
@@ -429,8 +429,8 @@ function CoursesPage() {
       title: q.title,
       duration_minutes: String(q.duration_minutes),
       questions: "",
-      score_released: !!(q as any).score_released,
-      answer_key_released: !!(q as any).answer_key_released,
+      score_released: !!q.score_released,
+      answer_key_released: !!q.answer_key_released,
     });
     setEditQuiz(q);
   };

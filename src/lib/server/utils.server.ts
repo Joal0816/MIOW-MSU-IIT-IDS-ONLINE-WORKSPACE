@@ -1,6 +1,4 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 // Shared utilities for server modules — unwrap(), withoutToken(), sleep().
-import { db } from "@/integrations/db/client.server";
 
 // PostgREST codes that are safe to retry. PGRST303 ("JWT issued at future")
 // is a transient gateway clock-skew rejection: the request is refused during
@@ -9,17 +7,24 @@ import { db } from "@/integrations/db/client.server";
 // token's iat.
 const RETRYABLE_DB_CODES = new Set(["PGRST303"]);
 
+interface DbError {
+  code?: string;
+  message?: string;
+}
+
 export const sleep = (ms: number) => new Promise<void>((r) => setTimeout(r, ms));
 
-export async function unwrap<T>(p: PromiseLike<{ data: T | null; error: any }>): Promise<T> {
-  let error: any = null;
+export async function unwrap<T>(
+  p: PromiseLike<{ data: unknown; error: DbError | null }>,
+): Promise<T> {
+  let error: DbError | null = null;
   for (let attempt = 0; attempt < 3; attempt++) {
     // supabase-js builders build and dispatch the fetch inside then(), so
     // re-awaiting the same builder is a genuine retry, not a cached replay.
     const res = await p;
     if (!res.error) return res.data as T;
     error = res.error;
-    if (!RETRYABLE_DB_CODES.has(error.code) || attempt === 2) break;
+    if (!error.code || !RETRYABLE_DB_CODES.has(error.code) || attempt === 2) break;
     await sleep(400 * (attempt + 1));
   }
   console.error("[lms] database error:", {

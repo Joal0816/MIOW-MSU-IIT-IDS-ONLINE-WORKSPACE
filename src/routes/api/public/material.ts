@@ -27,7 +27,7 @@ export const Route = createFileRoute("/api/public/material")({
         const t = (auth || url.searchParams.get("t")) ?? "";
         if (!PATH_RE.test(p)) return new Response("Not found", { status: 404 });
         if (!t) return new Response("Unauthorized", { status: 401 });
-        const server = await import("@/lib/lms.server");
+        const server = await import("@/lib/server");
         try {
           await server.requireSession(t);
         } catch {
