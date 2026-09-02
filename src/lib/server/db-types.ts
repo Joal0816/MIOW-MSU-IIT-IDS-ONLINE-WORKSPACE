@@ -13,7 +13,6 @@ export interface ProfileRow {
   role: ProfileRole;
   rfid_uid: string | null;
   avatar_url: string | null;
-  face_embedding: string | null;
   grade_level: number | null;
   section: string | null;
   created_at: string;
@@ -26,7 +25,6 @@ export interface ProfileRow {
   employee_id: string | null;
   prefix: string | null;
   department: string | null;
-  biometric_enrolled_at: string | null;
 }
 
 export interface CourseRow {
