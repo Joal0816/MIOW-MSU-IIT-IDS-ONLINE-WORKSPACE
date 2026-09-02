@@ -69,27 +69,6 @@ import { openGooglePicker, exportDocAsText } from "@/lib/google-docs";
 import { COURSE_LEVELS, collegeYearOf, educationLevelOf, levelLabel } from "@/lib/course-levels";
 import { CED_PROGRAMS, CED_DEPARTMENT_LABELS } from "@/lib/ced-programs";
 import { cn } from "@/lib/utils";
-import {
-  COLORS,
-  DAYS,
-  EMPTY_COURSE,
-  WIZARD_STEPS,
-  EMPTY_POLICY,
-  EMPTY_MANUAL_Q,
-  POLICY_LABELS,
-  ACCEPTED,
-  MAX_FILE_BYTES,
-  isAcceptedFile,
-  policyPayload,
-  type WizardStep,
-  type QuizMode,
-  type ManualQuestion,
-} from "@/components/courses/constants";
-import { PolicyFields } from "@/components/courses/policy-fields";
-import { AttemptRoster } from "@/components/courses/attempt-roster";
-import { EnrollmentCount } from "@/components/courses/enrollment-count";
-import { PendingDropzone } from "@/components/courses/pending-dropzone";
-import { MaterialManager } from "@/components/courses/material-manager";
 
 export const Route = createFileRoute("/dashboard/admin/courses")({
   head: () => ({
@@ -102,6 +81,82 @@ export const Route = createFileRoute("/dashboard/admin/courses")({
   }),
   component: CoursesPage,
 });
+
+const COLORS = ["indigo", "emerald", "sky", "amber", "rose", "violet"];
+
+const DAYS: Array<{ code: string; label: string }> = [
+  { code: "mon", label: "Mon" },
+  { code: "tue", label: "Tue" },
+  { code: "wed", label: "Wed" },
+  { code: "thu", label: "Thu" },
+  { code: "fri", label: "Fri" },
+  { code: "sat", label: "Sat" },
+  { code: "sun", label: "Sun" },
+];
+
+const EMPTY_COURSE = {
+  title: "",
+  code: "",
+  grade_level: "10",
+  teacher_id: "",
+  color: "indigo",
+  days: [] as string[],
+  start_time: "",
+  end_time: "",
+  grace: "10",
+  strand: "",
+  program: "",
+};
+
+type WizardStep = "basic" | "assignment" | "schedule";
+const WIZARD_STEPS: Array<{ id: WizardStep; label: string; desc: string }> = [
+  { id: "basic", label: "Basic", desc: "Title & Level" },
+  { id: "assignment", label: "Assignment", desc: "Teacher & Program" },
+  { id: "schedule", label: "Schedule", desc: "Days & Time" },
+];
+
+const POLICY_LABELS: Record<RetakePolicy, string> = {
+  highest_score: "Keep highest score",
+  latest_attempt: "Keep latest attempt",
+  average_score: "Average of all attempts",
+};
+
+/** Retake policy form state. `max_attempts` is a string for the input; 0 = unlimited. */
+const EMPTY_POLICY = {
+  allow_retake: false,
+  unlimited: false,
+  max_attempts: "1",
+  retake_score_policy: "highest_score" as RetakePolicy,
+};
+
+type QuizMode = "classmate" | "manual";
+
+interface ManualQuestion {
+  kind: "mc" | "fill" | "matching" | "essay";
+  question: string;
+  options: string[];
+  correct_answer: string;
+}
+
+const EMPTY_MANUAL_Q: ManualQuestion = {
+  kind: "mc",
+  question: "",
+  options: ["", "", "", ""],
+  correct_answer: "",
+};
+
+/** Parse the policy form into the API payload (unlimited → max_attempts 0). */
+function policyPayload(f: typeof EMPTY_POLICY) {
+  return {
+    allow_retake: f.allow_retake,
+    max_attempts: f.allow_retake
+      ? f.unlimited
+        ? 0
+        : Math.max(1, parseInt(f.max_attempts) || 1)
+      : 1,
+    retake_score_policy: f.retake_score_policy,
+  };
+}
 
 function CoursesPage() {
   const profile = useProfile(["admin", "teacher"]);
@@ -1844,5 +1899,470 @@ function CoursesPage() {
         {rosterQuiz && <AttemptRoster quizId={rosterQuiz.id} />}
       </Modal>
     </AppShell>
+  );
+}
+
+/** Shared Submission & Retake Policies card (creation + edit modals). */
+function PolicyFields({
+  value,
+  onChange,
+}: {
+  value: typeof EMPTY_POLICY;
+  onChange: (patch: Partial<typeof EMPTY_POLICY>) => void;
+}) {
+  return (
+    <fieldset className="rounded-xl border border-border p-3">
+      <legend className="px-1 text-xs font-semibold text-muted-foreground">
+        Submission &amp; Retake Policies
+      </legend>
+      <div className="flex items-center justify-between gap-3 py-1">
+        <span className="text-sm font-medium">Allow students to retake this worksheet</span>
+        <button
+          type="button"
+          role="switch"
+          aria-checked={value.allow_retake}
+          aria-label="Allow students to retake this worksheet"
+          onClick={() => onChange({ allow_retake: !value.allow_retake })}
+          className={cn(
+            "relative h-6 w-11 shrink-0 rounded-full transition",
+            value.allow_retake ? "bg-primary" : "bg-muted-foreground/30",
+          )}
+        >
+          <span
+            className={cn(
+              "absolute top-0.5 h-5 w-5 rounded-full bg-white shadow transition-all",
+              value.allow_retake ? "left-[22px]" : "left-0.5",
+            )}
+          />
+        </button>
+      </div>
+      {value.allow_retake ? (
+        <div className="mt-2 grid gap-3 sm:grid-cols-2">
+          <div>
+            <label className="flex items-center gap-2 text-xs font-medium text-muted-foreground">
+              <input
+                type="checkbox"
+                checked={value.unlimited}
+                onChange={(e) => onChange({ unlimited: e.target.checked })}
+                className="h-4 w-4 rounded border-input"
+              />
+              Unlimited attempts
+            </label>
+            {!value.unlimited && (
+              <input
+                inputMode="numeric"
+                aria-label="Maximum allowed attempts"
+                value={value.max_attempts}
+                onChange={(e) => onChange({ max_attempts: e.target.value })}
+                placeholder="Max attempts (e.g. 3)"
+                className="mt-2 h-10 w-full rounded-xl border border-input bg-background px-3 text-sm outline-none focus:ring-2 focus:ring-ring"
+              />
+            )}
+          </div>
+          <label className="text-xs font-medium text-muted-foreground">
+            Grading policy
+            <select
+              aria-label="Grading policy"
+              value={value.retake_score_policy}
+              onChange={(e) => onChange({ retake_score_policy: e.target.value as RetakePolicy })}
+              className="mt-2 h-10 w-full rounded-xl border border-input bg-background px-3 text-sm outline-none focus:ring-2 focus:ring-ring"
+            >
+              {Object.entries(POLICY_LABELS).map(([v, l]) => (
+                <option key={v} value={v}>
+                  {l}
+                </option>
+              ))}
+            </select>
+          </label>
+        </div>
+      ) : (
+        <p className="mt-1 text-xs text-muted-foreground">
+          Students get exactly one attempt unless you grant an individual retake later.
+        </p>
+      )}
+    </fieldset>
+  );
+}
+
+/** Staff roster of per-student attempts with grant/reset overrides. */
+function AttemptRoster({ quizId }: { quizId: string }) {
+  const qc = useQueryClient();
+  const { data, isLoading } = useQuery({
+    queryKey: ["quiz-attempts", quizId],
+    queryFn: () => listQuizAttempts(quizId),
+  });
+  const [busy, setBusy] = useState<string | null>(null);
+  const refresh = () => qc.invalidateQueries({ queryKey: ["quiz-attempts", quizId] });
+
+  const grant = async (studentId: string) => {
+    setBusy(studentId);
+    try {
+      await grantQuizRetake(quizId, studentId);
+      toast.success("Extra attempt granted.");
+      refresh();
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Could not grant a retake.");
+    } finally {
+      setBusy(null);
+    }
+  };
+
+  const reset = async (studentId: string, name: string) => {
+    if (
+      !confirm(
+        `Reset all attempts for ${name}? Their attempt history on this worksheet will be wiped.`,
+      )
+    )
+      return;
+    setBusy(studentId);
+    try {
+      await resetQuizAttempts(quizId, studentId);
+      toast.success("Attempts reset.");
+      refresh();
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Could not reset attempts.");
+    } finally {
+      setBusy(null);
+    }
+  };
+
+  if (isLoading)
+    return <p className="py-8 text-center text-sm text-muted-foreground">Loading attempts…</p>;
+  if (!data || data.students.length === 0) {
+    return <EmptyState title="No attempts yet" sub="No student has submitted this worksheet." />;
+  }
+
+  return (
+    <div className="space-y-3">
+      {data.students.map((s) => (
+        <div key={s.student_id} className="rounded-xl border border-border/70 p-4">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <div>
+              <p className="text-sm font-semibold">{s.full_name}</p>
+              <p className="text-xs text-muted-foreground">
+                {s.student_no ?? "—"}
+                {s.section ? ` · ${s.section}` : ""}
+              </p>
+            </div>
+            <div className="flex items-center gap-2">
+              {s.effective_score != null && (
+                <Badge tone="green">
+                  Effective: {s.effective_score}/{s.effective_total}
+                </Badge>
+              )}
+              {s.extra_attempts > 0 && <Badge tone="amber">+{s.extra_attempts} granted</Badge>}
+            </div>
+          </div>
+          <div className="mt-2 flex flex-wrap gap-1.5">
+            {s.attempts.map((a) => (
+              <span
+                key={a.attempt_number}
+                className="rounded-lg bg-muted px-2 py-1 text-[11px] font-semibold"
+              >
+                #{a.attempt_number}: {a.score}/{a.total}
+              </span>
+            ))}
+          </div>
+          <div className="mt-3 flex flex-wrap gap-2">
+            <button
+              onClick={() => grant(s.student_id)}
+              disabled={busy === s.student_id}
+              className="flex h-9 items-center gap-1.5 rounded-lg bg-primary/10 px-3 text-xs font-semibold text-primary hover:bg-primary/15 disabled:opacity-50"
+            >
+              <RotateCcw className="h-3.5 w-3.5" /> Grant extra retake
+            </button>
+            <button
+              onClick={() => reset(s.student_id, s.full_name)}
+              disabled={busy === s.student_id}
+              className="flex h-9 items-center gap-1.5 rounded-lg border border-rose-500/40 px-3 text-xs font-semibold text-rose-600 hover:bg-rose-500/10 disabled:opacity-50"
+            >
+              <Eraser className="h-3.5 w-3.5" /> Reset attempts
+            </button>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function EnrollmentCount({ courseId }: { courseId: string }) {
+  const { data } = useQuery({
+    queryKey: ["enrollments", courseId],
+    queryFn: () => enrollmentsForCourse(courseId),
+  });
+  return (
+    <p className="mt-3 flex items-center gap-1.5 text-xs font-semibold text-muted-foreground">
+      <Plus className="hidden" />
+      {data?.length ?? 0} students enrolled
+    </p>
+  );
+}
+
+const ACCEPTED = ".pdf,.doc,.docx,.png,.jpg,.jpeg,.zip";
+const MAX_FILE_BYTES = 25 * 1024 * 1024;
+const MAX_BATCH_BYTES = 60 * 1024 * 1024;
+const ACCEPTED_MIME = [
+  "application/pdf",
+  "application/msword",
+  "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+  "application/zip",
+  "application/x-zip-compressed",
+];
+
+/** MIME/extension + size validation shared by the staged dropzone. */
+function isAcceptedFile(file: File): boolean {
+  if (file.type.startsWith("image/")) return true;
+  if (ACCEPTED_MIME.includes(file.type)) return true;
+  return /\.(pdf|docx?|png|jpe?g|zip)$/i.test(file.name);
+}
+
+/**
+ * Staged drag-and-drop zone used before the record exists (create forms).
+ * Files are held in local state and uploaded once the item is posted.
+ */
+function PendingDropzone({
+  files,
+  onChange,
+  progress,
+  busy,
+}: {
+  files: File[];
+  onChange: (next: File[]) => void;
+  progress?: number;
+  busy?: boolean;
+}) {
+  const [drag, setDrag] = useState(false);
+  const inputRef = useRef<HTMLInputElement | null>(null);
+
+  const add = (incoming: FileList | File[]) => {
+    const next = [...files];
+    for (const file of Array.from(incoming)) {
+      if (!isAcceptedFile(file)) {
+        toast.error(`${file.name} is not a supported format.`);
+        continue;
+      }
+      if (file.size > MAX_FILE_BYTES) {
+        toast.error(`${file.name} is over 25 MB.`);
+        continue;
+      }
+      if (next.some((f) => f.name === file.name && f.size === file.size)) continue;
+      if (next.reduce((s, f) => s + f.size, 0) + file.size > MAX_BATCH_BYTES) {
+        toast.error("Batch is too large (max 60 MB total).");
+        break;
+      }
+      next.push(file);
+    }
+    onChange(next);
+  };
+
+  return (
+    <div>
+      <div
+        role="button"
+        tabIndex={0}
+        aria-label="Attach reference materials"
+        onClick={() => inputRef.current?.click()}
+        onKeyDown={(e) => {
+          if (e.key === "Enter" || e.key === " ") {
+            e.preventDefault();
+            inputRef.current?.click();
+          }
+        }}
+        onDragOver={(e) => {
+          e.preventDefault();
+          setDrag(true);
+        }}
+        onDragLeave={() => setDrag(false)}
+        onDrop={(e) => {
+          e.preventDefault();
+          setDrag(false);
+          if (e.dataTransfer.files.length) add(e.dataTransfer.files);
+        }}
+        className={cn(
+          "flex cursor-pointer flex-col items-center justify-center gap-1 rounded-xl border-2 border-dashed px-3 py-5 text-center transition",
+          drag
+            ? "border-primary bg-primary/10 ring-2 ring-primary/40"
+            : "border-border hover:border-primary/50 hover:bg-muted/60",
+        )}
+      >
+        <CloudUpload className={cn("h-6 w-6", drag ? "text-primary" : "text-muted-foreground")} />
+        <p className="text-sm font-semibold">Drag and drop files here, or browse</p>
+        <p className="text-xs text-muted-foreground">
+          Supports PDF, DOCX, PNG, JPG, ZIP (Max: 25MB)
+        </p>
+        <input
+          ref={inputRef}
+          type="file"
+          multiple
+          accept={ACCEPTED}
+          className="hidden"
+          aria-label="Reference materials"
+          onChange={(e) => {
+            if (e.target.files?.length) add(e.target.files);
+            e.target.value = "";
+          }}
+        />
+      </div>
+
+      {files.length > 0 && (
+        <ul className="mt-2 grid gap-1.5">
+          {files.map((f) => (
+            <li
+              key={`${f.name}-${f.size}`}
+              className="flex items-center gap-2 rounded-lg bg-muted/60 px-2.5 py-1.5"
+            >
+              <FileText className="h-3.5 w-3.5 shrink-0 text-primary" />
+              <span className="min-w-0 flex-1 truncate text-xs font-medium">{f.name}</span>
+              <span className="text-[11px] text-muted-foreground">{formatFileSize(f.size)}</span>
+              <button
+                type="button"
+                onClick={() => onChange(files.filter((x) => x !== f))}
+                disabled={busy}
+                aria-label={`Remove ${f.name}`}
+                className="rounded-md p-1 text-muted-foreground hover:bg-rose-50 hover:text-rose-600 disabled:opacity-50 dark:hover:bg-rose-500/10"
+              >
+                <X className="h-3.5 w-3.5" />
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
+
+      {busy && typeof progress === "number" && (
+        <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-muted">
+          <div
+            className="h-full rounded-full bg-primary transition-all"
+            style={{ width: `${progress}%` }}
+          />
+        </div>
+      )}
+    </div>
+  );
+}
+
+/**
+ * Drag-and-drop material uploader + attachment list for one worksheet or
+ * assignment. Uploads go to the private course-materials bucket; the server
+ * verifies the caller is an admin or the course lead before accepting a file.
+ */
+function MaterialManager({
+  target,
+  id,
+  courseId,
+  attachments,
+}: {
+  target: "quiz" | "assignment";
+  id: string;
+  courseId: string;
+  attachments: Attachment[];
+}) {
+  const qc = useQueryClient();
+  const [items, setItems] = useState<Attachment[]>(attachments);
+  const [drag, setDrag] = useState(false);
+  const [busy, setBusy] = useState(false);
+
+  const invalidate = () =>
+    qc.invalidateQueries({ queryKey: [target === "quiz" ? "quizzes" : "assignments"] });
+
+  const upload = async (files: FileList | File[]) => {
+    setBusy(true);
+    try {
+      for (const file of Array.from(files)) {
+        if (file.size > MAX_FILE_BYTES) {
+          toast.error(`${file.name} is over 25 MB.`);
+          continue;
+        }
+        const attachment = await uploadCourseMaterial(courseId, file);
+        setItems(await attachCourseMaterial(target, id, attachment));
+        toast.success(`${file.name} attached.`);
+      }
+      invalidate();
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Upload failed.");
+    } finally {
+      setBusy(false);
+      setDrag(false);
+    }
+  };
+
+  const detach = async (a: Attachment) => {
+    setBusy(true);
+    try {
+      setItems(await removeCourseMaterial(target, id, a.path));
+      toast.success("File removed.");
+      invalidate();
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Could not remove the file.");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <div className="mt-2 rounded-xl border border-dashed border-border p-3">
+      <div className="flex items-center gap-1.5 text-xs font-semibold text-muted-foreground">
+        <Paperclip className="h-3.5 w-3.5" /> Materials
+      </div>
+      {items.length > 0 && (
+        <ul className="mt-2 grid gap-1.5">
+          {items.map((a) => (
+            <li
+              key={a.path}
+              className="flex items-center gap-2 rounded-lg bg-muted/60 px-2.5 py-1.5"
+            >
+              <a
+                href={materialHref(a)}
+                target="_blank"
+                rel="noreferrer"
+                className="min-w-0 flex-1 truncate text-xs font-medium text-primary hover:underline"
+              >
+                {a.name}
+              </a>
+              <span className="text-[11px] text-muted-foreground">{formatFileSize(a.size)}</span>
+              <button
+                onClick={() => detach(a)}
+                disabled={busy}
+                aria-label={`Remove ${a.name}`}
+                className="rounded-md p-1 text-muted-foreground hover:bg-rose-50 hover:text-rose-600 disabled:opacity-50 dark:hover:bg-rose-500/10"
+              >
+                <X className="h-3.5 w-3.5" />
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
+      <label
+        onDragOver={(e) => {
+          e.preventDefault();
+          setDrag(true);
+        }}
+        onDragLeave={() => setDrag(false)}
+        onDrop={(e) => {
+          e.preventDefault();
+          if (e.dataTransfer.files.length) void upload(e.dataTransfer.files);
+        }}
+        className={cn(
+          "mt-2 flex cursor-pointer items-center justify-center gap-2 rounded-lg border border-dashed px-3 py-2.5 text-xs font-medium transition",
+          drag
+            ? "border-primary bg-primary/10 text-primary"
+            : "border-border text-muted-foreground hover:bg-muted",
+          busy && "pointer-events-none opacity-60",
+        )}
+      >
+        <Upload className="h-3.5 w-3.5" />
+        {busy ? "Uploading…" : "Drop files here or browse — PDF, DOCX, PNG, JPG, ZIP (Max: 25MB)"}
+        <input
+          type="file"
+          multiple
+          accept={ACCEPTED}
+          className="hidden"
+          aria-label="Upload course material"
+          onChange={(e) => {
+            if (e.target.files?.length) void upload(e.target.files);
+            e.target.value = "";
+          }}
+        />
+      </label>
+    </div>
   );
 }
