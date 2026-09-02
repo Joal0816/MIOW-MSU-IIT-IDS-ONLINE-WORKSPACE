@@ -1,16 +1,8 @@
 // Live check-in dispatch from the ESP32-P4 kiosk.
 // POST /api/public/hardware/attendance
-//   Authorization: Bearer <HARDW...KEY>
-//   X-Hardware-Timestamp: <ISO-8601>  (required, 5-min window)
-//   { "user_id": "<uuid>" | "rfid_uid": "0123456789",
-//     "timestamp": "2026-08-25T08:02:00Z", "confidence": 0.91 }
-//
-// The web side owns the status engine: the tap timestamp is compared with the
-// matched course schedule (start time + grace) to mark ON TIME or LATE, and
-// the resulting log appears on the live attendance screen.
 import { createFileRoute } from "@tanstack/react-router";
-import { timingSafeEqual } from "node:crypto";
 import { z } from "zod";
+import { guardHardwareRequest } from "@/lib/server/hardware-auth.server";
 
 const Body = z
   .object({
@@ -23,58 +15,14 @@ const Body = z
     message: "user_id or rfid_uid is required",
   });
 
-// A face match below this cosine-similarity confidence is rejected rather
-// than logged, mirroring the device-side 0.55 distance threshold.
 const MIN_CONFIDENCE = 0.45;
-
-// In-memory rate limit: 60 req / 60s per IP (per-instance, best-effort).
-// For production scale, replace with Redis / edge rate-limit.
-const RATE_LIMIT_MAX = 60;
-const RATE_LIMIT_WINDOW_MS = 60_000;
-const _rate = new Map<string, number[]>();
-function hitRateLimit(ip: string): boolean {
-  const now = Date.now();
-  const hits = (_rate.get(ip) ?? []).filter((t) => now - t < RATE_LIMIT_WINDOW_MS);
-  hits.push(now);
-  _rate.set(ip, hits);
-  if (_rate.size > 1000) {
-    for (const [k, v] of _rate) {
-      const last = v[v.length - 1];
-      if (!v.length || (last != null && now - last > RATE_LIMIT_WINDOW_MS)) _rate.delete(k);
-    }
-  }
-  return hits.length > RATE_LIMIT_MAX;
-}
-
-function authorized(request: Request): boolean {
-  const expected = process.env["HARDWARE_API_KEY"];
-  if (!expected) return false;
-  const token = (request.headers.get("authorization") ?? "").replace(/^Bearer\s+/i, "");
-  // Replay protection: require X-Hardware-Timestamp within 5-minute window.
-  const tsRaw = request.headers.get("x-hardware-timestamp");
-  if (!tsRaw) return false;
-  const ts = Date.parse(tsRaw);
-  if (!Number.isFinite(ts)) return false;
-  if (Math.abs(Date.now() - ts) > 5 * 60 * 1000) return false;
-  const a = Buffer.from(token);
-  const b = Buffer.from(expected);
-  return a.length === b.length && timingSafeEqual(a, b);
-}
 
 export const Route = createFileRoute("/api/public/hardware/attendance")({
   server: {
     handlers: {
       POST: async ({ request }) => {
-        const ip =
-          request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
-          request.headers.get("x-real-ip") ||
-          "unknown";
-        if (hitRateLimit(ip))
-          return new Response("Too Many Requests", {
-            status: 429,
-            headers: { "Retry-After": "60" },
-          });
-        if (!authorized(request)) return new Response("Unauthorized", { status: 401 });
+        const guard = guardHardwareRequest(request);
+        if (!guard.ok) return guard.response;
         let body: z.infer<typeof Body>;
         try {
           body = Body.parse(await request.json());
@@ -84,7 +32,7 @@ export const Route = createFileRoute("/api/public/hardware/attendance")({
         if (body.confidence != null && body.confidence < MIN_CONFIDENCE) {
           return Response.json({ ok: false, error: "Low confidence match" }, { status: 422 });
         }
-        const server = await import("@/lib/lms.server");
+        const server = await import("@/lib/server");
         const result = body.user_id
           ? await server.recordTapByProfileId(body.user_id, body.timestamp)
           : await server.recordTap(body.rfid_uid!, body.timestamp);

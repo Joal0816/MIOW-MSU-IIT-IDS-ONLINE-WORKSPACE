@@ -19,7 +19,9 @@ const USE_SUPABASE = !!(SUPABASE_URL && SUPABASE_KEY);
 const USE_PG = !!DATABASE_URL;
 
 if (!USE_SUPABASE && !USE_PG) {
-  console.error("[db] No database configured. Set SUPABASE_URL+SUPABASE_SERVICE_ROLE_KEY or DATABASE_URL.");
+  console.error(
+    "[db] No database configured. Set SUPABASE_URL+SUPABASE_SERVICE_ROLE_KEY or DATABASE_URL.",
+  );
 }
 
 // ── Supabase client ─────────────────────────────────────────────────
@@ -28,7 +30,10 @@ let _supabase: SupabaseClient | undefined;
 
 function getSupabase(): SupabaseClient {
   if (_supabase) return _supabase;
-  if (!USE_SUPABASE) throw new Error("[db] Supabase not configured (missing SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY)");
+  if (!USE_SUPABASE)
+    throw new Error(
+      "[db] Supabase not configured (missing SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY)",
+    );
   _supabase = createClient(SUPABASE_URL, SUPABASE_KEY, {
     auth: { persistSession: false, autoRefreshToken: false },
   });
@@ -66,13 +71,29 @@ export function getPoolRaw(): Pool {
 
 import { storage as localStorage } from "./storage";
 
+interface DbError {
+  code?: string;
+  message?: string;
+}
+
+interface DbQueryBuilder extends PromiseLike<{ data: unknown; error: DbError | null }> {
+  select(cols?: string, opts?: Record<string, unknown>): DbQueryBuilder;
+  insert(data: unknown): DbQueryBuilder;
+  update(data: Record<string, unknown>): DbQueryBuilder;
+  delete(): DbQueryBuilder;
+  eq(col: string, val: unknown): DbQueryBuilder;
+  gte(col: string, val: unknown): DbQueryBuilder;
+  ilike(col: string, val: string): DbQueryBuilder;
+  is(col: string, val: unknown): DbQueryBuilder;
+  in(col: string, vals: unknown[]): DbQueryBuilder;
+  order(col: string, opts?: { ascending?: boolean }): DbQueryBuilder;
+  limit(n: number): DbQueryBuilder;
+  maybeSingle(): DbQueryBuilder;
+  single(): DbQueryBuilder;
+}
+
 type DbLike = {
-  from(table: string): {
-    select(cols?: string): any;
-    insert(data: unknown): any;
-    update(data: Record<string, unknown>): any;
-    delete(): any;
-  };
+  from(table: string): DbQueryBuilder;
 };
 
 let _db: DbLike;
@@ -100,11 +121,12 @@ export const supabaseAdmin = db;
 function createPgCompatLayer(): DbLike {
   type Filter =
     | { type: "eq"; col: string; val: unknown }
+    | { type: "gte"; col: string; val: unknown }
     | { type: "ilike"; col: string; val: string }
     | { type: "is"; col: string; val: unknown }
     | { type: "in"; col: string; vals: unknown[] };
 
-  class QueryBuilder implements PromiseLike<{ data: unknown; error: unknown }> {
+  class QueryBuilder implements PromiseLike<{ data: unknown; error: DbError | null }> {
     private table: string;
     private op: "select" | "insert" | "update" | "delete" = "select";
     private selectCols: string = "*";
@@ -155,6 +177,11 @@ function createPgCompatLayer(): DbLike {
       return this;
     }
 
+    gte(col: string, val: unknown): this {
+      this.filters.push({ type: "gte", col, val });
+      return this;
+    }
+
     ilike(col: string, val: string): this {
       this.filters.push({ type: "ilike", col, val });
       return this;
@@ -192,24 +219,29 @@ function createPgCompatLayer(): DbLike {
       return this;
     }
 
-    then<TResult1 = { data: unknown; error: unknown }, TResult2 = never>(
-      onfulfilled?: ((value: { data: unknown; error: unknown }) => TResult1 | PromiseLike<TResult1>) | null,
+    then<TResult1 = { data: unknown; error: DbError | null }, TResult2 = never>(
+      onfulfilled?:
+        | ((value: { data: unknown; error: DbError | null }) => TResult1 | PromiseLike<TResult1>)
+        | null,
       onrejected?: ((reason: unknown) => TResult2 | PromiseLike<TResult2>) | null,
     ): PromiseLike<TResult1 | TResult2> {
       return this.execute().then(onfulfilled, onrejected);
     }
 
-    private async execute(): Promise<{ data: unknown; error: unknown }> {
+    private async execute(): Promise<{ data: unknown; error: DbError | null }> {
       try {
         const pool = getPool();
         return await this.run(pool);
       } catch (e: unknown) {
         const err = e as { code?: string; message?: string };
-        return { data: null, error: { code: err?.code ?? "UNKNOWN", message: err?.message ?? String(e) } };
+        return {
+          data: null,
+          error: { code: err?.code ?? "UNKNOWN", message: err?.message ?? String(e) },
+        };
       }
     }
 
-    private async run(pool: Pool): Promise<{ data: unknown; error: unknown }> {
+    private async run(pool: Pool): Promise<{ data: unknown; error: DbError | null }> {
       const table = `public.${this.table}`;
       const params: unknown[] = [];
       let idx = 1;
@@ -217,15 +249,29 @@ function createPgCompatLayer(): DbLike {
       const whereClause = (): string => {
         if (!this.filters.length) return "";
         const parts = this.filters.map((f) => {
-          if (f.type === "eq") { params.push(f.val); return `${qi(f.col)} = $${idx++}`; }
-          if (f.type === "ilike") { params.push(f.val); return `${qi(f.col)} ILIKE $${idx++}`; }
+          if (f.type === "eq") {
+            params.push(f.val);
+            return `${qi(f.col)} = $${idx++}`;
+          }
+          if (f.type === "gte") {
+            params.push(f.val);
+            return `${qi(f.col)} >= $${idx++}`;
+          }
+          if (f.type === "ilike") {
+            params.push(f.val);
+            return `${qi(f.col)} ILIKE $${idx++}`;
+          }
           if (f.type === "is") {
             if (f.val === null) return `${qi(f.col)} IS NULL`;
-            params.push(f.val); return `${qi(f.col)} IS $${idx++}`;
+            params.push(f.val);
+            return `${qi(f.col)} IS $${idx++}`;
           }
           if (f.type === "in") {
             if (!f.vals.length) return "FALSE";
-            const ph = f.vals.map((v) => { params.push(v); return `$${idx++}`; });
+            const ph = f.vals.map((v) => {
+              params.push(v);
+              return `$${idx++}`;
+            });
             return `${qi(f.col)} IN (${ph.join(", ")})`;
           }
           return "";
@@ -243,11 +289,13 @@ function createPgCompatLayer(): DbLike {
 
       if (this.op === "select") {
         const cols = this.selectCols === "*" ? "*" : this.selectCols;
-        const sql = `SELECT ${cols} FROM ${table} ${whereClause()} ${orderClause()} ${this.limitOne ? "LIMIT 1" : ""}`.trim();
+        const sql =
+          `SELECT ${cols} FROM ${table} ${whereClause()} ${orderClause()} ${this.limitOne ? "LIMIT 1" : ""}`.trim();
         const res: QueryResult = await pool.query(sql + ";", params);
         if (this.limitOne) {
           if (!res.rows.length) {
-            if (this.expectSingle) return { data: null, error: { code: "PGRST116", message: "No rows found" } };
+            if (this.expectSingle)
+              return { data: null, error: { code: "PGRST116", message: "No rows found" } };
             return { data: null, error: null };
           }
           return { data: res.rows[0], error: null };
@@ -260,15 +308,22 @@ function createPgCompatLayer(): DbLike {
         if (!rows.length) return { data: [], error: null };
         const keys = Object.keys(rows[0] as Record<string, unknown>);
         const colsSql = keys.map(qi).join(", ");
-        const valuesSql = rows.map((row) => {
-          const vals = keys.map((k) => { params.push((row as Record<string, unknown>)[k]); return `$${idx++}`; });
-          return `(${vals.join(", ")})`;
-        }).join(", ");
-        const sql = `INSERT INTO ${table} (${colsSql}) VALUES ${valuesSql} ${returningClause()};`.trim();
+        const valuesSql = rows
+          .map((row) => {
+            const vals = keys.map((k) => {
+              params.push((row as Record<string, unknown>)[k]);
+              return `$${idx++}`;
+            });
+            return `(${vals.join(", ")})`;
+          })
+          .join(", ");
+        const sql =
+          `INSERT INTO ${table} (${colsSql}) VALUES ${valuesSql} ${returningClause()};`.trim();
         const res = await pool.query(sql, params);
         if (this.limitOne) {
           if (!res.rows.length) {
-            if (this.expectSingle) return { data: null, error: { code: "PGRST116", message: "No rows found" } };
+            if (this.expectSingle)
+              return { data: null, error: { code: "PGRST116", message: "No rows found" } };
             return { data: null, error: null };
           }
           return { data: res.rows[0], error: null };
@@ -280,14 +335,20 @@ function createPgCompatLayer(): DbLike {
         const data = this.updateData ?? {};
         const keys = Object.keys(data);
         if (!keys.length) return { data: [], error: null };
-        const setSql = keys.map((k) => { params.push(data[k]); return `${qi(k)} = $${idx++}`; }).join(", ");
+        const setSql = keys
+          .map((k) => {
+            params.push(data[k]);
+            return `${qi(k)} = $${idx++}`;
+          })
+          .join(", ");
         const where = whereClause();
         const sql = `UPDATE ${table} SET ${setSql} ${where} ${returningClause()};`.trim();
         const res = await pool.query(sql, params);
         if (this.returning) {
           if (this.limitOne) {
             if (!res.rows.length) {
-              if (this.expectSingle) return { data: null, error: { code: "PGRST116", message: "No rows found" } };
+              if (this.expectSingle)
+                return { data: null, error: { code: "PGRST116", message: "No rows found" } };
               return { data: null, error: null };
             }
             return { data: res.rows[0], error: null };
@@ -305,7 +366,8 @@ function createPgCompatLayer(): DbLike {
         if (this.returning) {
           if (this.limitOne) {
             if (!res.rows.length) {
-              if (this.expectSingle) return { data: null, error: { code: "PGRST116", message: "No rows found" } };
+              if (this.expectSingle)
+                return { data: null, error: { code: "PGRST116", message: "No rows found" } };
               return { data: null, error: null };
             }
             return { data: res.rows[0], error: null };
@@ -320,7 +382,10 @@ function createPgCompatLayer(): DbLike {
   }
 
   function qi(ident: string): string {
-    return ident.split(".").map((p) => `"${p.replace(/"/g, '""')}"`).join(".");
+    return ident
+      .split(".")
+      .map((p) => `"${p.replace(/"/g, '""')}"`)
+      .join(".");
   }
 
   return {

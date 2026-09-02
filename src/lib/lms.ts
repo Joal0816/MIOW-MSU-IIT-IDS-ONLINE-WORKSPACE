@@ -460,7 +460,7 @@ export function transmutedOf(
 }
 
 import { logAudit } from "@/lib/settings";
-import { dbg } from "@/lib/debug";
+import { dbg, dbgError } from "@/lib/debug";
 
 /* ---------- Session (hardware-auth demo with signed server tokens) ---------- */
 
@@ -586,7 +586,10 @@ export async function pinLogin(login: string, secret: string): Promise<PinLoginR
         retryAfterMinutes?: number;
         attemptsLeft?: number;
       };
-  dbg("lms", "pinLogin RPC response", { ok: res.ok, reason: (res as any).reason });
+  dbg("lms", "pinLogin RPC response", {
+    ok: res.ok,
+    reason: "reason" in res ? res.reason : undefined,
+  });
   if (res.ok) return { ok: true, profile: { ...res.profile, session_token: res.token } };
   return res;
 }

@@ -45,3 +45,6 @@ storage/
 pgdata/
 # Hermes
 .hermes/
+
+# Heap snapshots
+*.heapsnapshot
