@@ -117,8 +117,8 @@ function AuthPage() {
       const res = await pinLogin(login.trim(), pin.trim());
       dbg("auth", "pinLogin result", {
         ok: res.ok,
-        reason: (res as any).reason,
-        profile: (res as any).profile?.role,
+        reason: "reason" in res ? res.reason : undefined,
+        profile: "profile" in res ? res.profile?.role : undefined,
       });
       if (res.ok) {
         startVerify(res.profile);

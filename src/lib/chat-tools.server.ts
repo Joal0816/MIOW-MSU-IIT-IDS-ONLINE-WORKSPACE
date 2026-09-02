@@ -5,7 +5,7 @@
 // input never carries a user id for the caller's own records.
 import { tool, type ToolSet } from "ai";
 import { z } from "zod";
-import * as lms from "./lms.server";
+import * as lms from "./server";
 
 export interface ChatCaller {
   id: string;
