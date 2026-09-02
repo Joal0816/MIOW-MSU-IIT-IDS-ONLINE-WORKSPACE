@@ -9,7 +9,7 @@ export const Route = createFileRoute("/api/public/hardware/sync-users")({
       GET: async ({ request }) => {
         const guard = guardHardwareRequest(request);
         if (!guard.ok) return guard.response;
-        const server = await import("@/lib/lms.server");
+        const server = await import("@/lib/server");
         const payload = await server.hardwareRoster();
         return Response.json(payload, {
           headers: { "Cache-Control": "no-store" },

@@ -119,7 +119,6 @@ function QuizzesPage() {
 
   useEffect(() => {
     if (activeId) void beginAttempt(activeId);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeId]);
 
   useEffect(() => {

@@ -1,6 +1,9 @@
 // Google Docs integration — Picker + Docs API export.
 // Requires VITE_GOOGLE_CLIENT_ID (OAuth) + VITE_GOOGLE_API_KEY (Picker).
 // All code is client-only; dynamically loads GAPI + GIS at runtime.
+/* eslint-disable @typescript-eslint/no-explicit-any */
+// (window as any) casts are required for external Google API globals loaded
+// via script tags — these objects have no bundled type declarations.
 
 const GIS_CLIENT_ID = import.meta.env["VITE_GOOGLE_CLIENT_ID"] ?? "";
 const GAPI_KEY = import.meta.env["VITE_GOOGLE_API_KEY"] ?? "";
@@ -62,9 +65,9 @@ async function requestToken(): Promise<string> {
       client_id: GIS_CLIENT_ID,
       scope: PICKER_SCOPE,
       prompt: "consent",
-      callback: (resp: any) => {
+      callback: (resp: { error?: string; access_token?: string }) => {
         if (resp.error) return reject(new Error(resp.error));
-        accessToken = resp.access_token;
+        accessToken = resp.access_token ?? null;
         resolve(accessToken!);
       },
     });

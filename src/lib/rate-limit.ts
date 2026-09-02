@@ -10,8 +10,10 @@ const MAX_ATTEMPTS = 5;
 // Optional Redis backend — lazy loaded so `ioredis` is not a hard dep.
 // If REDIS_URL is set and ioredis is installed, counters are shared across
 // instances via INCR + PEXPIRE. Otherwise uses in-memory Map (dev / single instance).
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 let redis: any = null;
 let redisWarned = false;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 function getRedis(): any {
   const url = process.env["REDIS_URL"] ?? "";
   if (!url) return null;
@@ -19,6 +21,7 @@ function getRedis(): any {
   try {
     // Dynamic require hidden from Vite scanner — ioredis is optional
     const IORedis =
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       (globalThis as any).require?.("ioredis") ??
       (() => {
         throw new Error("not found");

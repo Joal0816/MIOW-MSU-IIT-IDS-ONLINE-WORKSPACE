@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 // Zod validation schemas for all server functions.
 import { z } from "zod";
 
