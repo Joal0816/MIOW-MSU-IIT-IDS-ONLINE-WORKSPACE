@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 // Profiles & kiosk auth — CRUD, PIN login, RFID, biometrics.
 import bcrypt from "bcryptjs";
 import { z } from "zod";
@@ -6,26 +7,25 @@ import { getBucket } from "@/lib/rate-limit";
 import { unwrap, withoutToken } from "@/lib/server/utils.server";
 import { createSessionToken, revokeSessions, sessionSecret } from "@/lib/server/sessions.server";
 import { schemas } from "@/lib/server/schemas.server";
-import { type ProfileRow, type ProfileRole, type HttpError } from "@/lib/server/db-types";
 
 /* ---------- Safe profile shaping (strip credentials/biometrics) ---------- */
 
-export function safeProfile(p: ProfileRow) {
+export function safeProfile(p: any) {
   return {
-    id: p.id,
-    student_id: p.student_id,
-    email: p.email,
-    full_name: p.full_name,
-    role: p.role,
-    avatar_url: p.avatar_url,
-    grade_level: p.grade_level,
-    section: p.section,
-    created_at: p.created_at,
+    id: p.id as string,
+    student_id: (p.student_id ?? null) as string | null,
+    email: (p.email ?? null) as string | null,
+    full_name: p.full_name as string,
+    role: p.role as "student" | "teacher" | "admin",
+    avatar_url: (p.avatar_url ?? null) as string | null,
+    grade_level: (p.grade_level ?? null) as number | null,
+    section: (p.section ?? null) as string | null,
+    created_at: p.created_at as string,
     // Faculty identity fields (non-sensitive).
-    employee_id: p.employee_id,
-    prefix: p.prefix,
-    department: p.department,
-    biometric_enrolled_at: p.biometric_enrolled_at,
+    employee_id: (p.employee_id ?? null) as string | null,
+    prefix: (p.prefix ?? null) as string | null,
+    department: (p.department ?? null) as string | null,
+    biometric_enrolled_at: (p.biometric_enrolled_at ?? null) as string | null,
     is_face_enrolled: !!p.face_embedding,
     // Credentials and biometrics never leave the server.
     pin: null,
@@ -41,19 +41,19 @@ export type SafeProfile = ReturnType<typeof safeProfile>;
 /* ---------- RFID lookup ---------- */
 
 export async function findByRfid(uid: string) {
-  const p = await unwrap<ProfileRow | null>(
+  const p = await unwrap<any>(
     db.from("profiles").select("*").eq("rfid_uid", uid).is("deleted_at", null).maybeSingle(),
   );
-  return p ? { profile: safeProfile(p), token: createSessionToken(p.id) } : null;
+  return p ? { profile: safeProfile(p), token: createSessionToken(p.id as string) } : null;
 }
 
 /* ---------- PIN verification ---------- */
 
-async function verifyPin(p: ProfileRow, pin: string): Promise<boolean> {
+async function verifyPin(p: any, pin: string): Promise<boolean> {
   const key = `pin:${p.id ?? p.student_id ?? p.email ?? "unknown"}`;
   const bucket = getBucket(key);
   if (bucket.remaining === 0) {
-    const err = new Error("Too many attempts") as HttpError;
+    const err: any = new Error("Too many attempts");
     err.status = 429;
     throw err;
   }
@@ -83,11 +83,11 @@ async function verifyPin(p: ProfileRow, pin: string): Promise<boolean> {
 const LOGIN_MAX_ATTEMPTS = 5;
 const LOGIN_LOCK_MINUTES = 15;
 
-async function verifySecret(p: ProfileRow, secret: string): Promise<boolean> {
+async function verifySecret(p: any, secret: string): Promise<boolean> {
   if (await verifyPin(p, secret)) return true;
   const bucket = getBucket(`secret:${p.id ?? p.email ?? "unknown"}`);
   if (!bucket.consume()) {
-    const err = new Error("Too many attempts") as HttpError;
+    const err: any = new Error("Too many attempts");
     err.status = 429;
     throw err;
   }
@@ -111,14 +111,14 @@ export async function verifyPinLogin(login: string, secret: string) {
 
   const identBucket = getBucket(`login:ident:${identifier.toLowerCase()}`);
   if (!identBucket.consume()) {
-    const err = new Error("Too many attempts") as HttpError;
+    const err: any = new Error("Too many attempts");
     err.status = 429;
     throw err;
   }
 
-  let p: ProfileRow | null = null;
+  let p: any = null;
   for (const column of ["email", "student_id", "username", "employee_id"] as const) {
-    p = await unwrap<ProfileRow | null>(
+    p = await unwrap<any>(
       db
         .from("profiles")
         .select("*")
@@ -152,7 +152,7 @@ export async function verifyPinLogin(login: string, secret: string) {
 
   const profileBucket = getBucket(`login:profile:${p.id}`);
   if (!profileBucket.consume()) {
-    const err = new Error("Too many attempts") as HttpError;
+    const err: any = new Error("Too many attempts");
     err.status = 429;
     throw err;
   }
@@ -190,7 +190,7 @@ export async function verifyPinLogin(login: string, secret: string) {
 /* ---------- Profile CRUD ---------- */
 
 export async function getProfileById(id: string) {
-  const p = await unwrap<ProfileRow | null>(
+  const p = await unwrap<any>(
     db.from("profiles").select("*").eq("id", id).is("deleted_at", null).maybeSingle(),
   );
   return p ? safeProfile(p) : null;
@@ -209,7 +209,7 @@ export async function createProfile(input: z.infer<typeof schemas.profileInput>)
     row["pin_hash"] = await bcrypt.hash(row["pin"], 10);
     row["pin"] = null;
   }
-  const p = await unwrap<ProfileRow>(db.from("profiles").insert(row).select().single());
+  const p = await unwrap<any>(db.from("profiles").insert(row).select().single());
   return safeProfile(p);
 }
 
@@ -288,7 +288,7 @@ export async function updateTeacherSettings(teacherId: string, patch: Record<str
 
 export async function deleteUser(adminId: string, id: string) {
   if (adminId === id) throw new Error("You can't remove your own account");
-  const target = await unwrap<{ id: string; role: ProfileRole; full_name: string } | null>(
+  const target = await unwrap<any>(
     db
       .from("profiles")
       .select("id, role, full_name")
@@ -298,12 +298,12 @@ export async function deleteUser(adminId: string, id: string) {
   );
   if (!target) throw new Error("User not found");
   if (target.role === "admin") {
-    const admins = await unwrap<Array<{ id: string }>>(
+    const admins = await unwrap<any[]>(
       db.from("profiles").select("id").eq("role", "admin").is("deleted_at", null),
     );
     if (admins.length <= 1) throw new Error("You can't remove the last remaining admin");
   }
-  const cleared = await unwrap<Array<{ id: string }>>(
+  const cleared = await unwrap<any[]>(
     db.from("courses").update({ teacher_id: null }).eq("teacher_id", id).select("id"),
   );
   const stamp = new Date().toISOString();
@@ -311,12 +311,7 @@ export async function deleteUser(adminId: string, id: string) {
     typeof value === "string" && value && !value.startsWith("deleted:")
       ? `deleted:${stamp}:${value}`.slice(0, 300)
       : (value ?? null);
-  const archived = await unwrap<{
-    email: string | null;
-    student_id: string | null;
-    username: string | null;
-    employee_id: string | null;
-  } | null>(
+  const archived = await unwrap<any>(
     db
       .from("profiles")
       .select("email, student_id, username, employee_id")
@@ -345,14 +340,14 @@ export async function deleteUser(adminId: string, id: string) {
 }
 
 export async function listStudents() {
-  const rows = await unwrap<ProfileRow[]>(
+  const rows = await unwrap<any[]>(
     db.from("profiles").select("*").eq("role", "student").is("deleted_at", null).order("full_name"),
   );
   return rows.map(safeProfile);
 }
 
 export async function listStaff() {
-  const rows = await unwrap<ProfileRow[]>(
+  const rows = await unwrap<any[]>(
     db
       .from("profiles")
       .select("*")
@@ -364,7 +359,7 @@ export async function listStaff() {
 }
 
 export async function listTeachers() {
-  const rows = await unwrap<ProfileRow[]>(
+  const rows = await unwrap<any[]>(
     db.from("profiles").select("*").eq("role", "teacher").is("deleted_at", null).order("full_name"),
   );
   return rows.map(safeProfile);
@@ -372,7 +367,7 @@ export async function listTeachers() {
 
 export async function listTeacherDirectory() {
   const [rows, courses] = await Promise.all([
-    unwrap<ProfileRow[]>(
+    unwrap<any[]>(
       db
         .from("profiles")
         .select("*")
@@ -380,15 +375,13 @@ export async function listTeacherDirectory() {
         .is("deleted_at", null)
         .order("full_name"),
     ),
-    unwrap<Array<{ id: string; title: string; code: string; teacher_id: string | null }>>(
-      db.from("courses").select("id, title, code, teacher_id"),
-    ),
+    unwrap<any[]>(db.from("courses").select("id, title, code, teacher_id")),
   ]);
   return rows.map((r) => ({
     ...safeProfile(r),
     courses: courses
       .filter((c) => c.teacher_id === r.id)
-      .map((c) => ({ id: c.id, title: c.title, code: c.code })),
+      .map((c) => ({ id: c.id as string, title: c.title as string, code: c.code as string })),
   }));
 }
 
@@ -410,7 +403,7 @@ export async function assertUniqueIdentity(
   if (fields.username) checks.push(["username", fields.username, "username"]);
 
   for (const [column, value, label] of checks) {
-    const hits = await unwrap<Array<{ id: string }>>(
+    const hits = await unwrap<any[]>(
       db.from("profiles").select("id").ilike(column, value).is("deleted_at", null),
     );
     if (hits.some((h) => h.id !== exceptId)) {
@@ -433,7 +426,7 @@ export async function createTeacher(input: z.infer<typeof schemas.teacherInput>)
   row["pin"] = null;
   row["username"] = input.employee_id.trim();
   if (!row["rfid_uid"]) row["rfid_uid"] = null;
-  const created = await unwrap<ProfileRow>(db.from("profiles").insert(row).select().single());
+  const created = await unwrap<any>(db.from("profiles").insert(row).select().single());
 
   return { ...safeProfile(created), courses: [] as { id: string; title: string; code: string }[] };
 }
@@ -457,7 +450,7 @@ export async function enrollBiometrics(
 }
 
 export async function listAllUsers() {
-  const rows = await unwrap<ProfileRow[]>(
+  const rows = await unwrap<any[]>(
     db.from("profiles").select("*").is("deleted_at", null).order("full_name"),
   );
   return rows.map(safeProfile);
@@ -472,14 +465,14 @@ export async function updateUserRole(
   const target = await getProfileById(id);
   if (!target) throw new Error("User not found");
   if (target.role === "admin" && role !== "admin") {
-    const admins = await unwrap<Array<{ id: string }>>(
+    const admins = await unwrap<any[]>(
       db.from("profiles").select("id").eq("role", "admin").is("deleted_at", null),
     );
     if (admins.length <= 1) throw new Error("You can't demote the last remaining admin");
   }
   let unassignedCourses = 0;
   if (role === "student" && target.role !== "student") {
-    const cleared = await unwrap<Array<{ id: string }>>(
+    const cleared = await unwrap<any[]>(
       db.from("courses").update({ teacher_id: null }).eq("teacher_id", id).select("id"),
     );
     unassignedCourses = cleared.length;
@@ -539,9 +532,12 @@ function detectMimeByMagic(buf: Buffer): string | null {
 
 async function sniffMime(buffer: Buffer): Promise<string | null> {
   try {
-    const { fileTypeFromBuffer } = await import("file-type");
-    const ft = await fileTypeFromBuffer(buffer);
-    if (ft?.mime) return ft.mime;
+    const mod: any = await import("file-type");
+    const fn = mod.fileTypeFromBuffer ?? mod.fromBuffer ?? mod.default?.fileTypeFromBuffer;
+    if (typeof fn === "function") {
+      const ft = await fn(buffer);
+      if (ft?.mime) return ft.mime as string;
+    }
   } catch {
     // file-type unavailable — fallback to magic bytes
   }

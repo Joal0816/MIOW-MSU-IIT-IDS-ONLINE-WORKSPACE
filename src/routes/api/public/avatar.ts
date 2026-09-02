@@ -31,7 +31,7 @@ export const Route = createFileRoute("/api/public/avatar")({
         const auth = (request.headers.get("authorization") ?? "").replace(/^Bearer\s+/i, "");
         if (auth) {
           try {
-            const { requireSession } = await import("@/lib/server");
+            const { requireSession } = await import("@/lib/lms.server");
             await requireSession(auth);
           } catch {
             return new Response("Unauthorized", { status: 401 });

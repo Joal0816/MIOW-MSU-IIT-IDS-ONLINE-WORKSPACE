@@ -32,7 +32,7 @@ export const Route = createFileRoute("/api/public/hardware/attendance")({
         if (body.confidence != null && body.confidence < MIN_CONFIDENCE) {
           return Response.json({ ok: false, error: "Low confidence match" }, { status: 422 });
         }
-        const server = await import("@/lib/server");
+        const server = await import("@/lib/lms.server");
         const result = body.user_id
           ? await server.recordTapByProfileId(body.user_id, body.timestamp)
           : await server.recordTap(body.rfid_uid!, body.timestamp);

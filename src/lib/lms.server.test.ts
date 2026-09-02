@@ -23,7 +23,7 @@ describe("lms.server session HMAC — SESSION_SECRET isolation with compat", () 
     process.env["SESSION_SECRET"] = "test-session-secret-32-chars-hex-1234567890ab";
     process.env["SUPABASE_SERVICE_ROLE_KEY"] = "other-service-key-abcdef1234567890";
 
-    const { createSessionToken, verifySessionToken } = await import("./server");
+    const { createSessionToken, verifySessionToken } = await import("./lms.server.ts");
 
     const token = createSessionToken("00000000-0000-4000-a000-000000000001");
     expect(token).toContain(".");
@@ -52,7 +52,7 @@ describe("lms.server session HMAC — SESSION_SECRET isolation with compat", () 
 
     // Need fresh import to pick up new env for sessionSecret()
     // Use dynamic import with cache bust via query param
-    const mod = await import("./server");
+    const mod = await import("./lms.server.ts");
     const { verifySessionToken } = mod;
 
     // Create an old token manually signed with the old service key (as pre-migration tokens were)
@@ -77,7 +77,7 @@ describe("lms.server session HMAC — SESSION_SECRET isolation with compat", () 
     delete process.env["SESSION_SECRET"];
     process.env["SUPABASE_SERVICE_ROLE_KEY"] = "fallback-service-key-1234567890abcdef";
 
-    const { createSessionToken, verifySessionToken } = await import("./server");
+    const { createSessionToken, verifySessionToken } = await import("./lms.server.ts");
     const token = createSessionToken("00000000-0000-4000-a000-000000000003");
     expect(verifySessionToken(token)).toBe("00000000-0000-4000-a000-000000000003");
   });
@@ -86,7 +86,7 @@ describe("lms.server session HMAC — SESSION_SECRET isolation with compat", () 
     process.env["SESSION_SECRET"] = "tamper-test-secret-32-hex-1234567890ab";
     process.env["SUPABASE_SERVICE_ROLE_KEY"] = "other-key-for-tamper";
 
-    const { createSessionToken, verifySessionToken } = await import("./server");
+    const { createSessionToken, verifySessionToken } = await import("./lms.server.ts");
     const token = createSessionToken("00000000-0000-4000-a000-000000000004");
     const [payload, sig] = token.split(".");
 

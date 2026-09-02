@@ -228,6 +228,10 @@ export async function hardwareRoster() {
 }
 
 export async function countRows(table: string): Promise<number> {
-  const rows = await unwrap<unknown[]>(db.from(table).select("*"));
-  return rows.length;
+  const { count, error } = await db.from(table).select("*", { count: "exact", head: true });
+  if (error) {
+    console.error("[lms] count error:", error);
+    throw new Error("Database request failed");
+  }
+  return count ?? 0;
 }

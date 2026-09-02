@@ -71,29 +71,13 @@ export function getPoolRaw(): Pool {
 
 import { storage as localStorage } from "./storage";
 
-interface DbError {
-  code?: string;
-  message?: string;
-}
-
-interface DbQueryBuilder extends PromiseLike<{ data: unknown; error: DbError | null }> {
-  select(cols?: string, opts?: Record<string, unknown>): DbQueryBuilder;
-  insert(data: unknown): DbQueryBuilder;
-  update(data: Record<string, unknown>): DbQueryBuilder;
-  delete(): DbQueryBuilder;
-  eq(col: string, val: unknown): DbQueryBuilder;
-  gte(col: string, val: unknown): DbQueryBuilder;
-  ilike(col: string, val: string): DbQueryBuilder;
-  is(col: string, val: unknown): DbQueryBuilder;
-  in(col: string, vals: unknown[]): DbQueryBuilder;
-  order(col: string, opts?: { ascending?: boolean }): DbQueryBuilder;
-  limit(n: number): DbQueryBuilder;
-  maybeSingle(): DbQueryBuilder;
-  single(): DbQueryBuilder;
-}
-
 type DbLike = {
-  from(table: string): DbQueryBuilder;
+  from(table: string): {
+    select(cols?: string, opts?: Record<string, unknown>): any;
+    insert(data: unknown): any;
+    update(data: Record<string, unknown>): any;
+    delete(): any;
+  };
 };
 
 let _db: DbLike;
@@ -121,12 +105,11 @@ export const supabaseAdmin = db;
 function createPgCompatLayer(): DbLike {
   type Filter =
     | { type: "eq"; col: string; val: unknown }
-    | { type: "gte"; col: string; val: unknown }
     | { type: "ilike"; col: string; val: string }
     | { type: "is"; col: string; val: unknown }
     | { type: "in"; col: string; vals: unknown[] };
 
-  class QueryBuilder implements PromiseLike<{ data: unknown; error: DbError | null }> {
+  class QueryBuilder implements PromiseLike<{ data: unknown; error: unknown }> {
     private table: string;
     private op: "select" | "insert" | "update" | "delete" = "select";
     private selectCols: string = "*";
@@ -177,11 +160,6 @@ function createPgCompatLayer(): DbLike {
       return this;
     }
 
-    gte(col: string, val: unknown): this {
-      this.filters.push({ type: "gte", col, val });
-      return this;
-    }
-
     ilike(col: string, val: string): this {
       this.filters.push({ type: "ilike", col, val });
       return this;
@@ -219,16 +197,15 @@ function createPgCompatLayer(): DbLike {
       return this;
     }
 
-    then<TResult1 = { data: unknown; error: DbError | null }, TResult2 = never>(
+    then<TResult1 = { data: unknown; error: unknown }, TResult2 = never>(
       onfulfilled?:
-        | ((value: { data: unknown; error: DbError | null }) => TResult1 | PromiseLike<TResult1>)
-        | null,
+        ((value: { data: unknown; error: unknown }) => TResult1 | PromiseLike<TResult1>) | null,
       onrejected?: ((reason: unknown) => TResult2 | PromiseLike<TResult2>) | null,
     ): PromiseLike<TResult1 | TResult2> {
       return this.execute().then(onfulfilled, onrejected);
     }
 
-    private async execute(): Promise<{ data: unknown; error: DbError | null }> {
+    private async execute(): Promise<{ data: unknown; error: unknown }> {
       try {
         const pool = getPool();
         return await this.run(pool);
@@ -241,7 +218,7 @@ function createPgCompatLayer(): DbLike {
       }
     }
 
-    private async run(pool: Pool): Promise<{ data: unknown; error: DbError | null }> {
+    private async run(pool: Pool): Promise<{ data: unknown; error: unknown }> {
       const table = `public.${this.table}`;
       const params: unknown[] = [];
       let idx = 1;
@@ -252,10 +229,6 @@ function createPgCompatLayer(): DbLike {
           if (f.type === "eq") {
             params.push(f.val);
             return `${qi(f.col)} = $${idx++}`;
-          }
-          if (f.type === "gte") {
-            params.push(f.val);
-            return `${qi(f.col)} >= $${idx++}`;
           }
           if (f.type === "ilike") {
             params.push(f.val);

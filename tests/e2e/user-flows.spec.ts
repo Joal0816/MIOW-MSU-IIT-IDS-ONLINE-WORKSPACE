@@ -1,4 +1,4 @@
-import { test, expect, type Page } from "@playwright/test";
+import { test, expect } from "@playwright/test";
 
 // ── Helpers ──────────────────────────────────────────────
 const SESSION_KEY = "northview-lms-session";
@@ -26,7 +26,7 @@ function fakeProfile(role: "admin" | "teacher" | "student") {
   };
 }
 
-async function seedSession(page: Page, role: "admin" | "teacher" | "student") {
+async function seedSession(page: any, role: "admin" | "teacher" | "student") {
   await page.goto("/");
   await page.evaluate(
     ({ key, profile }: { key: string; profile: ReturnType<typeof fakeProfile> }) => {
@@ -37,8 +37,8 @@ async function seedSession(page: Page, role: "admin" | "teacher" | "student") {
 }
 
 /** Mock all TanStack Start server function POST calls to return success with given data. */
-async function mockServerFns(page: Page, mocks: Record<string, unknown>) {
-  await page.route("**/api/**", async (route) => {
+async function mockServerFns(page: any, mocks: Record<string, unknown>) {
+  await page.route("**/api/**", async (route: any) => {
     const url = route.request().url();
     // Check if this is a server function call
     if (route.request().method() === "POST") {

@@ -26,13 +26,7 @@ function parseWorksheetContext(
   return ctx;
 }
 
-interface ChatMessage {
-  role: "user" | "assistant";
-  content?: string;
-  parts?: Array<{ type?: string; text?: string }>;
-}
-
-function toOpenAIMessages(messages: ChatMessage[], systemPrompt: string) {
+function toOpenAIMessages(messages: any[], systemPrompt: string) {
   const out: Array<{ role: string; content: string }> = [{ role: "system", content: systemPrompt }];
   for (const m of messages) {
     if (m.role === "user" || m.role === "assistant") {
@@ -40,8 +34,8 @@ function toOpenAIMessages(messages: ChatMessage[], systemPrompt: string) {
       if (typeof m.content === "string") text = m.content;
       else if (Array.isArray(m.parts)) {
         text = m.parts
-          .filter((p) => p.type === "text")
-          .map((p) => p.text ?? "")
+          .filter((p: any) => p.type === "text")
+          .map((p: any) => p.text)
           .join("");
       }
       if (text.trim()) out.push({ role: m.role, content: text });
@@ -74,7 +68,7 @@ export const Route = createFileRoute("/api/chat")({
         }
 
         const [{ requireSession }, { systemPromptFor }] = await Promise.all([
-          import("@/lib/server"),
+          import("@/lib/lms.server"),
           import("@/lib/chat-tools.server"),
         ]);
 
@@ -136,8 +130,7 @@ export const Route = createFileRoute("/api/chat")({
                 continue;
               }
               try {
-                const parsed: { choices?: Array<{ delta?: { content?: string } }> } =
-                  JSON.parse(data);
+                const parsed = JSON.parse(data);
                 const delta = parsed.choices?.[0]?.delta;
                 if (!delta) continue;
                 if (delta.content === null || delta.content === undefined) continue;
