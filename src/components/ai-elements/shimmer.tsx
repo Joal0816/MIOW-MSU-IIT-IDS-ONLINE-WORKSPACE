@@ -1,8 +1,8 @@
 "use client";
 
 import { cn } from "@/lib/utils";
-import type { MotionProps, MotionStyle } from "framer-motion";
-import { motion } from "framer-motion";
+import type { MotionProps, MotionStyle } from "motion/react";
+import { motion } from "motion/react";
 import type { ElementType, JSX } from "react";
 import { memo, useMemo } from "react";
 
