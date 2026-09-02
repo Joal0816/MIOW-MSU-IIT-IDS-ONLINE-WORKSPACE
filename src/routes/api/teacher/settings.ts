@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import * as server from "@/lib/server";
+import * as server from "@/lib/lms.server";
 
 /**
  * PATCH /api/teacher/settings
@@ -21,8 +21,7 @@ export const Route = createFileRoute("/api/teacher/settings")({
           return Response.json({ error: "Invalid JSON body" }, { status: 400 });
         }
         const bearer = request.headers.get("authorization")?.replace(/^Bearer\s+/i, "");
-        const token =
-          bearer || (typeof body["token"] === "string" ? (body["token"] as string) : "");
+        const token = bearer || (typeof body["token"] === "string" ? (body["token"] as string) : "");
         try {
           const parsed = server.schemas.teacherSettings.parse({
             token,

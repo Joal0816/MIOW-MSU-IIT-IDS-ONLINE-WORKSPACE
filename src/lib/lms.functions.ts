@@ -1,4 +1,4 @@
-// Thin RPC wrappers around the server-only LMS data layer.
+// Thin RPC wrappers around the server-only LMS data layer (lms.server.ts).
 // Module scope intentionally contains only imports and server-function
 // declarations so code splitting never ships runtime helpers to the client.
 //
@@ -12,7 +12,7 @@
 //   gradebook editing, staff-only for other management writes, self-or-staff
 //   for student-scoped records, any valid session for catalog reads.
 import { createServerFn } from "@tanstack/react-start";
-import * as server from "./server";
+import * as server from "./lms.server";
 
 /* ---------- Profiles & kiosk auth (public — they issue tokens) ---------- */
 
@@ -45,6 +45,7 @@ export const updateProfileFn = createServerFn({ method: "POST" })
     const patch = await server.authorizeProfileUpdate(data.token, data.id, data.patch);
     return server.updateProfile(data.id, patch);
   });
+
 
 // User removal is ADMIN-only (teachers cannot remove accounts) and runs
 // as a soft delete with self-deletion and last-admin safeguards.
@@ -121,6 +122,7 @@ export const enrollBiometricsFn = createServerFn({ method: "POST" })
     if ("rfid_uid" in data) fields.rfid_uid = data.rfid_uid ?? null;
     return server.enrollBiometrics(data.id, fields);
   });
+
 
 // Role administration is ADMIN-only (teachers cannot reassign roles).
 export const listAllUsersFn = createServerFn({ method: "POST" })
@@ -204,6 +206,7 @@ export const deleteCourseFn = createServerFn({ method: "POST" })
     return server.deleteCourse(data.id);
   });
 
+
 export const listAssignmentsFn = createServerFn({ method: "POST" })
   .inputValidator((data) => server.schemas.session.parse(data))
   .handler(async ({ data }) => {
@@ -218,6 +221,7 @@ export const createAssignmentFn = createServerFn({ method: "POST" })
     await server.requireCourseOwnerOrAdmin(data.token, data.course_id);
     return server.createAssignment(data);
   });
+
 
 export const enrollmentsForCourseFn = createServerFn({ method: "POST" })
   .inputValidator((data) => server.schemas.courseScoped.parse(data))
@@ -325,6 +329,7 @@ export const createQuizWithQuestionsFn = createServerFn({ method: "POST" })
     return server.createQuizWithQuestions(data.quiz, data.questions);
   });
 
+
 /* ---------- Grades ---------- */
 
 export const listGradesForStudentFn = createServerFn({ method: "POST" })
@@ -412,13 +417,7 @@ export const countRowsFn = createServerFn({ method: "POST" })
 export const uploadCourseMaterialFn = createServerFn({ method: "POST" })
   .inputValidator((data) => server.schemas.materialUpload.parse(data))
   .handler(async ({ data }) =>
-    server.uploadCourseMaterial(
-      data.token,
-      data.course_id,
-      data.name,
-      data.data,
-      data.content_type,
-    ),
+    server.uploadCourseMaterial(data.token, data.course_id, data.name, data.data, data.content_type),
   );
 
 export const attachCourseMaterialFn = createServerFn({ method: "POST" })
@@ -429,9 +428,7 @@ export const attachCourseMaterialFn = createServerFn({ method: "POST" })
 
 export const removeCourseMaterialFn = createServerFn({ method: "POST" })
   .inputValidator((data) => server.schemas.materialRemove.parse(data))
-  .handler(async ({ data }) =>
-    server.removeCourseMaterial(data.token, data.target, data.id, data.path),
-  );
+  .handler(async ({ data }) => server.removeCourseMaterial(data.token, data.target, data.id, data.path));
 
 export const updateQuizFn = createServerFn({ method: "POST" })
   .inputValidator((data) => server.schemas.quizUpdate.parse(data))

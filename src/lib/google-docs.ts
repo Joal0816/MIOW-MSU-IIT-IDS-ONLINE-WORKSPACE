@@ -2,11 +2,10 @@
 // Requires VITE_GOOGLE_CLIENT_ID (OAuth) + VITE_GOOGLE_API_KEY (Picker).
 // All code is client-only; dynamically loads GAPI + GIS at runtime.
 
-const GIS_CLIENT_ID = import.meta.env["VITE_GOOGLE_CLIENT_ID"] ?? "";
-const GAPI_KEY = import.meta.env["VITE_GOOGLE_API_KEY"] ?? "";
+const GIS_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID ?? "";
+const GAPI_KEY = import.meta.env.VITE_GOOGLE_API_KEY ?? "";
 const GAPI_DISCOVERY = "https://www.googleapis.com/discovery/v1/apis/docs/v1/rest";
-const PICKER_SCOPE =
-  "https://www.googleapis.com/auth/documents.readonly https://www.googleapis.com/auth/drive.readonly";
+const PICKER_SCOPE = "https://www.googleapis.com/auth/documents.readonly https://www.googleapis.com/auth/drive.readonly";
 
 // ── Lazy-loaded singletons ──────────────────────────────────────────
 
@@ -23,15 +22,13 @@ function ensureGapi(): Promise<void> {
     s.onload = () => {
       // Load client first, then picker — they're separate modules
       (window as any).gapi.load("client", () => {
-        (window as any).gapi.client
-          .init({
-            apiKey: GAPI_KEY,
-            discoveryDocs: [GAPI_DISCOVERY],
-          })
-          .then(() => {
-            // Now load the picker module
-            (window as any).gapi.load("picker", () => resolve());
-          }, reject);
+        (window as any).gapi.client.init({
+          apiKey: GAPI_KEY,
+          discoveryDocs: [GAPI_DISCOVERY],
+        }).then(() => {
+          // Now load the picker module
+          (window as any).gapi.load("picker", () => resolve());
+        }, reject);
       });
     };
     s.onerror = () => reject(new Error("Failed to load gapi"));
@@ -81,9 +78,7 @@ async function requestToken(): Promise<string> {
  */
 export function openGooglePicker(onPick: (docIds: string[]) => void): void {
   if (!GIS_CLIENT_ID || !GAPI_KEY) {
-    console.warn(
-      "[google-docs] VITE_GOOGLE_CLIENT_ID / VITE_GOOGLE_API_KEY not set — using paste fallback",
-    );
+    console.warn("[google-docs] VITE_GOOGLE_CLIENT_ID / VITE_GOOGLE_API_KEY not set — using paste fallback");
     return;
   }
 
@@ -91,14 +86,13 @@ export function openGooglePicker(onPick: (docIds: string[]) => void): void {
     const token = await requestToken();
     await ensureGapi();
     const gapi = (window as any).gapi;
-    const pickerNs = (window as any).google?.picker;
-    const picker = new pickerNs.PickerBuilder()
-      .addView(pickerNs.ViewId.DOCS)
+    const picker = new google.picker.PickerBuilder()
+      .addView(google.picker.ViewId.DOCS)
       .setOAuthToken(token)
       .setDeveloperKey(GAPI_KEY)
       .setTitle("Select a Google Doc to import")
       .setCallback((data: any) => {
-        if (data.action === pickerNs.Action.PICKED) {
+        if (data.action === google.picker.Action.PICKED) {
           const ids = (data.docs ?? []).map((d: any) => d.id).filter(Boolean);
           if (ids.length) onPick(ids);
         }
@@ -136,7 +130,9 @@ export async function exportDocAsText(docId: string): Promise<string> {
   for (const el of body) {
     const para = el.paragraph;
     if (!para?.elements) continue;
-    const text = para.elements.map((e: any) => e.textRun?.content ?? "").join("");
+    const text = para.elements
+      .map((e: any) => e.textRun?.content ?? "")
+      .join("");
     if (text.trim()) lines.push(text.trimEnd());
   }
   return lines.join("\n");

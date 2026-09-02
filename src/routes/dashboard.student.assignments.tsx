@@ -37,10 +37,7 @@ export const Route = createFileRoute("/dashboard/student/assignments")({
       { title: "Activities | MIOW - MSU-IIT IDS Online Workspace" },
       { name: "description", content: "View and submit your activities and performance tasks." },
       { property: "og:title", content: "Activities | MIOW - MSU-IIT IDS Online Workspace" },
-      {
-        property: "og:description",
-        content: "View and submit your assignments and performance tasks.",
-      },
+      { property: "og:description", content: "View and submit your assignments and performance tasks." },
     ],
   }),
   component: AssignmentsPage,
@@ -67,16 +64,8 @@ function AssignmentsPage() {
     return () => setAssessmentMode(false);
   }, [target]);
 
-  const { data: courses } = useQuery({
-    queryKey: ["courses"],
-    queryFn: listCourses,
-    enabled: !!profile,
-  });
-  const { data: assignments } = useQuery({
-    queryKey: ["assignments"],
-    queryFn: listAssignments,
-    enabled: !!profile,
-  });
+  const { data: courses } = useQuery({ queryKey: ["courses"], queryFn: listCourses, enabled: !!profile });
+  const { data: assignments } = useQuery({ queryKey: ["assignments"], queryFn: listAssignments, enabled: !!profile });
   const { data: submissions } = useQuery({
     queryKey: ["submissions", profile?.id],
     queryFn: () => listSubmissionsForStudent(profile!.id),
@@ -172,11 +161,7 @@ function AssignmentsPage() {
 
       {visible.length === 0 ? (
         <EmptyState
-          title={
-            tab === "all"
-              ? "No assignments posted yet"
-              : `Nothing ${tab === "pending" ? "to do" : tab} right now`
-          }
+          title={tab === "all" ? "No assignments posted yet" : `Nothing ${tab === "pending" ? "to do" : tab} right now`}
           {...(tab === "pending" ? { sub: "You're all caught up — nice work!" } : {})}
         />
       ) : (
@@ -192,20 +177,12 @@ function AssignmentsPage() {
                 <div className="flex flex-wrap items-start justify-between gap-3">
                   <div className="min-w-0 flex-1">
                     <div className="flex flex-wrap items-center gap-2">
-                      <span className={cn("rounded-md px-2 py-0.5 text-[11px] font-bold", st.soft)}>
-                        {course?.code}
-                      </span>
+                      <span className={cn("rounded-md px-2 py-0.5 text-[11px] font-bold", st.soft)}>{course?.code}</span>
                       <Badge tone="slate">{COMPONENT_LABELS[a.component_type]}</Badge>
-                      <Badge
-                        tone={due === "Overdue" ? "red" : due.includes("today") ? "amber" : "sky"}
-                      >
-                        {due}
-                      </Badge>
+                      <Badge tone={due === "Overdue" ? "red" : due.includes("today") ? "amber" : "sky"}>{due}</Badge>
                     </div>
                     <p className="mt-2 font-semibold">{a.title}</p>
-                    {a.description && (
-                      <p className="mt-1 text-sm text-muted-foreground">{a.description}</p>
-                    )}
+                    {a.description && <p className="mt-1 text-sm text-muted-foreground">{a.description}</p>}
                     <p className="mt-1 text-xs text-muted-foreground">
                       Due {fmtDate(a.due_date)} · {a.total_points} points
                     </p>
@@ -219,9 +196,7 @@ function AssignmentsPage() {
                           <span className="text-sm text-muted-foreground">/{a.total_points}</span>
                         </p>
                         {sub.feedback && (
-                          <p className="mt-1 max-w-48 text-xs text-muted-foreground">
-                            “{sub.feedback}”
-                          </p>
+                          <p className="mt-1 max-w-48 text-xs text-muted-foreground">“{sub.feedback}”</p>
                         )}
                       </div>
                     ) : done ? (
@@ -300,9 +275,7 @@ function AssignmentsPage() {
             <>
               <CloudUpload className="h-7 w-7 text-muted-foreground" />
               <p className="text-sm font-semibold">Drop a file here, or click to browse</p>
-              <p className="text-xs text-muted-foreground">
-                PDF, DOCX, images — up to 15 MB · multiple files allowed
-              </p>
+              <p className="text-xs text-muted-foreground">PDF, DOCX, images — up to 15 MB · multiple files allowed</p>
             </>
           )}
         </div>
@@ -339,11 +312,7 @@ function AssignmentsPage() {
 }
 
 /** Read-only "Reference Materials" card listing a teacher's attached handouts. */
-function MaterialsCard({
-  attachments,
-}: {
-  attachments: { path: string; name: string; size: number; url: string }[];
-}) {
+function MaterialsCard({ attachments }: { attachments: { path: string; name: string; size: number; url: string }[] }) {
   if (attachments.length === 0) return null;
   return (
     <div className="mt-3 rounded-xl border border-border/60 bg-muted/40 p-3">
@@ -352,10 +321,7 @@ function MaterialsCard({
       </p>
       <ul className="mt-2 grid gap-1.5">
         {attachments.map((a) => (
-          <li
-            key={a.path}
-            className="flex items-center gap-2 rounded-lg bg-background/70 px-2.5 py-1.5"
-          >
+          <li key={a.path} className="flex items-center gap-2 rounded-lg bg-background/70 px-2.5 py-1.5">
             <FileText className="h-3.5 w-3.5 shrink-0 text-primary" />
             <a
               href={materialHref(a as never)}

@@ -23,15 +23,9 @@ export const Route = createFileRoute("/dashboard/admin/grades")({
   head: () => ({
     meta: [
       { title: "Gradebook | MIOW - MSU-IIT IDS Online Workspace" },
-      {
-        name: "description",
-        content: "Encode quarterly grades with automatic DepEd transmutation.",
-      },
+      { name: "description", content: "Encode quarterly grades with automatic DepEd transmutation." },
       { property: "og:title", content: "Gradebook | MIOW - MSU-IIT IDS Online Workspace" },
-      {
-        property: "og:description",
-        content: "Encode quarterly grades with automatic DepEd transmutation.",
-      },
+      { property: "og:description", content: "Encode quarterly grades with automatic DepEd transmutation." },
     ],
   }),
   component: GradebookPage,
@@ -46,16 +40,8 @@ interface CellState {
 function GradebookPage() {
   const profile = useProfile(["teacher"]);
   const qc = useQueryClient();
-  const { data: courses } = useQuery({
-    queryKey: ["courses"],
-    queryFn: listCourses,
-    enabled: !!profile,
-  });
-  const { data: students } = useQuery({
-    queryKey: ["students"],
-    queryFn: listStudents,
-    enabled: !!profile,
-  });
+  const { data: courses } = useQuery({ queryKey: ["courses"], queryFn: listCourses, enabled: !!profile });
+  const { data: students } = useQuery({ queryKey: ["students"], queryFn: listStudents, enabled: !!profile });
   // Gate attendance feeds the Attendance (10%) component of the grading scheme.
   const { data: allLogs } = useQuery({
     queryKey: ["all-attendance"],
@@ -121,13 +107,9 @@ function GradebookPage() {
   if (!profile) return null;
 
   const roster = (students ?? []).filter((s) =>
-    enrolledIds && enrolledIds.length > 0
-      ? enrolledIds.includes(s.id)
-      : s.grade_level === course?.grade_level,
+    enrolledIds && enrolledIds.length > 0 ? enrolledIds.includes(s.id) : s.grade_level === course?.grade_level,
   );
-  const sections = [
-    ...new Set(roster.map((s) => s.section).filter((x): x is string => !!x)),
-  ].sort();
+  const sections = [...new Set(roster.map((s) => s.section).filter((x): x is string => !!x))].sort();
   const visibleRoster = section === "all" ? roster : roster.filter((s) => s.section === section);
 
   const num = (v: string) => (v.trim() === "" ? null : Math.max(0, Math.min(100, Number(v))));
@@ -171,18 +153,7 @@ function GradebookPage() {
   };
 
   const exportCsv = () => {
-    const header = [
-      "Student No",
-      "Name",
-      "Section",
-      "Attendance (10%)",
-      "WW (20%)",
-      "PT (40%)",
-      "Exam (30%)",
-      "Initial",
-      "Transmuted",
-      "Remarks",
-    ];
+    const header = ["Student No", "Name", "Section", "Attendance (10%)", "WW (20%)", "PT (40%)", "Exam (30%)", "Initial", "Transmuted", "Remarks"];
     const rows = visibleRoster.map((s) => {
       const c = cells[s.id] ?? { ww: "", pt: "", ex: "" };
       const p = preview(s.id);
@@ -219,9 +190,7 @@ function GradebookPage() {
         {published && <Badge tone="green">Published</Badge>}
       </div>
       <p className="mb-6 mt-1 text-sm text-muted-foreground">
-        Enter component scores (0–100). The final grade is weighted Attendance 10% · WW 20% ·
-        Periodical Exam 30% · PT 40% and transmuted automatically. Attendance is pulled from gate
-        logs.
+        Enter component scores (0–100). The final grade is weighted Attendance 10% · WW 20% · Periodical Exam 30% · PT 40% and transmuted automatically. Attendance is pulled from gate logs.
       </p>
 
       <div className="mb-5 flex flex-wrap gap-3">
@@ -283,10 +252,7 @@ function GradebookPage() {
       </div>
 
       {!courseId || visibleRoster.length === 0 ? (
-        <EmptyState
-          title="No students on this roster"
-          sub="Enroll students or pick another course or section."
-        />
+        <EmptyState title="No students on this roster" sub="Enroll students or pick another course or section." />
       ) : (
         <Card className="overflow-x-auto">
           <table className="w-full min-w-[760px] text-sm">
@@ -307,10 +273,7 @@ function GradebookPage() {
                 const c = cells[s.id] ?? { ww: "", pt: "", ex: "" };
                 const p = preview(s.id);
                 const setCell = (k: keyof CellState) => (e: React.ChangeEvent<HTMLInputElement>) =>
-                  setCells((all) => ({
-                    ...all,
-                    [s.id]: { ...c, [k]: e.target.value.replace(/[^0-9.]/g, "") },
-                  }));
+                  setCells((all) => ({ ...all, [s.id]: { ...c, [k]: e.target.value.replace(/[^0-9.]/g, "") } }));
                 return (
                   <tr key={s.id}>
                     <td className="p-4">
@@ -349,11 +312,7 @@ function GradebookPage() {
                     </td>
                     <td className="p-4">
                       {p ? (
-                        <Badge
-                          tone={
-                            p.t >= 90 ? "green" : p.t >= 80 ? "indigo" : p.t >= 75 ? "amber" : "red"
-                          }
-                        >
+                        <Badge tone={p.t >= 90 ? "green" : p.t >= 80 ? "indigo" : p.t >= 75 ? "amber" : "red"}>
                           {gradeRemarks(p.t)}
                         </Badge>
                       ) : (

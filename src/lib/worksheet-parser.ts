@@ -65,10 +65,7 @@ function splitInlineOptions(line: string): Array<{ letter: string; text: string 
 
 function detectSection(line: string): ParsedQuestionKind | null {
   const l = line.toLowerCase();
-  if (
-    /^section\s+[ivx1-4]+[\s:—–-]/.test(l) ||
-    /^(multiple choice|fill in the blank|matching type|essay\s*\/\s*short answer)$/.test(l)
-  ) {
+  if (/^section\s+[ivx1-4]+[\s:—–-]/.test(l) || /^(multiple choice|fill in the blank|matching type|essay\s*\/\s*short answer)$/.test(l)) {
     if (/multiple choice/.test(l) || /section\s+(i|1)[\s:—–-]/.test(l)) return "mc";
     if (/fill in the blank/.test(l) || /section\s+(ii|2)[\s:—–-]/.test(l)) return "fill";
     if (/matching/.test(l) || /section\s+(iii|3)[\s:—–-]/.test(l)) return "matching";
@@ -85,22 +82,15 @@ interface KeyEntry {
 }
 
 function parseKeyEntry(body: string): KeyEntry {
-  const rubric =
-    body.match(/^rubric\/?\s*key points?\s*:?\s*(.*)$/i) ?? body.match(/^rubric\s*:?\s*(.*)$/i);
+  const rubric = body.match(/^rubric\/?\s*key points?\s*:?\s*(.*)$/i) ?? body.match(/^rubric\s*:?\s*(.*)$/i);
   if (rubric) return { rubric: rubric[1]!.trim(), acceptable: [] };
   const letter = body.match(/^([A-Z])\s*(?:[-–—:.]|\s|$)\s*(.*)$/);
   if (letter) return { letter: letter[1]!, acceptable: [] };
   const acceptableMatch = body.match(/\(acceptable:\s*([^)]*)\)/i);
   const acceptable = acceptableMatch
-    ? acceptableMatch[1]!
-        .split(/[,;]/)
-        .map((s) => s.trim())
-        .filter(Boolean)
+    ? acceptableMatch[1]!.split(/[,;]/).map((s) => s.trim()).filter(Boolean)
     : [];
-  const primary = body
-    .replace(/\(acceptable:\s*[^)]*\)/i, "")
-    .replace(/[-–—]\s*$/, "")
-    .trim();
+  const primary = body.replace(/\(acceptable:\s*[^)]*\)/i, "").replace(/[-–—]\s*$/, "").trim();
   return { primary, acceptable };
 }
 
@@ -272,12 +262,7 @@ export function parseWorksheet(text: string): ParseResult {
     const idx = letterIdx(key?.letter);
     const correct = idx >= 0 ? item.options[idx] : undefined;
     if (item.options.length >= 2 && correct) {
-      questions.push({
-        question: item.stem,
-        options: item.options,
-        correct_answer: correct,
-        kind: "mc",
-      });
+      questions.push({ question: item.stem, options: item.options, correct_answer: correct, kind: "mc" });
     } else dropped += 1;
   }
 
@@ -285,12 +270,7 @@ export function parseWorksheet(text: string): ParseResult {
     const key = keyByNum.get(item.num);
     if (key?.primary) {
       const variants = [key.primary, ...key.acceptable].filter(Boolean);
-      questions.push({
-        question: item.stem,
-        options: [],
-        correct_answer: variants.join("||"),
-        kind: "fill",
-      });
+      questions.push({ question: item.stem, options: [], correct_answer: variants.join("||"), kind: "fill" });
     } else dropped += 1;
   }
 
@@ -311,12 +291,7 @@ export function parseWorksheet(text: string): ParseResult {
   for (const item of essayItems) {
     const key = keyByNum.get(item.num);
     const rubric = key?.rubric ?? key?.primary ?? "Teacher review against the discussed concepts.";
-    questions.push({
-      question: item.stem,
-      options: [],
-      correct_answer: `Rubric: ${rubric}`,
-      kind: "essay",
-    });
+    questions.push({ question: item.stem, options: [], correct_answer: `Rubric: ${rubric}`, kind: "essay" });
   }
 
   // Legacy fallback: one question per line — "Question | A, B, C, D | answer".
@@ -325,10 +300,7 @@ export function parseWorksheet(text: string): ParseResult {
       const line = raw.trim();
       if (!line) continue;
       const [question, opts, correct] = line.split("|").map((s) => s.trim());
-      const options = (opts ?? "")
-        .split(",")
-        .map((s) => s.trim())
-        .filter(Boolean);
+      const options = (opts ?? "").split(",").map((s) => s.trim()).filter(Boolean);
       if (question && options.length >= 2 && correct) {
         questions.push({ question, options, correct_answer: correct, kind: "mc" });
       } else if (question) dropped += 1;

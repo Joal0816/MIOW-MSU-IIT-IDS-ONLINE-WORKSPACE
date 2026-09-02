@@ -1,17 +1,7 @@
 import { useRef, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import {
-  CloudUpload,
-  FileText,
-  Paperclip,
-  Pencil,
-  Pin,
-  PinOff,
-  Plus,
-  Trash2,
-  X,
-} from "lucide-react";
+import { CloudUpload, FileText, Paperclip, Pencil, Pin, PinOff, Plus, Trash2, X } from "lucide-react";
 import { toast } from "sonner";
 import {
   createAnnouncement,
@@ -23,31 +13,16 @@ import {
   type Announcement,
 } from "@/lib/lms";
 import { notifyAnnouncement } from "@/lib/notifications";
-import {
-  staffNav,
-  AppShell,
-  Badge,
-  EmptyState,
-  FilterTabs,
-  Modal,
-  MotionCard,
-  useProfile,
-} from "@/components/lms";
+import { staffNav, AppShell, Badge, EmptyState, FilterTabs, Modal, MotionCard, useProfile } from "@/components/lms";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/dashboard/admin/announcements")({
   head: () => ({
     meta: [
       { title: "Announcements | MIOW - MSU-IIT IDS Online Workspace" },
-      {
-        name: "description",
-        content: "Post school-wide announcements, events and urgent advisories.",
-      },
+      { name: "description", content: "Post school-wide announcements, events and urgent advisories." },
       { property: "og:title", content: "Announcements | MIOW - MSU-IIT IDS Online Workspace" },
-      {
-        property: "og:description",
-        content: "Post school-wide announcements, events and urgent advisories.",
-      },
+      { property: "og:description", content: "Post school-wide announcements, events and urgent advisories." },
     ],
   }),
   component: AnnouncementsPage,
@@ -61,24 +36,14 @@ interface FormState {
   pinned: boolean;
 }
 
-const EMPTY_FORM: FormState = {
-  title: "",
-  content: "",
-  category: "academic",
-  target_audience: "all",
-  pinned: false,
-};
+const EMPTY_FORM: FormState = { title: "", content: "", category: "academic", target_audience: "all", pinned: false };
 
 type AudienceFilter = "all" | "students" | "teachers";
 
 function AnnouncementsPage() {
   const profile = useProfile(["admin", "teacher"]);
   const qc = useQueryClient();
-  const { data: announcements } = useQuery({
-    queryKey: ["announcements"],
-    queryFn: listAnnouncements,
-    enabled: !!profile,
-  });
+  const { data: announcements } = useQuery({ queryKey: ["announcements"], queryFn: listAnnouncements, enabled: !!profile });
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<Announcement | null>(null);
   const [saving, setSaving] = useState(false);
@@ -124,16 +89,13 @@ function AnnouncementsPage() {
   const sorted = [...(announcements ?? [])].sort((a, b) => Number(b.pinned) - Number(a.pinned));
   const visible = sorted.filter((a) => {
     if (audience === "all") return true;
-    if (audience === "students")
-      return a.target_audience === "students" || a.target_audience === "all";
+    if (audience === "students") return a.target_audience === "students" || a.target_audience === "all";
     return a.target_audience === "teachers" || a.target_audience === "all";
   });
   const counts: Record<AudienceFilter, number> = {
     all: sorted.length,
-    students: sorted.filter((a) => a.target_audience === "students" || a.target_audience === "all")
-      .length,
-    teachers: sorted.filter((a) => a.target_audience === "teachers" || a.target_audience === "all")
-      .length,
+    students: sorted.filter((a) => a.target_audience === "students" || a.target_audience === "all").length,
+    teachers: sorted.filter((a) => a.target_audience === "teachers" || a.target_audience === "all").length,
   };
 
   const openEdit = (a: Announcement) => {
@@ -158,28 +120,12 @@ function AnnouncementsPage() {
     setSaving(true);
     try {
       if (editing) {
-        await updateAnnouncement(editing.id, form);
-        void notifyAnnouncement({
-          title: form.title,
-          content: form.content,
-          target_audience: form.target_audience,
-        }).catch(() => {});
-        if (pendingFiles.length)
-          toast.success(
-            `Announcement updated — ${pendingFiles.length} file(s) queued for upload (UI only).`,
-          );
+        await updateAnnouncement(editing.id, form); void notifyAnnouncement({ title: form.title, content: form.content, target_audience: form.target_audience }).catch(()=>{});
+        if (pendingFiles.length) toast.success(`Announcement updated — ${pendingFiles.length} file(s) queued for upload (UI only).`);
         else toast.success("Announcement updated.");
       } else {
-        await createAnnouncement({ ...form, author_id: profile.id });
-        void notifyAnnouncement({
-          title: form.title,
-          content: form.content,
-          target_audience: form.target_audience,
-        }).catch(() => {});
-        if (pendingFiles.length)
-          toast.success(
-            `Announcement posted — ${pendingFiles.length} file(s) queued for upload (UI only).`,
-          );
+        await createAnnouncement({ ...form, author_id: profile.id }); void notifyAnnouncement({ title: form.title, content: form.content, target_audience: form.target_audience }).catch(()=>{});
+        if (pendingFiles.length) toast.success(`Announcement posted — ${pendingFiles.length} file(s) queued for upload (UI only).`);
         else toast.success("Announcement posted.");
       }
       setOpen(false);
@@ -216,17 +162,11 @@ function AnnouncementsPage() {
   };
 
   return (
-    <AppShell
-      nav={staffNav(profile.role)}
-      profile={profile}
-      subtitle={profile.role === "admin" ? "MIOW Admin Console" : "MIOW Teacher Portal"}
-    >
+    <AppShell nav={staffNav(profile.role)} profile={profile} subtitle={profile.role === "admin" ? "MIOW Admin Console" : "MIOW Teacher Portal"}>
       <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="font-display text-2xl font-bold sm:text-3xl">Announcements</h1>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Broadcast to students, teachers, or everyone.
-          </p>
+          <p className="mt-1 text-sm text-muted-foreground">Broadcast to students, teachers, or everyone.</p>
         </div>
         <button
           onClick={() => {
@@ -276,15 +216,7 @@ function AnnouncementsPage() {
                         <Pin className="h-3 w-3" /> Pinned
                       </Badge>
                     )}
-                    <Badge
-                      tone={
-                        a.category === "urgent"
-                          ? "red"
-                          : a.category === "event"
-                            ? "green"
-                            : "indigo"
-                      }
-                    >
+                    <Badge tone={a.category === "urgent" ? "red" : a.category === "event" ? "green" : "indigo"}>
                       {a.category}
                     </Badge>
                     <Badge tone="slate">{a.target_audience}</Badge>
@@ -349,9 +281,7 @@ function AnnouncementsPage() {
           <div className="grid grid-cols-2 gap-3">
             <select
               value={form.category}
-              onChange={(e) =>
-                setForm((f) => ({ ...f, category: e.target.value as FormState["category"] }))
-              }
+              onChange={(e) => setForm((f) => ({ ...f, category: e.target.value as FormState["category"] }))}
               className="h-11 rounded-xl border border-input bg-background px-3 text-sm outline-none focus:ring-2 focus:ring-ring"
             >
               <option value="academic">Academic</option>
@@ -386,20 +316,12 @@ function AnnouncementsPage() {
             onDrop={handleDrop}
             className={cn(
               "flex cursor-pointer flex-col items-center justify-center gap-1 rounded-xl border-2 border-dashed px-3 py-5 text-center transition",
-              dragging
-                ? "border-primary bg-primary/10 ring-2 ring-primary/40"
-                : "border-border hover:border-primary/50 hover:bg-muted/60",
+              dragging ? "border-primary bg-primary/10 ring-2 ring-primary/40" : "border-border hover:border-primary/50 hover:bg-muted/60",
             )}
           >
-            <CloudUpload
-              className={cn("h-6 w-6", dragging ? "text-primary" : "text-muted-foreground")}
-            />
-            <p className="text-sm font-semibold">
-              {dragging ? "Drop files here" : "Drag and drop files here, or browse"}
-            </p>
-            <p className="text-xs text-muted-foreground">
-              Supports PDF, DOCX, PNG, JPG, ZIP (Max: 25 MB each, 60 MB total)
-            </p>
+            <CloudUpload className={cn("h-6 w-6", dragging ? "text-primary" : "text-muted-foreground")} />
+            <p className="text-sm font-semibold">{dragging ? "Drop files here" : "Drag and drop files here, or browse"}</p>
+            <p className="text-xs text-muted-foreground">Supports PDF, DOCX, PNG, JPG, ZIP (Max: 25 MB each, 60 MB total)</p>
             <input
               ref={fileInputRef}
               type="file"
@@ -416,15 +338,10 @@ function AnnouncementsPage() {
           {pendingFiles.length > 0 && (
             <ul className="grid gap-1.5">
               {pendingFiles.map((f) => (
-                <li
-                  key={`${f.name}-${f.size}`}
-                  className="flex items-center gap-2 rounded-lg bg-muted/60 px-2.5 py-1.5"
-                >
+                <li key={`${f.name}-${f.size}`} className="flex items-center gap-2 rounded-lg bg-muted/60 px-2.5 py-1.5">
                   <FileText className="h-3.5 w-3.5 shrink-0 text-primary" />
                   <span className="min-w-0 flex-1 truncate text-xs font-medium">{f.name}</span>
-                  <span className="text-[11px] text-muted-foreground">
-                    {formatFileSize(f.size)}
-                  </span>
+                  <span className="text-[11px] text-muted-foreground">{formatFileSize(f.size)}</span>
                   <button
                     type="button"
                     onClick={() => setPendingFiles((prev) => prev.filter((x) => x !== f))}
@@ -439,8 +356,7 @@ function AnnouncementsPage() {
           )}
           {pendingFiles.length > 0 && (
             <p className="flex items-center gap-1.5 text-xs text-muted-foreground">
-              <Paperclip className="h-3.5 w-3.5" /> {pendingFiles.length} file(s) pending — will be
-              attached when announcement is posted
+              <Paperclip className="h-3.5 w-3.5" /> {pendingFiles.length} file(s) pending — will be attached when announcement is posted
             </p>
           )}
           <label className="flex cursor-pointer items-center gap-2.5 rounded-xl border border-border bg-muted/50 px-4 py-3">

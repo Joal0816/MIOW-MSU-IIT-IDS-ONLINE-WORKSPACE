@@ -460,7 +460,7 @@ export function transmutedOf(
 }
 
 import { logAudit } from "@/lib/settings";
-import { dbg, dbgError } from "@/lib/debug";
+import { dbg } from "@/lib/debug";
 
 /* ---------- Session (hardware-auth demo with signed server tokens) ---------- */
 

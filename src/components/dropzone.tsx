@@ -66,9 +66,7 @@ export function Dropzone({
         }}
         className={cn(
           "flex cursor-pointer flex-col items-center justify-center gap-1 rounded-xl border-2 border-dashed px-3 py-5 text-center transition",
-          drag
-            ? "border-primary bg-primary/10 ring-2 ring-primary/40"
-            : "border-border hover:border-primary/50 hover:bg-muted/60",
+          drag ? "border-primary bg-primary/10 ring-2 ring-primary/40" : "border-border hover:border-primary/50 hover:bg-muted/60",
         )}
       >
         <CloudUpload className={cn("h-6 w-6", drag ? "text-primary" : "text-muted-foreground")} />
@@ -90,10 +88,7 @@ export function Dropzone({
       {files.length > 0 && (
         <ul className="mt-2 grid gap-1.5">
           {files.map((f) => (
-            <li
-              key={`${f.name}-${f.size}`}
-              className="flex items-center gap-2 rounded-lg bg-muted/60 px-2.5 py-1.5"
-            >
+            <li key={`${f.name}-${f.size}`} className="flex items-center gap-2 rounded-lg bg-muted/60 px-2.5 py-1.5">
               <FileText className="h-3.5 w-3.5 shrink-0 text-primary" />
               <span className="min-w-0 flex-1 truncate text-xs font-medium">{f.name}</span>
               <span className="text-[11px] text-muted-foreground">{formatFileSize(f.size)}</span>

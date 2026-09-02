@@ -66,11 +66,7 @@ type Tab = "profile" | "security" | "teaching";
 const TABS: Array<{ value: Tab; label: string; icon: React.ReactNode }> = [
   { value: "profile", label: "Profile & Identity", icon: <UserRound className="h-4 w-4" /> },
   { value: "security", label: "Security & Credentials", icon: <ShieldCheck className="h-4 w-4" /> },
-  {
-    value: "teaching",
-    label: "Teaching Preferences",
-    icon: <SlidersHorizontal className="h-4 w-4" />,
-  },
+  { value: "teaching", label: "Teaching Preferences", icon: <SlidersHorizontal className="h-4 w-4" /> },
 ];
 
 const PREFIXES = ["", "Dr.", "Prof.", "Mr.", "Ms.", "Mrs.", "Engr."];
@@ -329,9 +325,7 @@ function TeacherSettingsPage() {
         return;
       }
       await updateTeacherSettings({ pin: newPin });
-      updateSessionProfile({
-        session_token: verified.session_token ?? profile.session_token ?? "",
-      });
+      updateSessionProfile({ session_token: verified.session_token ?? profile.session_token ?? "" });
       setOldPin("");
       setNewPin("");
       setConfirmPin("");
@@ -530,8 +524,7 @@ function TeacherSettingsPage() {
 
                 <div className="mt-6 flex items-center justify-between gap-3">
                   <p className="text-xs text-muted-foreground">
-                    Displayed as{" "}
-                    <span className="font-semibold text-foreground">{displayName()}</span>
+                    Displayed as <span className="font-semibold text-foreground">{displayName()}</span>
                   </p>
                   <button
                     type="submit"
@@ -539,8 +532,7 @@ function TeacherSettingsPage() {
                     title={profileDirty ? "Save profile changes" : "No changes to save"}
                     className="flex items-center gap-2 rounded-xl bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground shadow-lift transition-opacity hover:opacity-90 disabled:opacity-50"
                   >
-                    <Save className="h-4 w-4" />{" "}
-                    {savingProfile ? "Saving…" : "Save profile changes"}
+                    <Save className="h-4 w-4" /> {savingProfile ? "Saving…" : "Save profile changes"}
                   </button>
                 </div>
               </form>
@@ -815,12 +807,10 @@ function TeacherSettingsPage() {
         title="Face Verification Enrollment"
       >
         <p className="mb-3 text-sm text-muted-foreground">
-          Center your face in the frame and hold still. The captured descriptor replaces your stored
-          face embedding.
+          Center your face in the frame and hold still. The captured descriptor replaces your
+          stored face embedding.
         </p>
-        {faceOpen && (
-          <CameraPanel scanning={capturing} videoRef={videoRef} className="aspect-video" />
-        )}
+        {faceOpen && <CameraPanel scanning={capturing} videoRef={videoRef} className="aspect-video" />}
         <div className="mt-4 flex justify-end gap-2">
           <button
             onClick={() => setFaceOpen(false)}

@@ -15,16 +15,7 @@ import {
   updateProfile,
   type Profile,
 } from "@/lib/lms";
-import {
-  ADMIN_NAV,
-  AppShell,
-  Badge,
-  Card,
-  EmptyState,
-  Modal,
-  staffNav,
-  useProfile,
-} from "@/components/lms";
+import { ADMIN_NAV, AppShell, Badge, Card, EmptyState, Modal, staffNav, useProfile } from "@/components/lms";
 
 export const Route = createFileRoute("/dashboard/admin/students")({
   head: () => ({
@@ -58,11 +49,7 @@ const EMPTY_FORM = {
 function StudentsPage() {
   const profile = useProfile(["admin", "teacher"]);
   const qc = useQueryClient();
-  const { data: students } = useQuery({
-    queryKey: ["students"],
-    queryFn: listStudents,
-    enabled: !!profile,
-  });
+  const { data: students } = useQuery({ queryKey: ["students"], queryFn: listStudents, enabled: !!profile });
   const [open, setOpen] = useState(false);
   const [saving, setSaving] = useState(false);
   const [form, setForm] = useState(EMPTY_FORM);
@@ -86,9 +73,8 @@ function StudentsPage() {
 
   if (!profile) return null;
 
-  const set =
-    (k: keyof typeof form) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) =>
-      setForm((f) => ({ ...f, [k]: e.target.value }));
+  const set = (k: keyof typeof form) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) =>
+    setForm((f) => ({ ...f, [k]: e.target.value }));
 
   const save = async () => {
     if (!form.full_name || !form.student_id) {
@@ -132,11 +118,7 @@ function StudentsPage() {
   };
 
   return (
-    <AppShell
-      nav={staffNav(profile.role)}
-      profile={profile}
-      subtitle={profile.role === "admin" ? "Admin Console" : "Teacher Portal"}
-    >
+    <AppShell nav={staffNav(profile.role)} profile={profile} subtitle={profile.role === "admin" ? "Admin Console" : "Teacher Portal"}>
       <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="font-display text-2xl font-bold sm:text-3xl">Students</h1>
@@ -185,11 +167,7 @@ function StudentsPage() {
       {filtered.length === 0 ? (
         <EmptyState
           title={students?.length ? "No matches" : "No students yet"}
-          sub={
-            students?.length
-              ? "Try a different search or filter."
-              : "Enroll your first student to get started."
-          }
+          sub={students?.length ? "Try a different search or filter." : "Enroll your first student to get started."}
         />
       ) : (
         <Card className="overflow-x-auto">
@@ -250,53 +228,17 @@ function StudentsPage() {
       {/* Add student */}
       <Modal open={open} onClose={() => setOpen(false)} title="Enroll a student">
         <div className="grid gap-3 sm:grid-cols-2">
-          <input
-            value={form.full_name}
-            onChange={set("full_name")}
-            placeholder="Full name *"
-            className="h-11 rounded-xl border border-input bg-background px-3 text-sm outline-none focus:ring-2 focus:ring-ring sm:col-span-2"
-          />
-          <input
-            value={form.student_id}
-            onChange={set("student_id")}
-            placeholder="Student number * (e.g. 2026-0042)"
-            className="h-11 rounded-xl border border-input bg-background px-3 text-sm outline-none focus:ring-2 focus:ring-ring"
-          />
-          <input
-            value={form.email}
-            onChange={set("email")}
-            placeholder="Email"
-            className="h-11 rounded-xl border border-input bg-background px-3 text-sm outline-none focus:ring-2 focus:ring-ring"
-          />
-          <select
-            value={form.grade_level}
-            onChange={set("grade_level")}
-            className="h-11 rounded-xl border border-input bg-background px-3 text-sm outline-none focus:ring-2 focus:ring-ring"
-          >
+          <input value={form.full_name} onChange={set("full_name")} placeholder="Full name *" className="h-11 rounded-xl border border-input bg-background px-3 text-sm outline-none focus:ring-2 focus:ring-ring sm:col-span-2" />
+          <input value={form.student_id} onChange={set("student_id")} placeholder="Student number * (e.g. 2026-0042)" className="h-11 rounded-xl border border-input bg-background px-3 text-sm outline-none focus:ring-2 focus:ring-ring" />
+          <input value={form.email} onChange={set("email")} placeholder="Email" className="h-11 rounded-xl border border-input bg-background px-3 text-sm outline-none focus:ring-2 focus:ring-ring" />
+          <select value={form.grade_level} onChange={set("grade_level")} className="h-11 rounded-xl border border-input bg-background px-3 text-sm outline-none focus:ring-2 focus:ring-ring">
             {[7, 8, 9, 10, 11, 12].map((g) => (
-              <option key={g} value={g}>
-                Grade {g}
-              </option>
+              <option key={g} value={g}>Grade {g}</option>
             ))}
           </select>
-          <input
-            value={form.section}
-            onChange={set("section")}
-            placeholder="Section (e.g. Rizal)"
-            className="h-11 rounded-xl border border-input bg-background px-3 text-sm outline-none focus:ring-2 focus:ring-ring"
-          />
-          <input
-            value={form.pin}
-            onChange={set("pin")}
-            placeholder="PIN (4–8 digits)"
-            className="h-11 rounded-xl border border-input bg-background px-3 text-sm outline-none focus:ring-2 focus:ring-ring"
-          />
-          <input
-            value={form.rfid_uid}
-            onChange={set("rfid_uid")}
-            placeholder="RFID UID (6–20 digits)"
-            className="h-11 rounded-xl border border-input bg-background px-3 text-sm outline-none focus:ring-2 focus:ring-ring"
-          />
+          <input value={form.section} onChange={set("section")} placeholder="Section (e.g. Rizal)" className="h-11 rounded-xl border border-input bg-background px-3 text-sm outline-none focus:ring-2 focus:ring-ring" />
+          <input value={form.pin} onChange={set("pin")} placeholder="PIN (4–8 digits)" className="h-11 rounded-xl border border-input bg-background px-3 text-sm outline-none focus:ring-2 focus:ring-ring" />
+          <input value={form.rfid_uid} onChange={set("rfid_uid")} placeholder="RFID UID (6–20 digits)" className="h-11 rounded-xl border border-input bg-background px-3 text-sm outline-none focus:ring-2 focus:ring-ring" />
         </div>
         <button
           onClick={save}
@@ -378,11 +320,7 @@ function StudentProfileModal({
   return (
     <Modal open={!!student} onClose={onClose} title={student.full_name}>
       <div className="mb-4 flex items-center gap-3">
-        <img
-          src={student.avatar_url ?? ""}
-          alt=""
-          className="h-14 w-14 rounded-full ring-2 ring-primary/30"
-        />
+        <img src={student.avatar_url ?? ""} alt="" className="h-14 w-14 rounded-full ring-2 ring-primary/30" />
         <div>
           <p className="text-sm font-semibold">{student.student_id}</p>
           <p className="text-xs text-muted-foreground">{student.email ?? "No email"}</p>
@@ -394,9 +332,7 @@ function StudentProfileModal({
 
       {/* Academic standing */}
       <div className="mb-4 rounded-xl bg-muted/70 p-4">
-        <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-          Academic standing
-        </p>
+        <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Academic standing</p>
         {gwa == null ? (
           <p className="mt-1 text-sm text-muted-foreground">No grades encoded yet.</p>
         ) : (
@@ -405,18 +341,14 @@ function StudentProfileModal({
             <Badge tone={gwa >= 90 ? "green" : gwa >= 80 ? "indigo" : gwa >= 75 ? "amber" : "red"}>
               {gradeRemarks(gwa)}
             </Badge>
-            <p className="text-xs text-muted-foreground">
-              GWA across {transmuted.length} course grade(s)
-            </p>
+            <p className="text-xs text-muted-foreground">GWA across {transmuted.length} course grade(s)</p>
           </div>
         )}
       </div>
 
       {/* Credential rebinding */}
       <div className="space-y-3">
-        <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-          Credentials
-        </p>
+        <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Credentials</p>
         <div className="flex gap-2">
           <div className="relative flex-1">
             <Nfc className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />

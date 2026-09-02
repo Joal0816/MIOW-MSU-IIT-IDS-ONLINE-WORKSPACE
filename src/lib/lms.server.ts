@@ -357,7 +357,7 @@ export const schemas = {
     title: z.string().min(1).max(200),
     code: z.string().min(1).max(20),
     grade_level: z.number().int().min(7).max(16),
-    education_level: z.enum(["jhs", "shs", "college"]).optional(),
+    education_level: z.enum(['jhs','shs','college']).optional(),
     college_year: z.number().int().min(1).max(4).nullable().optional(),
     strand: z.string().max(50).nullable().optional(),
     program: z.string().max(80).nullable().optional(),
@@ -373,7 +373,7 @@ export const schemas = {
         title: z.string().min(1).max(200),
         code: z.string().min(1).max(20),
         grade_level: z.number().int().min(7).max(16),
-        education_level: z.enum(["jhs", "shs", "college"]).nullable().optional(),
+        education_level: z.enum(['jhs','shs','college']).nullable().optional(),
         college_year: z.number().int().min(1).max(4).nullable().optional(),
         strand: z.string().max(50).nullable().optional(),
         program: z.string().max(80).nullable().optional(),
@@ -666,7 +666,7 @@ async function verifySecret(p: any, secret: string): Promise<boolean> {
 
 export async function verifyPinLogin(login: string, secret: string) {
   const dbgS = (msg: string, data?: unknown) => {
-    if (process.env["DEBUG_LOGS"] === "true") console.debug(`[auth:server] ${msg}`, data ?? "");
+    if (process.env.DEBUG_LOGS === "true") console.debug(`[auth:server] ${msg}`, data ?? "");
   };
   dbgS("verifyPinLogin called", { login: login.trim() });
   // Strip PostgREST ilike wildcards so the identifier is matched literally.
@@ -701,16 +701,8 @@ export async function verifyPinLogin(login: string, secret: string) {
   }
   // Unknown identifiers get the same generic failure as a wrong secret, so
   // the endpoint can't be used to enumerate accounts.
-  if (!p) {
-    dbgS("profile not found", { identifier });
-    return { ok: false as const, reason: "invalid" as const };
-  }
-  dbgS("profile found", {
-    email: p.email,
-    role: p.role,
-    hasPinHash: !!p.pin_hash,
-    locked: !!p.locked_until,
-  });
+  if (!p) { dbgS("profile not found", { identifier }); return { ok: false as const, reason: "invalid" as const }; }
+  dbgS("profile found", { email: p.email, role: p.role, hasPinHash: !!p.pin_hash, locked: !!p.locked_until });
 
   const now = Date.now();
   const lockedUntil = typeof p.locked_until === "string" ? Date.parse(p.locked_until) : 0;

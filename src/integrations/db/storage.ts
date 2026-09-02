@@ -8,8 +8,6 @@ import path from "node:path";
 
 const STORAGE_ROOT = process.env["STORAGE_PATH"] ?? path.join(process.cwd(), "storage");
 
-type StorageError = { message: string; code?: string };
-
 async function ensureDir(dir: string) {
   await fs.mkdir(dir, { recursive: true });
 }
@@ -22,7 +20,7 @@ export const storage = {
         filePath: string,
         data: Buffer | Uint8Array,
         opts?: { contentType?: string; upsert?: boolean },
-      ): Promise<{ data: { path: string } | null; error: StorageError | null }> {
+      ): Promise<{ data: { path: string } | null; error: unknown | null }> {
         try {
           const full = path.join(bucketRoot, filePath);
           // Prevent path traversal: filePath must stay inside bucketRoot
@@ -43,10 +41,7 @@ export const storage = {
           // Store content-type alongside as sidecar if needed (not required for download)
           if (opts?.contentType) {
             try {
-              await fs.writeFile(
-                full + ".meta.json",
-                JSON.stringify({ contentType: opts.contentType }),
-              );
+              await fs.writeFile(full + ".meta.json", JSON.stringify({ contentType: opts.contentType }));
             } catch {
               // ignore
             }
@@ -58,7 +53,9 @@ export const storage = {
         }
       },
 
-      async download(filePath: string): Promise<{ data: Blob | null; error: StorageError | null }> {
+      async download(
+        filePath: string,
+      ): Promise<{ data: Blob | null; error: unknown | null }> {
         try {
           const full = path.join(bucketRoot, filePath);
           if (!full.startsWith(bucketRoot)) {
@@ -77,7 +74,7 @@ export const storage = {
         }
       },
 
-      async remove(paths: string[]): Promise<{ data: unknown; error: StorageError | null }> {
+      async remove(paths: string[]): Promise<{ data: unknown; error: unknown | null }> {
         try {
           for (const p of paths) {
             const full = path.join(bucketRoot, p);

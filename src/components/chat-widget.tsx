@@ -33,7 +33,10 @@ import {
 } from "@/components/ai-elements/tool";
 import { useAssessmentMode } from "@/lib/assessment-mode";
 import type { Profile } from "@/lib/lms";
-import { WORKSHEET_CHAT_EVENT, type WorksheetAssistContext } from "@/lib/worksheet-context";
+import {
+  WORKSHEET_CHAT_EVENT,
+  type WorksheetAssistContext,
+} from "@/lib/worksheet-context";
 
 const TOOL_LABELS: Record<string, string> = {
   list_announcements: "Reading announcements",
@@ -265,10 +268,7 @@ function ChatPanel({
       </Conversation>
 
       {error && (
-        <p
-          role="alert"
-          className="border-t border-border bg-destructive/10 px-4 py-2 text-xs text-destructive"
-        >
+        <p role="alert" className="border-t border-border bg-destructive/10 px-4 py-2 text-xs text-destructive">
           The assistant couldn't answer that. Please try again.
         </p>
       )}
@@ -279,9 +279,7 @@ function ChatPanel({
             autoFocus
             aria-label="Ask the ClassMate Assistant"
             placeholder={
-              profile.role === "student"
-                ? "Ask about your grades, tasks…"
-                : "Ask about classes, students…"
+              profile.role === "student" ? "Ask about your grades, tasks…" : "Ask about classes, students…"
             }
           />
           <PromptInputFooter className="justify-end">

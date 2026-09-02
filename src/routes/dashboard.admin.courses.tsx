@@ -1,25 +1,7 @@
 import { useRef, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import {
-  AlertTriangle,
-  BookOpen,
-  ClipboardList,
-  CloudUpload,
-  Eraser,
-  FileQuestion,
-  FileText,
-  Paperclip,
-  Pencil,
-  Plus,
-  RotateCcw,
-  Settings2,
-  Sparkles,
-  Trash2,
-  Upload,
-  Users,
-  X,
-} from "lucide-react";
+import { AlertTriangle, BookOpen, ClipboardList, CloudUpload, Eraser, FileQuestion, FileText, Paperclip, Pencil, Plus, RotateCcw, Settings2, Sparkles, Trash2, Upload, Users, X } from "lucide-react";
 import { toast } from "sonner";
 import {
   COMPONENT_LABELS,
@@ -53,16 +35,7 @@ import {
   type Quiz,
   type RetakePolicy,
 } from "@/lib/lms";
-import {
-  staffNav,
-  AppShell,
-  Badge,
-  EmptyState,
-  Modal,
-  MotionCard,
-  courseStyle,
-  useProfile,
-} from "@/components/lms";
+import { staffNav, AppShell, Badge, EmptyState, Modal, MotionCard, courseStyle, useProfile } from "@/components/lms";
 import { parseWorksheet } from "@/lib/worksheet-parser";
 import { openWorksheetChat } from "@/lib/worksheet-context";
 import { openGooglePicker, exportDocAsText } from "@/lib/google-docs";
@@ -138,22 +111,13 @@ interface ManualQuestion {
   correct_answer: string;
 }
 
-const EMPTY_MANUAL_Q: ManualQuestion = {
-  kind: "mc",
-  question: "",
-  options: ["", "", "", ""],
-  correct_answer: "",
-};
+const EMPTY_MANUAL_Q: ManualQuestion = { kind: "mc", question: "", options: ["", "", "", ""], correct_answer: "" };
 
 /** Parse the policy form into the API payload (unlimited → max_attempts 0). */
 function policyPayload(f: typeof EMPTY_POLICY) {
   return {
     allow_retake: f.allow_retake,
-    max_attempts: f.allow_retake
-      ? f.unlimited
-        ? 0
-        : Math.max(1, parseInt(f.max_attempts) || 1)
-      : 1,
+    max_attempts: f.allow_retake ? (f.unlimited ? 0 : Math.max(1, parseInt(f.max_attempts) || 1)) : 1,
     retake_score_policy: f.retake_score_policy,
   };
 }
@@ -161,47 +125,18 @@ function policyPayload(f: typeof EMPTY_POLICY) {
 function CoursesPage() {
   const profile = useProfile(["admin", "teacher"]);
   const qc = useQueryClient();
-  const { data: courses } = useQuery({
-    queryKey: ["courses"],
-    queryFn: listCourses,
-    enabled: !!profile,
-  });
+  const { data: courses } = useQuery({ queryKey: ["courses"], queryFn: listCourses, enabled: !!profile });
   // Course-lead picker source: TEACHERS only — admin accounts never appear.
-  const { data: teachers } = useQuery({
-    queryKey: ["teachers"],
-    queryFn: listTeachers,
-    enabled: !!profile,
-  });
-  const { data: quizzes } = useQuery({
-    queryKey: ["quizzes"],
-    queryFn: listQuizzes,
-    enabled: !!profile,
-  });
-  const { data: assignments } = useQuery({
-    queryKey: ["assignments"],
-    queryFn: listAssignments,
-    enabled: !!profile,
-  });
+  const { data: teachers } = useQuery({ queryKey: ["teachers"], queryFn: listTeachers, enabled: !!profile });
+  const { data: quizzes } = useQuery({ queryKey: ["quizzes"], queryFn: listQuizzes, enabled: !!profile });
+  const { data: assignments } = useQuery({ queryKey: ["assignments"], queryFn: listAssignments, enabled: !!profile });
 
   const [modal, setModal] = useState<"course" | "assignment" | "quiz" | null>(null);
   const [editing, setEditing] = useState<Course | null>(null);
   const [saving, setSaving] = useState(false);
   const [courseForm, setCourseForm] = useState(EMPTY_COURSE);
-  const [assignForm, setAssignForm] = useState({
-    course_id: "",
-    title: "",
-    description: "",
-    due_date: "",
-    total_points: "100",
-    component_type: "written_work" as const,
-  });
-  const [quizForm, setQuizForm] = useState({
-    ...EMPTY_POLICY,
-    course_id: "",
-    title: "",
-    duration_minutes: "15",
-    questions: "",
-  });
+  const [assignForm, setAssignForm] = useState({ course_id: "", title: "", description: "", due_date: "", total_points: "100", component_type: "written_work" as const });
+  const [quizForm, setQuizForm] = useState({ ...EMPTY_POLICY, course_id: "", title: "", duration_minutes: "15", questions: "" });
   const [quizMode, setQuizMode] = useState<QuizMode>("classmate");
   const [manualQuestions, setManualQuestions] = useState<ManualQuestion[]>([]);
   const [quizFileDrag, setQuizFileDrag] = useState(false);
@@ -215,27 +150,10 @@ function CoursesPage() {
   const [rosterQuiz, setRosterQuiz] = useState<Quiz | null>(null);
   // Content editing / removal state (worksheets + assignments)
   const [editQuiz, setEditQuiz] = useState<Quiz | null>(null);
-  const [editQuizForm, setEditQuizForm] = useState({
-    ...EMPTY_POLICY,
-    title: "",
-    duration_minutes: "15",
-    questions: "",
-    score_released: false,
-    answer_key_released: false,
-  });
+  const [editQuizForm, setEditQuizForm] = useState({ ...EMPTY_POLICY, title: "", duration_minutes: "15", questions: "", score_released: false, answer_key_released: false });
   const [editAssign, setEditAssign] = useState<Assignment | null>(null);
-  const [editAssignForm, setEditAssignForm] = useState({
-    title: "",
-    description: "",
-    due_date: "",
-    total_points: "100",
-    component_type: "written_work" as Assignment["component_type"],
-  });
-  const [removeTarget, setRemoveTarget] = useState<{
-    kind: "quiz" | "assignment";
-    id: string;
-    title: string;
-  } | null>(null);
+  const [editAssignForm, setEditAssignForm] = useState({ title: "", description: "", due_date: "", total_points: "100", component_type: "written_work" as Assignment["component_type"] });
+  const [removeTarget, setRemoveTarget] = useState<{ kind: "quiz" | "assignment"; id: string; title: string } | null>(null);
 
   if (!profile) return null;
 
@@ -297,7 +215,7 @@ function CoursesPage() {
         education_level,
         college_year,
         strand: lvl >= 11 && lvl <= 12 ? courseForm.strand || null : null,
-        program: lvl >= 13 ? courseForm.program?.trim() || null : null,
+        program: lvl >= 13 ? (courseForm.program?.trim() || null) : null,
         teacher_id: courseForm.teacher_id || null,
         color: courseForm.color,
         days_of_week: courseForm.days.length ? courseForm.days : null,
@@ -325,12 +243,7 @@ function CoursesPage() {
   };
 
   const removeCourse = async (c: Course) => {
-    if (
-      !confirm(
-        `Delete ${c.code} — ${c.title}? Its assignments and worksheets will also be removed.`,
-      )
-    )
-      return;
+    if (!confirm(`Delete ${c.code} — ${c.title}? Its assignments and worksheets will also be removed.`)) return;
     try {
       await deleteCourse(c.id);
       toast.success("Course deleted.");
@@ -366,14 +279,7 @@ function CoursesPage() {
       toast.success("Assignment posted.");
       qc.invalidateQueries({ queryKey: ["assignments"] });
       setModal(null);
-      setAssignForm({
-        course_id: "",
-        title: "",
-        description: "",
-        due_date: "",
-        total_points: "100",
-        component_type: "written_work",
-      });
+      setAssignForm({ course_id: "", title: "", description: "", due_date: "", total_points: "100", component_type: "written_work" });
       setAssignFiles([]);
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Could not post assignment.");
@@ -413,9 +319,7 @@ function CoursesPage() {
         return;
       }
       if (parsed.dropped > 0) {
-        toast.warning(
-          `${parsed.dropped} item${parsed.dropped > 1 ? "s were" : " was"} skipped — check their numbering against the Answer Key.`,
-        );
+        toast.warning(`${parsed.dropped} item${parsed.dropped > 1 ? "s were" : " was"} skipped — check their numbering against the Answer Key.`);
       }
       questions = parsed.questions;
     }
@@ -434,13 +338,7 @@ function CoursesPage() {
       toast.success(`Worksheet created with ${questions.length} questions.`);
       qc.invalidateQueries({ queryKey: ["quizzes"] });
       setModal(null);
-      setQuizForm({
-        ...EMPTY_POLICY,
-        course_id: "",
-        title: "",
-        duration_minutes: "15",
-        questions: "",
-      });
+      setQuizForm({ ...EMPTY_POLICY, course_id: "", title: "", duration_minutes: "15", questions: "" });
       setManualQuestions([]);
       setQuizMode("classmate");
     } catch {
@@ -498,16 +396,14 @@ function CoursesPage() {
     }
     // Pasting new content replaces the item set + answer key; leaving it empty
     // keeps the existing questions untouched.
-    let questions:
-      Array<{ question: string; options: string[]; correct_answer: string }> | undefined;
+    let questions: Array<{ question: string; options: string[]; correct_answer: string }> | undefined;
     if (editQuizForm.questions.trim()) {
       const parsed = parseWorksheet(editQuizForm.questions);
       if (!parsed.questions.length) {
         toast.error("No valid questions found in the replacement content.");
         return;
       }
-      if (parsed.dropped > 0)
-        toast.warning(`${parsed.dropped} item(s) skipped — check the Answer Key numbering.`);
+      if (parsed.dropped > 0) toast.warning(`${parsed.dropped} item(s) skipped — check the Answer Key numbering.`);
       questions = parsed.questions;
     }
     setSaving(true);
@@ -588,17 +484,11 @@ function CoursesPage() {
   };
 
   return (
-    <AppShell
-      nav={staffNav(profile.role)}
-      profile={profile}
-      subtitle={profile.role === "admin" ? "MIOW Admin Console" : "MIOW Teacher Portal"}
-    >
+    <AppShell nav={staffNav(profile.role)} profile={profile} subtitle={profile.role === "admin" ? "MIOW Admin Console" : "MIOW Teacher Portal"}>
       <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="font-display text-2xl font-bold sm:text-3xl">Courses</h1>
-          <p className="mt-1 text-sm text-muted-foreground">
-            {courses?.length ?? 0} active courses
-          </p>
+          <p className="mt-1 text-sm text-muted-foreground">{courses?.length ?? 0} active courses</p>
         </div>
         <div className="flex flex-wrap gap-2">
           {isAdmin && (
@@ -614,16 +504,10 @@ function CoursesPage() {
               <BookOpen className="h-4 w-4" /> Course
             </button>
           )}
-          <button
-            onClick={() => setModal("assignment")}
-            className="flex items-center gap-1.5 rounded-xl border border-border bg-card px-4 py-2.5 text-sm font-semibold hover:bg-muted"
-          >
+          <button onClick={() => setModal("assignment")} className="flex items-center gap-1.5 rounded-xl border border-border bg-card px-4 py-2.5 text-sm font-semibold hover:bg-muted">
             <ClipboardList className="h-4 w-4" /> Assignment
           </button>
-          <button
-            onClick={() => setModal("quiz")}
-            className="flex items-center gap-1.5 rounded-xl border border-border bg-card px-4 py-2.5 text-sm font-semibold hover:bg-muted"
-          >
+          <button onClick={() => setModal("quiz")} className="flex items-center gap-1.5 rounded-xl border border-border bg-card px-4 py-2.5 text-sm font-semibold hover:bg-muted">
             <FileQuestion className="h-4 w-4" /> Worksheet
           </button>
         </div>
@@ -632,11 +516,7 @@ function CoursesPage() {
       {(courses ?? []).length === 0 ? (
         <EmptyState
           title="No courses yet"
-          sub={
-            isAdmin
-              ? "Create your first course to begin."
-              : "An administrator will assign courses to you."
-          }
+          sub={isAdmin ? "Create your first course to begin." : "An administrator will assign courses to you."}
         />
       ) : (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -670,13 +550,8 @@ function CoursesPage() {
                       )}
                     </div>
                   </div>
-                  <p className="mt-1.5 flex items-center gap-2 font-semibold leading-snug">
-                    <span>{c.title}</span>
-                    <Badge tone="indigo">{levelLabel(c.grade_level)}</Badge>
-                  </p>
-                  <p className="mt-1 text-xs text-muted-foreground">
-                    {c.teacher_name ?? "No teacher assigned"}
-                  </p>
+                  <p className="mt-1.5 flex items-center gap-2 font-semibold leading-snug"><span>{c.title}</span><Badge tone="indigo">{levelLabel(c.grade_level)}</Badge></p>
+                  <p className="mt-1 text-xs text-muted-foreground">{c.teacher_name ?? "No teacher assigned"}</p>
                   {formatSchedule(c) && (
                     <p className="mt-1 text-xs font-medium text-primary">{formatSchedule(c)}</p>
                   )}
@@ -700,9 +575,7 @@ function CoursesPage() {
               const st = courseStyle(course?.color ?? "indigo");
               return (
                 <MotionCard key={q.id} className="flex flex-wrap items-center gap-3 p-4">
-                  <span className={cn("rounded-md px-2 py-0.5 text-[11px] font-bold", st.soft)}>
-                    {course?.code ?? "—"}
-                  </span>
+                  <span className={cn("rounded-md px-2 py-0.5 text-[11px] font-bold", st.soft)}>{course?.code ?? "—"}</span>
                   <div className="min-w-0 flex-1">
                     <p className="truncate text-sm font-semibold">{q.title}</p>
                     <p className="text-xs text-muted-foreground">
@@ -742,12 +615,7 @@ function CoursesPage() {
                     <Trash2 className="h-3.5 w-3.5" />
                   </button>
                   <div className="w-full">
-                    <MaterialManager
-                      target="quiz"
-                      id={q.id}
-                      courseId={q.course_id}
-                      attachments={q.attachments ?? []}
-                    />
+                    <MaterialManager target="quiz" id={q.id} courseId={q.course_id} attachments={q.attachments ?? []} />
                   </div>
                 </MotionCard>
               );
@@ -768,16 +636,12 @@ function CoursesPage() {
               const st = courseStyle(course?.color ?? "indigo");
               return (
                 <MotionCard key={a.id} className="flex flex-wrap items-center gap-3 p-4">
-                  <span className={cn("rounded-md px-2 py-0.5 text-[11px] font-bold", st.soft)}>
-                    {course?.code ?? "—"}
-                  </span>
+                  <span className={cn("rounded-md px-2 py-0.5 text-[11px] font-bold", st.soft)}>{course?.code ?? "—"}</span>
                   <div className="min-w-0 flex-1">
                     <p className="truncate text-sm font-semibold">{a.title}</p>
                     <p className="text-xs text-muted-foreground">
                       {COMPONENT_LABELS[a.component_type]} · {a.total_points} pts
-                      {a.due_date
-                        ? ` · due ${new Date(a.due_date).toLocaleDateString()}`
-                        : " · no due date"}
+                      {a.due_date ? ` · due ${new Date(a.due_date).toLocaleDateString()}` : " · no due date"}
                     </p>
                   </div>
                   <button
@@ -788,21 +652,14 @@ function CoursesPage() {
                     <Pencil className="h-3.5 w-3.5" /> Edit
                   </button>
                   <button
-                    onClick={() =>
-                      setRemoveTarget({ kind: "assignment", id: a.id, title: a.title })
-                    }
+                    onClick={() => setRemoveTarget({ kind: "assignment", id: a.id, title: a.title })}
                     aria-label={`Remove assignment ${a.title}`}
                     className="flex h-9 items-center rounded-lg p-2 text-muted-foreground hover:bg-rose-50 hover:text-rose-600 dark:hover:bg-rose-500/10"
                   >
                     <Trash2 className="h-3.5 w-3.5" />
                   </button>
                   <div className="w-full">
-                    <MaterialManager
-                      target="assignment"
-                      id={a.id}
-                      courseId={a.course_id}
-                      attachments={a.attachments ?? []}
-                    />
+                    <MaterialManager target="assignment" id={a.id} courseId={a.course_id} attachments={a.attachments ?? []} />
                   </div>
                 </MotionCard>
               );
@@ -811,7 +668,7 @@ function CoursesPage() {
         </section>
       )}
 
-      <Modal
+            <Modal
         open={modal === "course"}
         onClose={() => {
           setModal(null);
@@ -843,11 +700,7 @@ function CoursesPage() {
                   <span
                     className={cn(
                       "flex h-6 w-6 items-center justify-center rounded-full text-[11px] font-bold",
-                      isActive
-                        ? "bg-white text-primary"
-                        : isPast
-                          ? "bg-emerald-500 text-white"
-                          : "bg-muted-foreground/20",
+                      isActive ? "bg-white text-primary" : isPast ? "bg-emerald-500 text-white" : "bg-muted-foreground/20",
                     )}
                   >
                     {idx + 1}
@@ -856,12 +709,7 @@ function CoursesPage() {
                   <span className="sm:hidden">{s.label.slice(0, 3)}</span>
                 </button>
                 {idx < WIZARD_STEPS.length - 1 && (
-                  <span
-                    className={cn(
-                      "hidden h-px flex-1 sm:block",
-                      isPast ? "bg-emerald-500/40" : "bg-border",
-                    )}
-                  />
+                  <span className={cn("hidden h-px flex-1 sm:block", isPast ? "bg-emerald-500/40" : "bg-border")} />
                 )}
               </div>
             );
@@ -871,20 +719,15 @@ function CoursesPage() {
         {/* Preview — title + level badge */}
         <div className="mb-4 flex flex-wrap items-center gap-2 rounded-xl border border-border bg-muted/40 px-3 py-2.5">
           <div className={cn("h-2.5 w-2.5 rounded-full", courseStyle(courseForm.color).chip)} />
-          <span className="truncate text-sm font-semibold">
-            {courseForm.title.trim() || "Untitled course"}
-          </span>
+          <span className="truncate text-sm font-semibold">{courseForm.title.trim() || "Untitled course"}</span>
           <Badge tone="indigo">{levelLabel(parseInt(courseForm.grade_level) || 10)}</Badge>
-          {courseForm.code && (
-            <span className="text-xs font-medium text-muted-foreground">{courseForm.code}</span>
-          )}
+          {courseForm.code && <span className="text-xs font-medium text-muted-foreground">{courseForm.code}</span>}
           {courseForm.program && parseInt(courseForm.grade_level) >= 13 && (
             <span className="text-xs text-muted-foreground">· {courseForm.program}</span>
           )}
-          {courseForm.strand &&
-            (courseForm.grade_level === "11" || courseForm.grade_level === "12") && (
-              <span className="text-xs text-muted-foreground">· {courseForm.strand}</span>
-            )}
+          {courseForm.strand && (courseForm.grade_level === "11" || courseForm.grade_level === "12") && (
+            <span className="text-xs text-muted-foreground">· {courseForm.strand}</span>
+          )}
         </div>
 
         {/* Step: Basic */}
@@ -904,9 +747,7 @@ function CoursesPage() {
                 className="h-11 rounded-xl border border-input bg-background px-3 text-sm outline-none focus:ring-2 focus:ring-ring"
               />
               <div>
-                <label className="mb-1 block text-xs font-semibold text-muted-foreground">
-                  Level *
-                </label>
+                <label className="mb-1 block text-xs font-semibold text-muted-foreground">Level *</label>
                 <select
                   value={courseForm.grade_level}
                   onChange={(e) => setCourseForm({ ...courseForm, grade_level: e.target.value })}
@@ -924,11 +765,7 @@ function CoursesPage() {
                     const n = parseInt(courseForm.grade_level) || 10;
                     const edu = educationLevelOf(n);
                     const yr = collegeYearOf(n);
-                    return edu === "college"
-                      ? `College Year ${yr} · college`
-                      : edu === "shs"
-                        ? "Senior High (SHS)"
-                        : "Junior High (JHS)";
+                    return edu === "college" ? `College Year ${yr} · college` : edu === "shs" ? "Senior High (SHS)" : "Junior High (JHS)";
                   })()}
                 </p>
               </div>
@@ -941,9 +778,7 @@ function CoursesPage() {
           <div className="grid gap-3">
             {isAdmin ? (
               <label className="block">
-                <span className="mb-1 block text-xs font-semibold text-muted-foreground">
-                  Course lead (teacher)
-                </span>
+                <span className="mb-1 block text-xs font-semibold text-muted-foreground">Course lead (teacher)</span>
                 <select
                   aria-label="Course lead"
                   value={courseForm.teacher_id}
@@ -965,9 +800,7 @@ function CoursesPage() {
             )}
             {(courseForm.grade_level === "11" || courseForm.grade_level === "12") && (
               <label className="block">
-                <span className="mb-1 block text-xs font-semibold text-muted-foreground">
-                  Strand (SHS) *
-                </span>
+                <span className="mb-1 block text-xs font-semibold text-muted-foreground">Strand (SHS) *</span>
                 <select
                   value={courseForm.strand ?? ""}
                   onChange={(e) => setCourseForm({ ...courseForm, strand: e.target.value })}
@@ -987,9 +820,7 @@ function CoursesPage() {
               courseForm.grade_level === "15" ||
               courseForm.grade_level === "16") && (
               <label className="block">
-                <span className="mb-1 block text-xs font-semibold text-muted-foreground">
-                  Program (College) *
-                </span>
+                <span className="mb-1 block text-xs font-semibold text-muted-foreground">Program (College) *</span>
                 <select
                   value={courseForm.program ?? ""}
                   onChange={(e) => setCourseForm({ ...courseForm, program: e.target.value })}
@@ -1002,9 +833,7 @@ function CoursesPage() {
                     return (
                       <optgroup key={dept} label={CED_DEPARTMENT_LABELS[dept]}>
                         {progs.map((p) => (
-                          <option key={p.name} value={p.name}>
-                            {p.name}
-                          </option>
+                          <option key={p.name} value={p.name}>{p.name}</option>
                         ))}
                       </optgroup>
                     );
@@ -1013,20 +842,14 @@ function CoursesPage() {
               </label>
             )}
             <div>
-              <span className="mb-1 block text-xs font-semibold text-muted-foreground">
-                Accent color
-              </span>
+              <span className="mb-1 block text-xs font-semibold text-muted-foreground">Accent color</span>
               <div className="flex gap-2">
                 {COLORS.map((c) => (
                   <button
                     key={c}
                     type="button"
                     onClick={() => setCourseForm((f) => ({ ...f, color: c }))}
-                    className={cn(
-                      "h-8 w-8 rounded-full",
-                      courseStyle(c).chip,
-                      courseForm.color === c ? "ring-2 ring-ring ring-offset-2" : "opacity-60",
-                    )}
+                    className={cn("h-8 w-8 rounded-full", courseStyle(c).chip, courseForm.color === c ? "ring-2 ring-ring ring-offset-2" : "opacity-60")}
                     title={c}
                     aria-label={`Color ${c}`}
                   />
@@ -1039,9 +862,7 @@ function CoursesPage() {
         {/* Step: Schedule */}
         {wizardStep === "schedule" && (
           <fieldset className="rounded-xl border border-border p-3">
-            <legend className="px-1 text-xs font-semibold text-muted-foreground">
-              Class schedule (optional) — drives on-time/late taps
-            </legend>
+            <legend className="px-1 text-xs font-semibold text-muted-foreground">Class schedule (optional) — drives on-time/late taps</legend>
             <div className="flex flex-wrap gap-1.5" role="group" aria-label="Days of week">
               {DAYS.map((d) => {
                 const active = courseForm.days.includes(d.code);
@@ -1058,9 +879,7 @@ function CoursesPage() {
                     }
                     className={cn(
                       "rounded-lg px-2.5 py-1.5 text-xs font-semibold transition",
-                      active
-                        ? "bg-primary text-primary-foreground"
-                        : "border border-border bg-background text-muted-foreground hover:bg-muted",
+                      active ? "bg-primary text-primary-foreground" : "border border-border bg-background text-muted-foreground hover:bg-muted",
                     )}
                   >
                     {d.label}
@@ -1139,145 +958,51 @@ function CoursesPage() {
 
       <Modal open={modal === "assignment"} onClose={() => setModal(null)} title="Post assignment">
         <div className="grid gap-3">
-          <select
-            value={assignForm.course_id}
-            onChange={(e) => setAssignForm((f) => ({ ...f, course_id: e.target.value }))}
-            className="h-11 rounded-xl border border-input bg-background px-3 text-sm outline-none focus:ring-2 focus:ring-ring"
-          >
+          <select value={assignForm.course_id} onChange={(e) => setAssignForm((f) => ({ ...f, course_id: e.target.value }))} className="h-11 rounded-xl border border-input bg-background px-3 text-sm outline-none focus:ring-2 focus:ring-ring">
             <option value="">Select course *</option>
-            {(courses ?? []).map((c) => (
-              <option key={c.id} value={c.id}>
-                {c.code} — {c.title}
-              </option>
-            ))}
+            {(courses ?? []).map((c) => <option key={c.id} value={c.id}>{c.code} — {c.title}</option>)}
           </select>
-          <input
-            value={assignForm.title}
-            onChange={(e) => setAssignForm((f) => ({ ...f, title: e.target.value }))}
-            placeholder="Title *"
-            className="h-11 rounded-xl border border-input bg-background px-3 text-sm outline-none focus:ring-2 focus:ring-ring"
-          />
-          <textarea
-            value={assignForm.description}
-            onChange={(e) => setAssignForm((f) => ({ ...f, description: e.target.value }))}
-            placeholder="Instructions"
-            rows={3}
-            className="rounded-xl border border-input bg-background p-3 text-sm outline-none focus:ring-2 focus:ring-ring"
-          />
-          <PendingDropzone
-            files={assignFiles}
-            onChange={setAssignFiles}
-            progress={assignUploadPct}
-            busy={saving}
-          />
+          <input value={assignForm.title} onChange={(e) => setAssignForm((f) => ({ ...f, title: e.target.value }))} placeholder="Title *" className="h-11 rounded-xl border border-input bg-background px-3 text-sm outline-none focus:ring-2 focus:ring-ring" />
+          <textarea value={assignForm.description} onChange={(e) => setAssignForm((f) => ({ ...f, description: e.target.value }))} placeholder="Instructions" rows={3} className="rounded-xl border border-input bg-background p-3 text-sm outline-none focus:ring-2 focus:ring-ring" />
+          <PendingDropzone files={assignFiles} onChange={setAssignFiles} progress={assignUploadPct} busy={saving} />
           <div className="grid grid-cols-3 gap-3">
-            <input
-              type="datetime-local"
-              value={assignForm.due_date}
-              onChange={(e) => setAssignForm((f) => ({ ...f, due_date: e.target.value }))}
-              className="h-11 rounded-xl border border-input bg-background px-3 text-sm outline-none focus:ring-2 focus:ring-ring"
-            />
-            <input
-              value={assignForm.total_points}
-              onChange={(e) => setAssignForm((f) => ({ ...f, total_points: e.target.value }))}
-              placeholder="Points"
-              inputMode="numeric"
-              className="h-11 rounded-xl border border-input bg-background px-3 text-sm outline-none focus:ring-2 focus:ring-ring"
-            />
-            <select
-              value={assignForm.component_type}
-              onChange={(e) =>
-                setAssignForm((f) => ({
-                  ...f,
-                  component_type: e.target.value as typeof f.component_type,
-                }))
-              }
-              className="h-11 rounded-xl border border-input bg-background px-3 text-sm outline-none focus:ring-2 focus:ring-ring"
-            >
-              {Object.entries(COMPONENT_LABELS).map(([v, l]) => (
-                <option key={v} value={v}>
-                  {l}
-                </option>
-              ))}
+            <input type="datetime-local" value={assignForm.due_date} onChange={(e) => setAssignForm((f) => ({ ...f, due_date: e.target.value }))} className="h-11 rounded-xl border border-input bg-background px-3 text-sm outline-none focus:ring-2 focus:ring-ring" />
+            <input value={assignForm.total_points} onChange={(e) => setAssignForm((f) => ({ ...f, total_points: e.target.value }))} placeholder="Points" inputMode="numeric" className="h-11 rounded-xl border border-input bg-background px-3 text-sm outline-none focus:ring-2 focus:ring-ring" />
+            <select value={assignForm.component_type} onChange={(e) => setAssignForm((f) => ({ ...f, component_type: e.target.value as typeof f.component_type }))} className="h-11 rounded-xl border border-input bg-background px-3 text-sm outline-none focus:ring-2 focus:ring-ring">
+              {Object.entries(COMPONENT_LABELS).map(([v, l]) => <option key={v} value={v}>{l}</option>)}
             </select>
           </div>
         </div>
-        <button
-          onClick={saveAssignment}
-          disabled={saving}
-          className="mt-4 h-11 w-full rounded-xl bg-primary text-sm font-semibold text-primary-foreground hover:opacity-90 disabled:opacity-50"
-        >
+        <button onClick={saveAssignment} disabled={saving} className="mt-4 h-11 w-full rounded-xl bg-primary text-sm font-semibold text-primary-foreground hover:opacity-90 disabled:opacity-50">
           {saving ? "Posting…" : "Post assignment"}
         </button>
       </Modal>
 
-      <Modal
-        open={modal === "quiz"}
-        onClose={() => {
-          setModal(null);
-          setQuizMode("classmate");
-          setManualQuestions([]);
-          setQuizFileName(null);
-        }}
-        title="Create worksheet"
-        wide
-      >
+      <Modal open={modal === "quiz"} onClose={() => { setModal(null); setQuizMode("classmate"); setManualQuestions([]); setQuizFileName(null); }} title="Create worksheet" wide>
         <div className="grid gap-3">
           <div className="grid gap-3 sm:grid-cols-3">
-            <select
-              value={quizForm.course_id}
-              onChange={(e) => setQuizForm((f) => ({ ...f, course_id: e.target.value }))}
-              className="h-11 rounded-xl border border-input bg-background px-3 text-sm outline-none focus:ring-2 focus:ring-ring sm:col-span-2"
-            >
+            <select value={quizForm.course_id} onChange={(e) => setQuizForm((f) => ({ ...f, course_id: e.target.value }))} className="h-11 rounded-xl border border-input bg-background px-3 text-sm outline-none focus:ring-2 focus:ring-ring sm:col-span-2">
               <option value="">Select course *</option>
-              {(courses ?? []).map((c) => (
-                <option key={c.id} value={c.id}>
-                  {c.code} — {c.title}
-                </option>
-              ))}
+              {(courses ?? []).map((c) => <option key={c.id} value={c.id}>{c.code} — {c.title}</option>)}
             </select>
-            <input
-              value={quizForm.duration_minutes}
-              onChange={(e) => setQuizForm((f) => ({ ...f, duration_minutes: e.target.value }))}
-              placeholder="Minutes"
-              inputMode="numeric"
-              className="h-11 rounded-xl border border-input bg-background px-3 text-sm outline-none focus:ring-2 focus:ring-ring"
-            />
+            <input value={quizForm.duration_minutes} onChange={(e) => setQuizForm((f) => ({ ...f, duration_minutes: e.target.value }))} placeholder="Minutes" inputMode="numeric" className="h-11 rounded-xl border border-input bg-background px-3 text-sm outline-none focus:ring-2 focus:ring-ring" />
           </div>
-          <input
-            value={quizForm.title}
-            onChange={(e) => setQuizForm((f) => ({ ...f, title: e.target.value }))}
-            placeholder="Worksheet title *"
-            className="h-11 rounded-xl border border-input bg-background px-3 text-sm outline-none focus:ring-2 focus:ring-ring"
-          />
-          <PolicyFields
-            value={quizForm}
-            onChange={(patch) => setQuizForm((f) => ({ ...f, ...patch }))}
-          />
+          <input value={quizForm.title} onChange={(e) => setQuizForm((f) => ({ ...f, title: e.target.value }))} placeholder="Worksheet title *" className="h-11 rounded-xl border border-input bg-background px-3 text-sm outline-none focus:ring-2 focus:ring-ring" />
+          <PolicyFields value={quizForm} onChange={(patch) => setQuizForm((f) => ({ ...f, ...patch }))} />
 
           {/* ── Mode tabs ────────────────────────────────────────────── */}
           <div className="flex gap-2 rounded-xl border border-border bg-muted/30 p-1">
             <button
               type="button"
               onClick={() => setQuizMode("classmate")}
-              className={cn(
-                "flex flex-1 items-center justify-center gap-1.5 rounded-lg px-3 py-2 text-xs font-semibold transition",
-                quizMode === "classmate"
-                  ? "bg-primary text-primary-foreground shadow-sm"
-                  : "text-muted-foreground hover:bg-muted",
-              )}
+              className={cn("flex flex-1 items-center justify-center gap-1.5 rounded-lg px-3 py-2 text-xs font-semibold transition", quizMode === "classmate" ? "bg-primary text-primary-foreground shadow-sm" : "text-muted-foreground hover:bg-muted")}
             >
               <Sparkles className="h-3.5 w-3.5" /> Generate with ClassMate
             </button>
             <button
               type="button"
               onClick={() => setQuizMode("manual")}
-              className={cn(
-                "flex flex-1 items-center justify-center gap-1.5 rounded-lg px-3 py-2 text-xs font-semibold transition",
-                quizMode === "manual"
-                  ? "bg-primary text-primary-foreground shadow-sm"
-                  : "text-muted-foreground hover:bg-muted",
-              )}
+              className={cn("flex flex-1 items-center justify-center gap-1.5 rounded-lg px-3 py-2 text-xs font-semibold transition", quizMode === "manual" ? "bg-primary text-primary-foreground shadow-sm" : "text-muted-foreground hover:bg-muted")}
             >
               <FileText className="h-3.5 w-3.5" /> Manual Entry
             </button>
@@ -1293,10 +1018,7 @@ function CoursesPage() {
                   <span className="flex-1 truncate text-xs font-semibold">{quizFileName}</span>
                   <button
                     type="button"
-                    onClick={() => {
-                      setQuizFileName(null);
-                      setQuizForm((f) => ({ ...f, questions: "" }));
-                    }}
+                    onClick={() => { setQuizFileName(null); setQuizForm((f) => ({ ...f, questions: "" })); }}
                     className="rounded-md p-1 text-muted-foreground hover:bg-rose-50 hover:text-rose-600 dark:hover:bg-rose-500/10"
                   >
                     <X className="h-3.5 w-3.5" />
@@ -1304,10 +1026,7 @@ function CoursesPage() {
                 </div>
               ) : (
                 <label
-                  onDragOver={(e) => {
-                    e.preventDefault();
-                    setQuizFileDrag(true);
-                  }}
+                  onDragOver={(e) => { e.preventDefault(); setQuizFileDrag(true); }}
                   onDragLeave={() => setQuizFileDrag(false)}
                   onDrop={(e) => {
                     e.preventDefault();
@@ -1315,46 +1034,25 @@ function CoursesPage() {
                     const file = e.dataTransfer.files?.[0];
                     if (!file) return;
                     if (!/\.(txt|md)$/i.test(file.name)) {
-                      toast.error(
-                        "Only .txt and .md files are supported. For DOCX/PDF, use 'Import from Google Docs' or paste the content.",
-                      );
+                      toast.error("Only .txt and .md files are supported. For DOCX/PDF, use 'Import from Google Docs' or paste the content.");
                       return;
                     }
                     if (file.size > 10 * 1024 * 1024) {
                       toast.error("File is too large (max 10MB).");
                       return;
                     }
-                    file
-                      .text()
-                      .then((text) => {
-                        setQuizFileName(file.name);
-                        setQuizForm((f) => ({ ...f, questions: text }));
-                        const { questions, dropped } = parseWorksheet(text);
-                        toast.success(
-                          `Loaded ${questions.length} question(s) from file${dropped ? ` (${dropped} skipped)` : ""}`,
-                        );
-                      })
-                      .catch(() => toast.error("Could not read the file."));
+                    file.text().then((text) => {
+                      setQuizFileName(file.name);
+                      setQuizForm((f) => ({ ...f, questions: text }));
+                      const { questions, dropped } = parseWorksheet(text);
+                      toast.success(`Loaded ${questions.length} question(s) from file${dropped ? ` (${dropped} skipped)` : ""}`);
+                    }).catch(() => toast.error("Could not read the file."));
                   }}
-                  className={cn(
-                    "flex cursor-pointer flex-col items-center justify-center gap-1 rounded-xl border-2 border-dashed px-3 py-5 text-center transition",
-                    quizFileDrag
-                      ? "border-primary bg-primary/10 ring-2 ring-primary/40"
-                      : "border-border hover:border-primary/50 hover:bg-muted/60",
-                  )}
+                  className={cn("flex cursor-pointer flex-col items-center justify-center gap-1 rounded-xl border-2 border-dashed px-3 py-5 text-center transition", quizFileDrag ? "border-primary bg-primary/10 ring-2 ring-primary/40" : "border-border hover:border-primary/50 hover:bg-muted/60")}
                 >
-                  <CloudUpload
-                    className={cn(
-                      "h-5 w-5",
-                      quizFileDrag ? "text-primary" : "text-muted-foreground",
-                    )}
-                  />
-                  <p className="text-xs font-semibold">
-                    Drag & drop a file here, or click to browse
-                  </p>
-                  <p className="text-[11px] text-muted-foreground">
-                    Supports .txt, .md (Max 10MB). For DOCX/PDF, use Google Docs import below.
-                  </p>
+                  <CloudUpload className={cn("h-5 w-5", quizFileDrag ? "text-primary" : "text-muted-foreground")} />
+                  <p className="text-xs font-semibold">Drag & drop a file here, or click to browse</p>
+                  <p className="text-[11px] text-muted-foreground">Supports .txt, .md (Max 10MB). For DOCX/PDF, use Google Docs import below.</p>
                   <input
                     type="file"
                     accept=".txt,.md"
@@ -1362,26 +1060,19 @@ function CoursesPage() {
                     onChange={(e) => {
                       const file = e.target.files?.[0];
                       if (!file) return;
-                      file
-                        .text()
-                        .then((text) => {
-                          setQuizFileName(file.name);
-                          setQuizForm((f) => ({ ...f, questions: text }));
-                          const { questions, dropped } = parseWorksheet(text);
-                          toast.success(
-                            `Loaded ${questions.length} question(s)${dropped ? ` (${dropped} skipped)` : ""}`,
-                          );
-                        })
-                        .catch(() => toast.error("Could not read the file."));
+                      file.text().then((text) => {
+                        setQuizFileName(file.name);
+                        setQuizForm((f) => ({ ...f, questions: text }));
+                        const { questions, dropped } = parseWorksheet(text);
+                        toast.success(`Loaded ${questions.length} question(s)${dropped ? ` (${dropped} skipped)` : ""}`);
+                      }).catch(() => toast.error("Could not read the file."));
                       e.target.value = "";
                     }}
                   />
                 </label>
               )}
               <div className="flex items-center gap-2">
-                <label className="text-xs font-semibold text-muted-foreground flex-1">
-                  Or paste questions &amp; answer key
-                </label>
+                <label className="text-xs font-semibold text-muted-foreground flex-1">Or paste questions &amp; answer key</label>
                 <button
                   type="button"
                   onClick={() => {
@@ -1393,13 +1084,9 @@ function CoursesPage() {
                         if (text) {
                           const { questions, dropped } = parseWorksheet(text);
                           setQuizForm((f) => ({ ...f, questions: text }));
-                          toast.success(
-                            `Loaded ${questions.length} question(s) from Google Doc${dropped ? ` (${dropped} skipped)` : ""}`,
-                          );
+                          toast.success(`Loaded ${questions.length} question(s) from Google Doc${dropped ? ` (${dropped} skipped)` : ""}`);
                         } else {
-                          toast.error(
-                            "Could not read the doc — check sharing permissions or try pasting instead.",
-                          );
+                          toast.error("Could not read the doc — check sharing permissions or try pasting instead.");
                         }
                       } catch (e) {
                         toast.error(e instanceof Error ? e.message : "Export failed");
@@ -1415,9 +1102,7 @@ function CoursesPage() {
                 value={quizForm.questions}
                 onChange={(e) => setQuizForm((f) => ({ ...f, questions: e.target.value }))}
                 rows={9}
-                placeholder={
-                  "Paste a ClassMate worksheet (Sections I–IV + Answer Key):\n\nSection I: Multiple Choice\n1. What is 7 × 8?\nA. 54\nB. 56\nC. 63\nD. 48\n\nSection II: Fill in the Blank\n2. Water boils at ______ °C.\n…\n\nAnswer Key:\n1. B - 7 groups of 8 make 56\n2. 100 (Acceptable: one hundred)"
-                }
+                placeholder={"Paste a ClassMate worksheet (Sections I–IV + Answer Key):\n\nSection I: Multiple Choice\n1. What is 7 × 8?\nA. 54\nB. 56\nC. 63\nD. 48\n\nSection II: Fill in the Blank\n2. Water boils at ______ °C.\n…\n\nAnswer Key:\n1. B - 7 groups of 8 make 56\n2. 100 (Acceptable: one hundred)"}
                 className="rounded-xl border border-input bg-background p-3 font-mono text-xs outline-none focus:ring-2 focus:ring-ring"
               />
               <button
@@ -1426,9 +1111,7 @@ function CoursesPage() {
                 onClick={() => {
                   const course = (courses ?? []).find((c) => c.id === quizForm.course_id);
                   if (!course) {
-                    toast.error(
-                      "Select a course first — ClassMate will use it as the worksheet context.",
-                    );
+                    toast.error("Select a course first — ClassMate will use it as the worksheet context.");
                     return;
                   }
                   openWorksheetChat({
@@ -1436,9 +1119,7 @@ function CoursesPage() {
                     title: quizForm.title.trim(),
                     ...(quizForm.questions ? { sourceMaterial: quizForm.questions } : {}),
                   });
-                  toast.success(
-                    "ClassMate has your file & course — tell it the topic and item count.",
-                  );
+                  toast.success("ClassMate has your file & course — tell it the topic and item count.");
                 }}
                 className={cn(
                   "flex h-10 items-center justify-center gap-1.5 rounded-xl px-4 text-sm font-semibold transition",
@@ -1460,9 +1141,7 @@ function CoursesPage() {
                 <div className="rounded-xl border border-dashed border-border bg-muted/30 p-6 text-center">
                   <FileText className="mx-auto h-8 w-8 text-muted-foreground/50" />
                   <p className="mt-2 text-sm font-semibold">No questions yet</p>
-                  <p className="mt-1 text-xs text-muted-foreground">
-                    Click "Add Question" below to start building your worksheet.
-                  </p>
+                  <p className="mt-1 text-xs text-muted-foreground">Click "Add Question" below to start building your worksheet.</p>
                 </div>
               )}
               <div className="space-y-3 max-h-[50vh] overflow-y-auto pr-1">
@@ -1475,22 +1154,7 @@ function CoursesPage() {
                           value={q.kind}
                           onChange={(e) => {
                             const kind = e.target.value as ManualQuestion["kind"];
-                            setManualQuestions((prev) =>
-                              prev.map((pq, i) =>
-                                i === qi
-                                  ? {
-                                      ...pq,
-                                      kind,
-                                      options:
-                                        kind === "mc"
-                                          ? pq.options.length >= 4
-                                            ? pq.options
-                                            : ["", "", "", ""]
-                                          : [],
-                                    }
-                                  : pq,
-                              ),
-                            );
+                            setManualQuestions((prev) => prev.map((pq, i) => i === qi ? { ...pq, kind, options: kind === "mc" ? (pq.options.length >= 4 ? pq.options : ["", "", "", ""]) : [] } : pq));
                           }}
                           className="h-8 rounded-lg border border-input bg-background px-2 text-xs"
                         >
@@ -1501,9 +1165,7 @@ function CoursesPage() {
                         </select>
                         <button
                           type="button"
-                          onClick={() =>
-                            setManualQuestions((prev) => prev.filter((_, i) => i !== qi))
-                          }
+                          onClick={() => setManualQuestions((prev) => prev.filter((_, i) => i !== qi))}
                           className="rounded-lg p-1 text-muted-foreground hover:bg-rose-50 hover:text-rose-600 dark:hover:bg-rose-500/10"
                         >
                           <Trash2 className="h-3.5 w-3.5" />
@@ -1512,40 +1174,22 @@ function CoursesPage() {
                     </div>
                     <input
                       value={q.question}
-                      onChange={(e) =>
-                        setManualQuestions((prev) =>
-                          prev.map((pq, i) =>
-                            i === qi ? { ...pq, question: e.target.value } : pq,
-                          ),
-                        )
-                      }
-                      placeholder={
-                        q.kind === "fill"
-                          ? "Sentence with ______ blank"
-                          : q.kind === "essay"
-                            ? "Essay prompt or question"
-                            : "Question text"
-                      }
+                      onChange={(e) => setManualQuestions((prev) => prev.map((pq, i) => i === qi ? { ...pq, question: e.target.value } : pq))}
+                      placeholder={q.kind === "fill" ? "Sentence with ______ blank" : q.kind === "essay" ? "Essay prompt or question" : "Question text"}
                       className="h-9 w-full rounded-lg border border-input bg-background px-2.5 text-xs outline-none focus:ring-2 focus:ring-ring"
                     />
                     {q.kind === "mc" && (
                       <div className="grid grid-cols-2 gap-1.5">
                         {["A", "B", "C", "D"].map((letter, oi) => (
                           <div key={letter} className="flex items-center gap-1">
-                            <span className="text-[11px] font-bold text-muted-foreground w-4">
-                              {letter}.
-                            </span>
+                            <span className="text-[11px] font-bold text-muted-foreground w-4">{letter}.</span>
                             <input
                               value={q.options[oi] ?? ""}
-                              onChange={(e) =>
-                                setManualQuestions((prev) => {
-                                  const opts = [...(prev[qi]?.options ?? ["", "", "", ""])];
-                                  opts[oi] = e.target.value;
-                                  return prev.map((pq, i) =>
-                                    i === qi ? { ...pq, options: opts } : pq,
-                                  );
-                                })
-                              }
+                              onChange={(e) => setManualQuestions((prev) => {
+                                const opts = [...(prev[qi]?.options ?? ["", "", "", ""])];
+                                opts[oi] = e.target.value;
+                                return prev.map((pq, i) => i === qi ? { ...pq, options: opts } : pq);
+                              })}
                               placeholder={`Option ${letter}`}
                               className="h-8 flex-1 rounded-lg border border-input bg-background px-2 text-xs outline-none focus:ring-2 focus:ring-ring"
                             />
@@ -1555,25 +1199,15 @@ function CoursesPage() {
                     )}
                     {q.kind === "mc" && (
                       <div className="flex items-center gap-2">
-                        <span className="text-[11px] font-semibold text-muted-foreground">
-                          Correct:
-                        </span>
+                        <span className="text-[11px] font-semibold text-muted-foreground">Correct:</span>
                         <select
                           value={q.correct_answer}
-                          onChange={(e) =>
-                            setManualQuestions((prev) =>
-                              prev.map((pq, i) =>
-                                i === qi ? { ...pq, correct_answer: e.target.value } : pq,
-                              ),
-                            )
-                          }
+                          onChange={(e) => setManualQuestions((prev) => prev.map((pq, i) => i === qi ? { ...pq, correct_answer: e.target.value } : pq))}
                           className="h-8 rounded-lg border border-input bg-background px-2 text-xs"
                         >
                           <option value="">Select answer</option>
                           {q.options.filter(Boolean).map((opt, oi) => (
-                            <option key={oi} value={opt}>
-                              {String.fromCharCode(65 + oi)}. {opt}
-                            </option>
+                            <option key={oi} value={opt}>{String.fromCharCode(65 + oi)}. {opt}</option>
                           ))}
                         </select>
                       </div>
@@ -1581,13 +1215,7 @@ function CoursesPage() {
                     {q.kind === "fill" && (
                       <input
                         value={q.correct_answer}
-                        onChange={(e) =>
-                          setManualQuestions((prev) =>
-                            prev.map((pq, i) =>
-                              i === qi ? { ...pq, correct_answer: e.target.value } : pq,
-                            ),
-                          )
-                        }
+                        onChange={(e) => setManualQuestions((prev) => prev.map((pq, i) => i === qi ? { ...pq, correct_answer: e.target.value } : pq))}
                         placeholder="Correct answer (e.g. 100)"
                         className="h-8 w-full rounded-lg border border-input bg-background px-2.5 text-xs outline-none focus:ring-2 focus:ring-ring"
                       />
@@ -1595,13 +1223,7 @@ function CoursesPage() {
                     {q.kind === "essay" && (
                       <textarea
                         value={q.correct_answer}
-                        onChange={(e) =>
-                          setManualQuestions((prev) =>
-                            prev.map((pq, i) =>
-                              i === qi ? { ...pq, correct_answer: e.target.value } : pq,
-                            ),
-                          )
-                        }
+                        onChange={(e) => setManualQuestions((prev) => prev.map((pq, i) => i === qi ? { ...pq, correct_answer: e.target.value } : pq))}
                         placeholder="Rubric / key points (e.g. Must mention: photosynthesis, sunlight, chlorophyll)"
                         rows={2}
                         className="w-full rounded-lg border border-input bg-background px-2.5 py-1.5 text-xs outline-none focus:ring-2 focus:ring-ring"
@@ -1610,36 +1232,20 @@ function CoursesPage() {
                     {q.kind === "matching" && (
                       <div className="grid grid-cols-2 gap-2">
                         <div>
-                          <p className="mb-1 text-[10px] font-semibold text-muted-foreground">
-                            Column A (premises)
-                          </p>
+                          <p className="mb-1 text-[10px] font-semibold text-muted-foreground">Column A (premises)</p>
                           <textarea
                             value={q.question}
-                            onChange={(e) =>
-                              setManualQuestions((prev) =>
-                                prev.map((pq, i) =>
-                                  i === qi ? { ...pq, question: e.target.value } : pq,
-                                ),
-                              )
-                            }
+                            onChange={(e) => setManualQuestions((prev) => prev.map((pq, i) => i === qi ? { ...pq, question: e.target.value } : pq))}
                             placeholder={"1. Premise A\n2. Premise B"}
                             rows={3}
                             className="w-full rounded-lg border border-input bg-background px-2 py-1.5 text-xs outline-none focus:ring-2 focus:ring-ring"
                           />
                         </div>
                         <div>
-                          <p className="mb-1 text-[10px] font-semibold text-muted-foreground">
-                            Column B (options)
-                          </p>
+                          <p className="mb-1 text-[10px] font-semibold text-muted-foreground">Column B (options)</p>
                           <textarea
                             value={q.options.join("\n")}
-                            onChange={(e) =>
-                              setManualQuestions((prev) =>
-                                prev.map((pq, i) =>
-                                  i === qi ? { ...pq, options: e.target.value.split("\n") } : pq,
-                                ),
-                              )
-                            }
+                            onChange={(e) => setManualQuestions((prev) => prev.map((pq, i) => i === qi ? { ...pq, options: e.target.value.split("\n") } : pq))}
                             placeholder={"A. Option 1\nB. Option 2\nC. Option 3\nD. Option 4"}
                             rows={3}
                             className="w-full rounded-lg border border-input bg-background px-2 py-1.5 text-xs outline-none focus:ring-2 focus:ring-ring"
@@ -1650,13 +1256,7 @@ function CoursesPage() {
                     {q.kind === "matching" && (
                       <input
                         value={q.correct_answer}
-                        onChange={(e) =>
-                          setManualQuestions((prev) =>
-                            prev.map((pq, i) =>
-                              i === qi ? { ...pq, correct_answer: e.target.value } : pq,
-                            ),
-                          )
-                        }
+                        onChange={(e) => setManualQuestions((prev) => prev.map((pq, i) => i === qi ? { ...pq, correct_answer: e.target.value } : pq))}
                         placeholder="Correct pairs (e.g. 1-A, 2-C, 3-B)"
                         className="h-8 w-full rounded-lg border border-input bg-background px-2.5 text-xs outline-none focus:ring-2 focus:ring-ring"
                       />
@@ -1675,25 +1275,14 @@ function CoursesPage() {
           )}
         </div>
         <div className="mt-4 flex justify-end">
-          <button
-            onClick={saveQuiz}
-            disabled={saving}
-            className="h-11 flex-1 rounded-xl bg-primary text-sm font-semibold text-primary-foreground hover:opacity-90 disabled:opacity-50"
-          >
+          <button onClick={saveQuiz} disabled={saving} className="h-11 flex-1 rounded-xl bg-primary text-sm font-semibold text-primary-foreground hover:opacity-90 disabled:opacity-50">
             {saving ? "Creating…" : "Create worksheet"}
           </button>
         </div>
       </Modal>
 
-      <Modal
-        open={!!policyQuiz}
-        onClose={() => setPolicyQuiz(null)}
-        title={`Retake policy — ${policyQuiz?.title ?? ""}`}
-      >
-        <PolicyFields
-          value={policyForm}
-          onChange={(patch) => setPolicyForm((f) => ({ ...f, ...patch }))}
-        />
+      <Modal open={!!policyQuiz} onClose={() => setPolicyQuiz(null)} title={`Retake policy — ${policyQuiz?.title ?? ""}`}>
+        <PolicyFields value={policyForm} onChange={(patch) => setPolicyForm((f) => ({ ...f, ...patch }))} />
         <button
           onClick={savePolicy}
           disabled={saving}
@@ -1703,12 +1292,7 @@ function CoursesPage() {
         </button>
       </Modal>
 
-      <Modal
-        open={!!editQuiz}
-        onClose={() => setEditQuiz(null)}
-        title={`Edit worksheet — ${editQuiz?.title ?? ""}`}
-        wide
-      >
+      <Modal open={!!editQuiz} onClose={() => setEditQuiz(null)} title={`Edit worksheet — ${editQuiz?.title ?? ""}`} wide>
         <div className="grid gap-3">
           <div className="grid gap-3 sm:grid-cols-3">
             <input
@@ -1727,10 +1311,7 @@ function CoursesPage() {
               className="h-11 rounded-xl border border-input bg-background px-3 text-sm outline-none focus:ring-2 focus:ring-ring"
             />
           </div>
-          <PolicyFields
-            value={editQuizForm}
-            onChange={(patch) => setEditQuizForm((f) => ({ ...f, ...patch }))}
-          />
+          <PolicyFields value={editQuizForm} onChange={(patch) => setEditQuizForm((f) => ({ ...f, ...patch }))} />
           <label className="text-xs font-semibold text-muted-foreground">
             Replace questions &amp; answer key (optional)
             <textarea
@@ -1744,37 +1325,16 @@ function CoursesPage() {
           <div className="flex flex-col gap-2 rounded-xl border border-border bg-muted/30 p-3">
             <label className="flex items-center justify-between gap-3 text-sm">
               <span className="font-medium">Release scores to students</span>
-              <input
-                type="checkbox"
-                checked={!!editQuizForm.score_released}
-                onChange={(e) =>
-                  setEditQuizForm((f) => ({ ...f, score_released: e.target.checked }))
-                }
-                className="h-4 w-4 rounded border-input"
-              />
+              <input type="checkbox" checked={!!editQuizForm.score_released} onChange={(e)=>setEditQuizForm(f=>({...f, score_released:e.target.checked}))} className="h-4 w-4 rounded border-input" />
             </label>
             <label className="flex items-center justify-between gap-3 text-sm">
               <span className="font-medium">Release answer key</span>
-              <input
-                type="checkbox"
-                checked={!!editQuizForm.answer_key_released}
-                onChange={(e) =>
-                  setEditQuizForm((f) => ({ ...f, answer_key_released: e.target.checked }))
-                }
-                className="h-4 w-4 rounded border-input"
-              />
+              <input type="checkbox" checked={!!editQuizForm.answer_key_released} onChange={(e)=>setEditQuizForm(f=>({...f, answer_key_released:e.target.checked}))} className="h-4 w-4 rounded border-input" />
             </label>
-            <p className="text-xs text-muted-foreground">
-              When unchecked, students see “Awaiting teacher release”.
-            </p>
+            <p className="text-xs text-muted-foreground">When unchecked, students see “Awaiting teacher release”.</p>
           </div>
           {editQuiz && (
-            <MaterialManager
-              target="quiz"
-              id={editQuiz.id}
-              courseId={editQuiz.course_id}
-              attachments={editQuiz.attachments ?? []}
-            />
+            <MaterialManager target="quiz" id={editQuiz.id} courseId={editQuiz.course_id} attachments={editQuiz.attachments ?? []} />
           )}
         </div>
         <button
@@ -1786,11 +1346,7 @@ function CoursesPage() {
         </button>
       </Modal>
 
-      <Modal
-        open={!!editAssign}
-        onClose={() => setEditAssign(null)}
-        title={`Edit assignment — ${editAssign?.title ?? ""}`}
-      >
+      <Modal open={!!editAssign} onClose={() => setEditAssign(null)} title={`Edit assignment — ${editAssign?.title ?? ""}`}>
         <div className="grid gap-3">
           <input
             value={editAssignForm.title}
@@ -1825,29 +1381,15 @@ function CoursesPage() {
             />
             <select
               value={editAssignForm.component_type}
-              onChange={(e) =>
-                setEditAssignForm((f) => ({
-                  ...f,
-                  component_type: e.target.value as Assignment["component_type"],
-                }))
-              }
+              onChange={(e) => setEditAssignForm((f) => ({ ...f, component_type: e.target.value as Assignment["component_type"] }))}
               aria-label="Grading component"
               className="h-11 rounded-xl border border-input bg-background px-3 text-sm outline-none focus:ring-2 focus:ring-ring"
             >
-              {Object.entries(COMPONENT_LABELS).map(([v, l]) => (
-                <option key={v} value={v}>
-                  {l}
-                </option>
-              ))}
+              {Object.entries(COMPONENT_LABELS).map(([v, l]) => <option key={v} value={v}>{l}</option>)}
             </select>
           </div>
           {editAssign && (
-            <MaterialManager
-              target="assignment"
-              id={editAssign.id}
-              courseId={editAssign.course_id}
-              attachments={editAssign.attachments ?? []}
-            />
+            <MaterialManager target="assignment" id={editAssign.id} courseId={editAssign.course_id} attachments={editAssign.attachments ?? []} />
           )}
         </div>
         <button
@@ -1859,17 +1401,12 @@ function CoursesPage() {
         </button>
       </Modal>
 
-      <Modal
-        open={!!removeTarget}
-        onClose={() => setRemoveTarget(null)}
-        title={`Remove ${removeTarget?.kind === "quiz" ? "worksheet" : "assignment"}`}
-      >
+      <Modal open={!!removeTarget} onClose={() => setRemoveTarget(null)} title={`Remove ${removeTarget?.kind === "quiz" ? "worksheet" : "assignment"}`}>
         <div className="flex gap-3 rounded-xl border border-amber-500/30 bg-amber-500/10 p-3 text-sm">
           <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-amber-600" />
           <p>
-            <span className="font-semibold">{removeTarget?.title}</span> — archiving hides it from
-            students while keeping every score, attempt, and audit record. Permanent deletion also
-            erases attached files and cannot be undone.
+            <span className="font-semibold">{removeTarget?.title}</span> — archiving hides it from students while keeping
+            every score, attempt, and audit record. Permanent deletion also erases attached files and cannot be undone.
           </p>
         </div>
         <div className="mt-4 grid gap-2 sm:grid-cols-2">
@@ -1890,14 +1427,10 @@ function CoursesPage() {
         </div>
       </Modal>
 
-      <Modal
-        open={!!rosterQuiz}
-        onClose={() => setRosterQuiz(null)}
-        title={`Attempts — ${rosterQuiz?.title ?? ""}`}
-        wide
-      >
+      <Modal open={!!rosterQuiz} onClose={() => setRosterQuiz(null)} title={`Attempts — ${rosterQuiz?.title ?? ""}`} wide>
         {rosterQuiz && <AttemptRoster quizId={rosterQuiz.id} />}
       </Modal>
+
     </AppShell>
   );
 }
@@ -2008,12 +1541,7 @@ function AttemptRoster({ quizId }: { quizId: string }) {
   };
 
   const reset = async (studentId: string, name: string) => {
-    if (
-      !confirm(
-        `Reset all attempts for ${name}? Their attempt history on this worksheet will be wiped.`,
-      )
-    )
-      return;
+    if (!confirm(`Reset all attempts for ${name}? Their attempt history on this worksheet will be wiped.`)) return;
     setBusy(studentId);
     try {
       await resetQuizAttempts(quizId, studentId);
@@ -2026,8 +1554,7 @@ function AttemptRoster({ quizId }: { quizId: string }) {
     }
   };
 
-  if (isLoading)
-    return <p className="py-8 text-center text-sm text-muted-foreground">Loading attempts…</p>;
+  if (isLoading) return <p className="py-8 text-center text-sm text-muted-foreground">Loading attempts…</p>;
   if (!data || data.students.length === 0) {
     return <EmptyState title="No attempts yet" sub="No student has submitted this worksheet." />;
   }
@@ -2055,10 +1582,7 @@ function AttemptRoster({ quizId }: { quizId: string }) {
           </div>
           <div className="mt-2 flex flex-wrap gap-1.5">
             {s.attempts.map((a) => (
-              <span
-                key={a.attempt_number}
-                className="rounded-lg bg-muted px-2 py-1 text-[11px] font-semibold"
-              >
+              <span key={a.attempt_number} className="rounded-lg bg-muted px-2 py-1 text-[11px] font-semibold">
                 #{a.attempt_number}: {a.score}/{a.total}
               </span>
             ))}
@@ -2086,10 +1610,7 @@ function AttemptRoster({ quizId }: { quizId: string }) {
 }
 
 function EnrollmentCount({ courseId }: { courseId: string }) {
-  const { data } = useQuery({
-    queryKey: ["enrollments", courseId],
-    queryFn: () => enrollmentsForCourse(courseId),
-  });
+  const { data } = useQuery({ queryKey: ["enrollments", courseId], queryFn: () => enrollmentsForCourse(courseId) });
   return (
     <p className="mt-3 flex items-center gap-1.5 text-xs font-semibold text-muted-foreground">
       <Plus className="hidden" />
@@ -2187,9 +1708,7 @@ function PendingDropzone({
       >
         <CloudUpload className={cn("h-6 w-6", drag ? "text-primary" : "text-muted-foreground")} />
         <p className="text-sm font-semibold">Drag and drop files here, or browse</p>
-        <p className="text-xs text-muted-foreground">
-          Supports PDF, DOCX, PNG, JPG, ZIP (Max: 25MB)
-        </p>
+        <p className="text-xs text-muted-foreground">Supports PDF, DOCX, PNG, JPG, ZIP (Max: 25MB)</p>
         <input
           ref={inputRef}
           type="file"
@@ -2207,10 +1726,7 @@ function PendingDropzone({
       {files.length > 0 && (
         <ul className="mt-2 grid gap-1.5">
           {files.map((f) => (
-            <li
-              key={`${f.name}-${f.size}`}
-              className="flex items-center gap-2 rounded-lg bg-muted/60 px-2.5 py-1.5"
-            >
+            <li key={`${f.name}-${f.size}`} className="flex items-center gap-2 rounded-lg bg-muted/60 px-2.5 py-1.5">
               <FileText className="h-3.5 w-3.5 shrink-0 text-primary" />
               <span className="min-w-0 flex-1 truncate text-xs font-medium">{f.name}</span>
               <span className="text-[11px] text-muted-foreground">{formatFileSize(f.size)}</span>
@@ -2230,15 +1746,13 @@ function PendingDropzone({
 
       {busy && typeof progress === "number" && (
         <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-muted">
-          <div
-            className="h-full rounded-full bg-primary transition-all"
-            style={{ width: `${progress}%` }}
-          />
+          <div className="h-full rounded-full bg-primary transition-all" style={{ width: `${progress}%` }} />
         </div>
       )}
     </div>
   );
 }
+
 
 /**
  * Drag-and-drop material uploader + attachment list for one worksheet or
@@ -2306,10 +1820,7 @@ function MaterialManager({
       {items.length > 0 && (
         <ul className="mt-2 grid gap-1.5">
           {items.map((a) => (
-            <li
-              key={a.path}
-              className="flex items-center gap-2 rounded-lg bg-muted/60 px-2.5 py-1.5"
-            >
+            <li key={a.path} className="flex items-center gap-2 rounded-lg bg-muted/60 px-2.5 py-1.5">
               <a
                 href={materialHref(a)}
                 target="_blank"
@@ -2343,9 +1854,7 @@ function MaterialManager({
         }}
         className={cn(
           "mt-2 flex cursor-pointer items-center justify-center gap-2 rounded-lg border border-dashed px-3 py-2.5 text-xs font-medium transition",
-          drag
-            ? "border-primary bg-primary/10 text-primary"
-            : "border-border text-muted-foreground hover:bg-muted",
+          drag ? "border-primary bg-primary/10 text-primary" : "border-border text-muted-foreground hover:bg-muted",
           busy && "pointer-events-none opacity-60",
         )}
       >

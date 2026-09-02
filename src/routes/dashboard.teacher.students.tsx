@@ -11,24 +11,13 @@ import {
   transmutedOf,
   type Profile,
 } from "@/lib/lms";
-import {
-  AppShell,
-  Badge,
-  Card,
-  EmptyState,
-  Modal,
-  TEACHER_NAV,
-  useProfile,
-} from "@/components/lms";
+import { AppShell, Badge, Card, EmptyState, Modal, TEACHER_NAV, useProfile } from "@/components/lms";
 
 export const Route = createFileRoute("/dashboard/teacher/students")({
   head: () => ({
     meta: [
       { title: "Students Info | MIOW - MSU-IIT IDS Online Workspace" },
-      {
-        name: "description",
-        content: "Students in your courses — grades, attendance and sections.",
-      },
+      { name: "description", content: "Students in your courses — grades, attendance and sections." },
       { property: "og:title", content: "Students Info | MIOW - MSU-IIT IDS Online Workspace" },
     ],
   }),
@@ -37,16 +26,8 @@ export const Route = createFileRoute("/dashboard/teacher/students")({
 
 function TeacherStudentsPage() {
   const profile = useProfile(["teacher", "admin"]);
-  const { data: students } = useQuery({
-    queryKey: ["students"],
-    queryFn: listStudents,
-    enabled: !!profile,
-  });
-  const { data: courses } = useQuery({
-    queryKey: ["courses"],
-    queryFn: listCourses,
-    enabled: !!profile,
-  });
+  const { data: students } = useQuery({ queryKey: ["students"], queryFn: listStudents, enabled: !!profile });
+  const { data: courses } = useQuery({ queryKey: ["courses"], queryFn: listCourses, enabled: !!profile });
 
   const [search, setSearch] = useState("");
   const [gradeFilter, setGradeFilter] = useState("all");
@@ -118,13 +99,7 @@ function TeacherStudentsPage() {
       {filtered.length === 0 ? (
         <EmptyState
           title={students?.length ? "No matches" : "No students yet"}
-          sub={
-            students?.length
-              ? "Try a different search or filter."
-              : teacherCourses.length === 0
-                ? "You are not leading any courses yet."
-                : "No students enrolled in your courses yet."
-          }
+          sub={students?.length ? "Try a different search or filter." : teacherCourses.length === 0 ? "You are not leading any courses yet." : "No students enrolled in your courses yet."}
         />
       ) : (
         <Card className="overflow-x-auto">
@@ -141,11 +116,7 @@ function TeacherStudentsPage() {
             </thead>
             <tbody className="divide-y divide-border">
               {filtered.map((s) => (
-                <tr
-                  key={s.id}
-                  onClick={() => setSelected(s)}
-                  className="cursor-pointer transition-colors hover:bg-muted/50"
-                >
+                <tr key={s.id} onClick={() => setSelected(s)} className="cursor-pointer transition-colors hover:bg-muted/50">
                   <td className="p-4">
                     <div className="flex items-center gap-2.5">
                       <img src={s.avatar_url ?? ""} alt="" className="h-8 w-8 rounded-full" />
@@ -157,9 +128,7 @@ function TeacherStudentsPage() {
                   </td>
                   <td className="p-4">{s.student_id}</td>
                   <td className="p-4">
-                    <Badge tone="indigo">
-                      G{s.grade_level} · {s.section ?? "—"}
-                    </Badge>
+                    <Badge tone="indigo">G{s.grade_level} · {s.section ?? "—"}</Badge>
                   </td>
                   <td className="p-4 font-mono text-xs">{s.has_rfid ? "••••••••" : "—"}</td>
                   <td className="p-4">
@@ -181,30 +150,19 @@ function TeacherStudentsPage() {
 }
 
 function AttendanceCell({ studentId }: { studentId: string }) {
-  const { data: logs } = useQuery({
-    queryKey: ["attendance", studentId],
-    queryFn: () => listAttendance(studentId),
-  });
+  const { data: logs } = useQuery({ queryKey: ["attendance", studentId], queryFn: () => listAttendance(studentId) });
   if (!logs) return <span className="text-xs text-muted-foreground">—</span>;
   const pct = attendancePercent(logs);
   return <span className="text-xs font-semibold">{pct != null ? `${pct}%` : "—"}</span>;
 }
 
 function GwaCell({ studentId }: { studentId: string }) {
-  const { data: grades } = useQuery({
-    queryKey: ["student-grades", studentId],
-    queryFn: () => listGradesForStudent(studentId),
-  });
-  const { data: logs } = useQuery({
-    queryKey: ["attendance", studentId],
-    queryFn: () => listAttendance(studentId),
-  });
+  const { data: grades } = useQuery({ queryKey: ["student-grades", studentId], queryFn: () => listGradesForStudent(studentId) });
+  const { data: logs } = useQuery({ queryKey: ["attendance", studentId], queryFn: () => listAttendance(studentId) });
   if (!grades) return <span className="text-xs text-muted-foreground">—</span>;
   const att = attendancePercent(logs ?? []);
   const transmuted = grades.map((g) => transmutedOf(g, att)).filter((t): t is number => t != null);
-  const gwa = transmuted.length
-    ? Math.round((transmuted.reduce((a, b) => a + b, 0) / transmuted.length) * 10) / 10
-    : null;
+  const gwa = transmuted.length ? Math.round((transmuted.reduce((a, b) => a + b, 0) / transmuted.length) * 10) / 10 : null;
   return <span className="text-xs font-semibold">{gwa ?? "—"}</span>;
 }
 
@@ -221,53 +179,31 @@ function StudentInfoModal({ student, onClose }: { student: Profile | null; onClo
   });
   if (!student) return null;
   const att = attendancePercent(logs ?? []);
-  const transmuted = (grades ?? [])
-    .map((g) => transmutedOf(g, att))
-    .filter((t): t is number => t != null);
-  const gwa = transmuted.length
-    ? Math.round((transmuted.reduce((a, b) => a + b, 0) / transmuted.length) * 10) / 10
-    : null;
+  const transmuted = (grades ?? []).map((g) => transmutedOf(g, att)).filter((t): t is number => t != null);
+  const gwa = transmuted.length ? Math.round((transmuted.reduce((a, b) => a + b, 0) / transmuted.length) * 10) / 10 : null;
   return (
     <Modal open={!!student} onClose={onClose} title={student.full_name}>
       <div className="mb-4 flex items-center gap-3">
-        <img
-          src={student.avatar_url ?? ""}
-          alt=""
-          className="h-14 w-14 rounded-full ring-2 ring-primary/30"
-        />
+        <img src={student.avatar_url ?? ""} alt="" className="h-14 w-14 rounded-full ring-2 ring-primary/30" />
         <div>
           <p className="text-sm font-semibold">{student.student_id}</p>
           <p className="text-xs text-muted-foreground">{student.email ?? "No email"}</p>
-          <Badge tone="indigo">
-            Grade {student.grade_level} · {student.section ?? "—"}
-          </Badge>
+          <Badge tone="indigo">Grade {student.grade_level} · {student.section ?? "—"}</Badge>
         </div>
       </div>
       <div className="rounded-xl bg-muted/70 p-4">
-        <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-          Academic standing
-        </p>
+        <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Academic standing</p>
         {gwa == null ? (
           <p className="mt-1 text-sm text-muted-foreground">No grades encoded yet.</p>
         ) : (
           <div className="mt-1 flex items-center gap-3">
             <p className="font-display text-2xl font-bold">{gwa}</p>
             <Badge tone={gwa >= 90 ? "green" : gwa >= 80 ? "indigo" : gwa >= 75 ? "amber" : "red"}>
-              {gwa >= 90
-                ? "Outstanding"
-                : gwa >= 85
-                  ? "Very Satisfactory"
-                  : gwa >= 80
-                    ? "Satisfactory"
-                    : gwa >= 75
-                      ? "Fairly Satisfactory"
-                      : "Did Not Meet Expectations"}
+              {gwa >= 90 ? "Outstanding" : gwa >= 85 ? "Very Satisfactory" : gwa >= 80 ? "Satisfactory" : gwa >= 75 ? "Fairly Satisfactory" : "Did Not Meet Expectations"}
             </Badge>
           </div>
         )}
-        <p className="mt-2 text-xs text-muted-foreground">
-          Attendance: {att != null ? `${att}%` : "—"} · {logs?.length ?? 0} log(s)
-        </p>
+        <p className="mt-2 text-xs text-muted-foreground">Attendance: {att != null ? `${att}%` : "—"} · {logs?.length ?? 0} log(s)</p>
       </div>
     </Modal>
   );

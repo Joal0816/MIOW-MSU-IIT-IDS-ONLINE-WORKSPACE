@@ -2,37 +2,17 @@ import { useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { CalendarCheck, ChevronLeft, ChevronRight, LogIn, LogOut } from "lucide-react";
-import {
-  attendanceStreak,
-  fmtDate,
-  fmtTime,
-  listAttendance,
-  type AttendanceStatus,
-} from "@/lib/lms";
-import {
-  AppShell,
-  Badge,
-  Card,
-  EmptyState,
-  STUDENT_NAV,
-  attendanceTone,
-  useProfile,
-} from "@/components/lms";
+import { attendanceStreak, fmtDate, fmtTime, listAttendance, type AttendanceStatus } from "@/lib/lms";
+import { AppShell, Badge, Card, EmptyState, STUDENT_NAV, attendanceTone, useProfile } from "@/components/lms";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/dashboard/student/attendance")({
   head: () => ({
     meta: [
       { title: "My Attendance | MIOW - MSU-IIT IDS Online Workspace" },
-      {
-        name: "description",
-        content: "Your RFID tap-in and tap-out history and attendance streak.",
-      },
+      { name: "description", content: "Your RFID tap-in and tap-out history and attendance streak." },
       { property: "og:title", content: "My Attendance | MIOW - MSU-IIT IDS Online Workspace" },
-      {
-        property: "og:description",
-        content: "Your RFID tap-in and tap-out history and attendance streak.",
-      },
+      { property: "og:description", content: "Your RFID tap-in and tap-out history and attendance streak." },
     ],
   }),
   component: AttendancePage,
@@ -60,9 +40,7 @@ function AttendancePage() {
   const all = logs ?? [];
   const streak = attendanceStreak(all);
   const lateCount = all.filter((l) => l.status === "late" && l.scan_type === "in").length;
-  const daysPresent = new Set(
-    all.filter((l) => l.scan_type === "in").map((l) => new Date(l.timestamp).toDateString()),
-  ).size;
+  const daysPresent = new Set(all.filter((l) => l.scan_type === "in").map((l) => new Date(l.timestamp).toDateString())).size;
 
   // Calendar model for the viewed month
   const now = new Date();
@@ -95,23 +73,17 @@ function AttendancePage() {
       <div className="mb-6 grid gap-4 sm:grid-cols-3">
         <Card className="p-5">
           <div className="flex items-center justify-between">
-            <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-              Current Streak
-            </p>
+            <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Current Streak</p>
             <CalendarCheck className="h-4 w-4 text-emerald-500" />
           </div>
           <p className="mt-2 font-display text-3xl font-bold">{streak} days</p>
         </Card>
         <Card className="p-5">
-          <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-            Days Present
-          </p>
+          <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Days Present</p>
           <p className="mt-2 font-display text-3xl font-bold">{daysPresent}</p>
         </Card>
         <Card className="p-5">
-          <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-            Times Late
-          </p>
+          <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Times Late</p>
           <p
             className={cn(
               "mt-2 font-display text-3xl font-bold",
@@ -149,10 +121,7 @@ function AttendancePage() {
 
           <div className="grid grid-cols-7 gap-1 text-center">
             {WEEKDAYS.map((d) => (
-              <p
-                key={d}
-                className="pb-1 text-[10px] font-bold uppercase tracking-wide text-muted-foreground"
-              >
+              <p key={d} className="pb-1 text-[10px] font-bold uppercase tracking-wide text-muted-foreground">
                 {d}
               </p>
             ))}
@@ -172,12 +141,7 @@ function AttendancePage() {
                   )}
                 >
                   {day}
-                  <span
-                    className={cn(
-                      "mt-0.5 h-1.5 w-1.5 rounded-full",
-                      status ? STATUS_DOT[status] : "bg-transparent",
-                    )}
-                  />
+                  <span className={cn("mt-0.5 h-1.5 w-1.5 rounded-full", status ? STATUS_DOT[status] : "bg-transparent")} />
                 </div>
               );
             })}
@@ -200,10 +164,7 @@ function AttendancePage() {
         <div>
           <h2 className="mb-3 font-display text-lg font-bold">Recent taps</h2>
           {all.length === 0 ? (
-            <EmptyState
-              title="No attendance records yet"
-              sub="Tap your ID at the gate kiosk to start your streak."
-            />
+            <EmptyState title="No attendance records yet" sub="Tap your ID at the gate kiosk to start your streak." />
           ) : (
             <Card className="max-h-[430px] divide-y divide-border overflow-y-auto">
               {all.slice(0, 40).map((l) => {
@@ -218,16 +179,10 @@ function AttendancePage() {
                           : "bg-sky-100 text-sky-600 dark:bg-sky-500/15 dark:text-sky-300",
                       )}
                     >
-                      {l.scan_type === "in" ? (
-                        <LogIn className="h-4 w-4" />
-                      ) : (
-                        <LogOut className="h-4 w-4" />
-                      )}
+                      {l.scan_type === "in" ? <LogIn className="h-4 w-4" /> : <LogOut className="h-4 w-4" />}
                     </div>
                     <div className="flex-1">
-                      <p className="text-sm font-semibold">
-                        Tapped {l.scan_type === "in" ? "IN" : "OUT"}
-                      </p>
+                      <p className="text-sm font-semibold">Tapped {l.scan_type === "in" ? "IN" : "OUT"}</p>
                       <p className="text-xs text-muted-foreground">
                         {fmtDate(l.timestamp)} · {fmtTime(l.timestamp)}
                       </p>

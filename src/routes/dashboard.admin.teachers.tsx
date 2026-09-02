@@ -122,8 +122,7 @@ function TeachersPage() {
   );
 
   const departments = useMemo(
-    () =>
-      Array.from(new Set((teachers ?? []).map((t) => t.department).filter(Boolean))) as string[],
+    () => Array.from(new Set((teachers ?? []).map((t) => t.department).filter(Boolean))) as string[],
     [teachers],
   );
 
@@ -149,12 +148,7 @@ function TeachersPage() {
       setForm((f) => ({ ...f, [k]: e.target.value }));
 
   const save = async () => {
-    if (
-      !form.full_name.trim() ||
-      !form.email.trim() ||
-      !form.employee_id.trim() ||
-      !form.department.trim()
-    ) {
+    if (!form.full_name.trim() || !form.email.trim() || !form.employee_id.trim() || !form.department.trim()) {
       toast.error("Name, email, employee ID and department are required.");
       return;
     }
@@ -347,24 +341,14 @@ function TeachersPage() {
       {/* Add teacher */}
       <Modal open={open} onClose={() => setOpen(false)} title="Add a teacher">
         <div className="grid gap-3 sm:grid-cols-2">
-          <select
-            value={form.prefix}
-            onChange={set("prefix")}
-            aria-label="Prefix"
-            className={INPUT}
-          >
+          <select value={form.prefix} onChange={set("prefix")} aria-label="Prefix" className={INPUT}>
             {PREFIXES.map((p) => (
               <option key={p || "none"} value={p}>
                 {p || "No prefix"}
               </option>
             ))}
           </select>
-          <input
-            value={form.full_name}
-            onChange={set("full_name")}
-            placeholder="Full name *"
-            className={INPUT}
-          />
+          <input value={form.full_name} onChange={set("full_name")} placeholder="Full name *" className={INPUT} />
           <input
             value={form.email}
             onChange={set("email")}
@@ -386,9 +370,7 @@ function TeachersPage() {
           />
           <input
             value={form.pin}
-            onChange={(e) =>
-              setForm((f) => ({ ...f, pin: e.target.value.replace(/\D/g, "").slice(0, 6) }))
-            }
+            onChange={(e) => setForm((f) => ({ ...f, pin: e.target.value.replace(/\D/g, "").slice(0, 6) }))}
             placeholder="Temporary PIN * (4–6 digits)"
             inputMode="numeric"
             className={INPUT}
@@ -396,9 +378,7 @@ function TeachersPage() {
           <div className="flex gap-2">
             <input
               value={form.rfid_uid}
-              onChange={(e) =>
-                setForm((f) => ({ ...f, rfid_uid: e.target.value.replace(/\D/g, "") }))
-              }
+              onChange={(e) => setForm((f) => ({ ...f, rfid_uid: e.target.value.replace(/\D/g, "") }))}
               placeholder="RFID UID (optional)"
               inputMode="numeric"
               className={`${INPUT} flex-1`}
@@ -413,8 +393,8 @@ function TeachersPage() {
           </div>
         </div>
         <p className="mt-3 text-xs text-muted-foreground">
-          The account is created with the <strong>teacher</strong> role. Share the temporary PIN
-          privately — it is hashed on the server and cannot be read back.
+          The account is created with the <strong>teacher</strong> role. Share the temporary PIN privately —
+          it is hashed on the server and cannot be read back.
         </p>
         <button
           onClick={save}
@@ -544,18 +524,10 @@ function TeacherDetailModal({
   };
 
   return (
-    <Modal
-      open={!!teacher}
-      onClose={onClose}
-      title={`${teacher.prefix ?? ""} ${teacher.full_name}`.trim()}
-    >
+    <Modal open={!!teacher} onClose={onClose} title={`${teacher.prefix ?? ""} ${teacher.full_name}`.trim()}>
       <div className="mb-4 flex items-center gap-3">
         {teacher.avatar_url ? (
-          <img
-            src={teacher.avatar_url}
-            alt=""
-            className="h-14 w-14 rounded-full ring-2 ring-primary/30"
-          />
+          <img src={teacher.avatar_url} alt="" className="h-14 w-14 rounded-full ring-2 ring-primary/30" />
         ) : (
           <span className="grid h-14 w-14 place-items-center rounded-full bg-primary/10 text-primary">
             <GraduationCap className="h-6 w-6" />
@@ -570,9 +542,7 @@ function TeacherDetailModal({
 
       {/* Course load */}
       <div className="mb-4 rounded-xl bg-muted/70 p-4">
-        <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-          Course load
-        </p>
+        <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Course load</p>
         {teacher.courses.length === 0 ? (
           <p className="mt-1 text-sm text-muted-foreground">No courses assigned yet.</p>
         ) : (
@@ -588,24 +558,14 @@ function TeacherDetailModal({
 
       {/* Editable identity */}
       <div className="mb-4 grid gap-3 sm:grid-cols-2">
-        <select
-          value={prefix}
-          onChange={(e) => setPrefix(e.target.value)}
-          aria-label="Prefix"
-          className={INPUT}
-        >
+        <select value={prefix} onChange={(e) => setPrefix(e.target.value)} aria-label="Prefix" className={INPUT}>
           {PREFIXES.map((p) => (
             <option key={p || "none"} value={p}>
               {p || "No prefix"}
             </option>
           ))}
         </select>
-        <input
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          aria-label="Full name"
-          className={INPUT}
-        />
+        <input value={name} onChange={(e) => setName(e.target.value)} aria-label="Full name" className={INPUT} />
         <input
           value={employeeId}
           onChange={(e) => setEmployeeId(e.target.value)}

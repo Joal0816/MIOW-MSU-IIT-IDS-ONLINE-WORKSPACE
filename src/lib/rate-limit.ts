@@ -13,35 +13,19 @@ const MAX_ATTEMPTS = 5;
 let redis: any = null;
 let redisWarned = false;
 function getRedis(): any {
-  const url = process.env["REDIS_URL"] ?? "";
+  const url = process.env.REDIS_URL ?? "";
   if (!url) return null;
   if (redis) return redis;
   try {
     // Dynamic require hidden from Vite scanner — ioredis is optional
-    const IORedis =
-      (globalThis as any).require?.("ioredis") ??
-      (() => {
-        throw new Error("not found");
-      })();
-    redis = new IORedis(url, {
-      maxRetriesPerRequest: 1,
-      enableReadyCheck: false,
-      lazyConnect: true,
-    });
+    const IORedis = (globalThis as any).require?.("ioredis") ?? (() => { throw new Error("not found"); })();
+    redis = new IORedis(url, { maxRetriesPerRequest: 1, enableReadyCheck: false, lazyConnect: true });
     redis.on?.("error", (e: unknown) => {
-      if (!redisWarned) {
-        console.warn("[rate-limit] Redis error, falling back to in-memory:", e);
-        redisWarned = true;
-      }
+      if (!redisWarned) { console.warn("[rate-limit] Redis error, falling back to in-memory:", e); redisWarned = true; }
     });
     return redis;
   } catch {
-    if (!redisWarned) {
-      console.warn(
-        "[rate-limit] REDIS_URL set but ioredis not installed — using in-memory. Run: bun add ioredis",
-      );
-      redisWarned = true;
-    }
+    if (!redisWarned) { console.warn("[rate-limit] REDIS_URL set but ioredis not installed — using in-memory. Run: bun add ioredis"); redisWarned = true; }
     return null;
   }
 }
@@ -81,11 +65,9 @@ export function getBucket(key: string): { consume(): boolean; remaining: number 
     // Fire-and-forget Redis increment for cross-instance visibility, but
     // enforce locally via in-memory to keep this method sync.
     const redisKey = `ratelimit:${key}`;
-    r.incr?.(redisKey)
-      ?.then?.((count: number) => {
-        if (count === 1) r.pexpire?.(redisKey, WINDOW_MS);
-      })
-      .catch?.(() => {});
+    r.incr?.(redisKey)?.then?.((count: number) => {
+      if (count === 1) r.pexpire?.(redisKey, WINDOW_MS);
+    }).catch?.(() => {});
   }
   return {
     consume(): boolean {
@@ -103,15 +85,9 @@ export function getBucket(key: string): { consume(): boolean; remaining: number 
   };
 }
 
-export async function getBucketAsync(
-  key: string,
-): Promise<{ consume(): Promise<boolean>; remaining(): Promise<number> }> {
+export async function getBucketAsync(key: string): Promise<{ consume(): Promise<boolean>; remaining: Promise<number> }> {
   const r = getRedis();
-  if (!r)
-    return getBucket(key) as unknown as {
-      consume(): Promise<boolean>;
-      remaining(): Promise<number>;
-    };
+  if (!r) return getBucket(key) as unknown as { consume(): Promise<boolean>; remaining: Promise<number> };
   const redisKey = `ratelimit:${key}`;
   return {
     async consume(): Promise<boolean> {
@@ -128,9 +104,7 @@ export async function getBucketAsync(
     },
     async remaining(): Promise<number> {
       try {
-        const count: number = await r
-          .get(redisKey)
-          .then((v: string | null) => parseInt(v ?? "0", 10));
+        const count: number = await r.get(redisKey).then((v: string | null) => parseInt(v ?? "0", 10));
         return Math.max(0, MAX_ATTEMPTS - count);
       } catch {
         const state = store.get(key);
