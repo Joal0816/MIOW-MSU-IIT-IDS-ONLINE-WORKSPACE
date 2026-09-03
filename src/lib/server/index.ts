@@ -33,7 +33,7 @@ export {
   listAllUsers,
   updateUserRole,
   createTeacher,
-  enrollBiometrics,
+  enrollRfid,
   uploadAvatar,
   avatarUrlForPath,
   selfServicePatch,

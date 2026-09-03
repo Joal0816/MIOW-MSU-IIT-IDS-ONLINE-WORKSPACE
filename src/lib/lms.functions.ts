@@ -17,7 +17,7 @@ import * as server from "./server";
 /* ---------- Profiles & kiosk auth (public — they issue tokens) ---------- */
 
 export const getProfileByRfidFn = createServerFn({ method: "POST" })
-  .inputValidator((data) => server.schemas.rfid.parse(data))
+  .inputValidator((data) => server.schemas.rfidLogin.parse(data))
   .handler(async ({ data }) => server.findByRfid(data.uid));
 
 // Unified sign-in for ALL roles: one identifier (student ID, email, or
@@ -109,17 +109,17 @@ export const createTeacherFn = createServerFn({ method: "POST" })
     return server.createTeacher(data);
   });
 
-// Biometric / RFID enrolment. Admins may enroll anyone; everyone else may
+// RFID enrolment. Admins may enroll anyone; everyone else may
 // only enroll their OWN record (target id is checked against the token).
-export const enrollBiometricsFn = createServerFn({ method: "POST" })
-  .inputValidator((data) => server.schemas.biometrics.parse(data))
+export const enrollRfidFn = createServerFn({ method: "POST" })
+  .inputValidator((data) => server.schemas.rfid.parse(data))
   .handler(async ({ data }) => {
     const caller = await server.requireSession(data.token);
     if (caller.role !== "admin" && caller.id !== data.id) throw new Error("Forbidden");
     const fields: { face_embedding?: string | null; rfid_uid?: string | null } = {};
     if ("face_embedding" in data) fields.face_embedding = data.face_embedding ?? null;
     if ("rfid_uid" in data) fields.rfid_uid = data.rfid_uid ?? null;
-    return server.enrollBiometrics(data.id, fields);
+    return server.enrollRfid(data.id, fields);
   });
 
 // Role administration is ADMIN-only (teachers cannot reassign roles).

@@ -3,24 +3,15 @@
 // create/edit/remove actions. All mutations route through the signed-token
 // server functions in lms.functions.ts (tables are default-deny), and the
 // role is forced to 'teacher' server-side.
-import { useCallback, useMemo, useRef, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import {
-  BookOpen,
-  GraduationCap,
-  KeyRound,
-  Nfc,
-  Plus,
-  ScanFace,
-  Search,
-  Trash2,
-} from "lucide-react";
+import { BookOpen, GraduationCap, KeyRound, Nfc, Plus, Search, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import {
   createTeacher,
   deleteProfile,
-  enrollBiometrics,
+  enrollRfid,
   listTeacherDirectory,
   updateProfile,
   type TeacherRecord,
@@ -29,7 +20,6 @@ import {
   ADMIN_NAV,
   AppShell,
   Badge,
-  CameraPanel,
   Card,
   EmptyState,
   Modal,
@@ -72,26 +62,6 @@ const EMPTY_FORM = {
 
 const INPUT =
   "h-11 rounded-xl border border-input bg-background px-3 text-sm outline-none focus:ring-2 focus:ring-ring";
-
-/**
- * Downscale the live webcam frame to an 8×16 luminance grid — the same compact
- * descriptor format the kiosk matcher and ESP32 roster sync expect.
- */
-function frameToEmbedding(video: HTMLVideoElement): string | null {
-  const canvas = document.createElement("canvas");
-  canvas.width = 16;
-  canvas.height = 8;
-  const ctx = canvas.getContext("2d");
-  if (!ctx || !video.videoWidth) return null;
-  ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-  const { data } = ctx.getImageData(0, 0, canvas.width, canvas.height);
-  const vector: number[] = [];
-  for (let i = 0; i < data.length; i += 4) {
-    const lum = (0.299 * data[i]! + 0.587 * data[i + 1]! + 0.114 * data[i + 2]!) / 255;
-    vector.push(Number(lum.toFixed(4)));
-  }
-  return JSON.stringify(vector);
-}
 
 function TeachersPage() {
   const profile = useProfile(["admin"]);
@@ -319,9 +289,6 @@ function TeachersPage() {
                       <Badge tone={t.has_rfid ? "green" : "amber"}>
                         {t.has_rfid ? "Card bound" : "No card"}
                       </Badge>
-                      <Badge tone={t.is_face_enrolled ? "green" : "amber"}>
-                        {t.is_face_enrolled ? "Face enrolled" : "No face"}
-                      </Badge>
                     </div>
                   </td>
                   <td className="p-4 text-right">
@@ -456,9 +423,6 @@ function TeacherDetailModal({
   const [newRfid, setNewRfid] = useState("");
   const [newPin, setNewPin] = useState("");
   const [busy, setBusy] = useState(false);
-  const [faceOpen, setFaceOpen] = useState(false);
-  const [capturing, setCapturing] = useState(false);
-  const videoRef = useRef<HTMLVideoElement | null>(null);
   const [hydrated, setHydrated] = useState<string | null>(null);
 
   // Seed the editable fields the first time a given faculty row is opened.
@@ -470,7 +434,6 @@ function TeacherDetailModal({
     setEmployeeId(teacher.employee_id ?? "");
     setNewRfid("");
     setNewPin("");
-    setFaceOpen(false);
   }
 
   if (!teacher) return null;
@@ -507,7 +470,7 @@ function TeacherDetailModal({
     setBusy(true);
     try {
       if (kind === "rfid") {
-        await enrollBiometrics(teacher.id, { rfid_uid: value });
+        await enrollRfid(teacher.id, { rfid_uid: value });
         setNewRfid("");
         toast.success("Keycard bound.");
       } else {
@@ -520,26 +483,6 @@ function TeacherDetailModal({
       toast.error(err instanceof Error ? err.message : "Update failed.");
     } finally {
       setBusy(false);
-    }
-  };
-
-  const captureFace = async () => {
-    setCapturing(true);
-    try {
-      await new Promise((r) => setTimeout(r, 900));
-      const embedding = videoRef.current ? frameToEmbedding(videoRef.current) : null;
-      if (!embedding) {
-        toast.error("Camera frame unavailable — check permissions.");
-        return;
-      }
-      await enrollBiometrics(teacher.id, { face_embedding: embedding });
-      toast.success("Face descriptor enrolled.");
-      setFaceOpen(false);
-      onChanged();
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Enrollment failed.");
-    } finally {
-      setCapturing(false);
     }
   };
 
@@ -673,37 +616,6 @@ function TeacherDetailModal({
           >
             Reset PIN
           </button>
-        </div>
-
-        <div className="rounded-xl border border-border/60 bg-card/60 p-4">
-          <div className="flex flex-wrap items-center justify-between gap-2">
-            <div>
-              <p className="text-sm font-semibold">Face enrollment</p>
-              <p className="text-xs text-muted-foreground">
-                {teacher.is_face_enrolled
-                  ? `Enrolled${teacher.biometric_enrolled_at ? ` · ${new Date(teacher.biometric_enrolled_at).toLocaleDateString()}` : ""}`
-                  : "No descriptor on file — the kiosk will fall back to card or PIN."}
-              </p>
-            </div>
-            <button
-              onClick={() => setFaceOpen((v) => !v)}
-              className="flex items-center gap-1.5 rounded-xl border border-border bg-card px-3 py-2 text-sm font-semibold hover:bg-muted"
-            >
-              <ScanFace className="h-4 w-4" /> {faceOpen ? "Close camera" : "Enroll face"}
-            </button>
-          </div>
-          {faceOpen && (
-            <div className="mt-3 space-y-3">
-              <CameraPanel scanning={capturing} videoRef={videoRef} className="aspect-video" />
-              <button
-                onClick={captureFace}
-                disabled={capturing}
-                className="h-10 w-full rounded-xl bg-primary text-sm font-semibold text-primary-foreground hover:opacity-90 disabled:opacity-50"
-              >
-                {capturing ? "Capturing…" : "Capture descriptor"}
-              </button>
-            </div>
-          )}
         </div>
       </div>
 

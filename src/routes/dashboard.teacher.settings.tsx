@@ -47,7 +47,7 @@ export const Route = createFileRoute("/dashboard/teacher/settings")({
       {
         name: "description",
         content:
-          "Faculty settings: profile and identity, keycard and face enrollment, and teaching defaults for attendance and worksheet retakes.",
+          "Faculty settings: profile and identity, keycard enrollment, and teaching defaults for attendance and worksheet retakes.",
       },
       { property: "og:title", content: "Teacher Settings | MIOW - MSU-IIT IDS Online Workspace" },
       {

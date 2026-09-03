@@ -126,7 +126,7 @@ export function MiowLockup({
   );
 }
 
-/** Low-opacity identity watermark for camera/verification surfaces. */
+/** Low-opacity identity watermark for surfaces. */
 export function MiowWatermark({ className }: { className?: string }) {
   return (
     <div

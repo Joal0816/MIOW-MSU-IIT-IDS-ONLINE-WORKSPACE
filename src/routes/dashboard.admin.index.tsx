@@ -53,121 +53,163 @@ function AdminDashboard() {
   const lateToday = todayIns.filter((l) => l.status === "late").length;
   const nameOf = new Map((students ?? []).map((s) => [s.id, s.full_name]));
 
+  const firstName = profile.full_name.split(" ")[0];
+  const hour = new Date().getHours();
+  const greeting = hour < 12 ? "Good morning" : hour < 18 ? "Good afternoon" : "Good evening";
+
   return (
     <AppShell nav={ADMIN_NAV} profile={profile} subtitle="Admin Console">
-      <h1 className="font-display text-2xl font-bold sm:text-3xl">Campus Overview</h1>
-      <p className="mb-6 mt-1 text-sm text-muted-foreground">
-        {new Date().toLocaleDateString("en-PH", {
-          weekday: "long",
-          month: "long",
-          day: "numeric",
-          year: "numeric",
-        })}
-      </p>
+      {/* Welcome Banner */}
+      <div className="mb-8 rounded-2xl bg-sidebar p-7 text-sidebar-foreground relative overflow-hidden">
+        <div className="absolute top-[-20px] right-[-20px] h-28 w-28 rounded-full bg-white/5" />
+        <div className="absolute bottom-[-30px] right-10 h-20 w-20 rounded-full bg-white/5" />
+        <h1 className="font-display text-2xl font-bold relative z-10">
+          {greeting}, {firstName} ☀️
+        </h1>
+        <p className="mt-1 text-sm text-sidebar-foreground/70 relative z-10">
+          You have {students?.length ?? "—"} students across {courseCount ?? "—"} courses.
+        </p>
+        <p className="mt-3 text-xs italic text-sidebar-foreground/40 relative z-10">
+          "Education is the most powerful weapon which you can use to change the world." — Nelson
+          Mandela
+        </p>
+      </div>
 
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <Card className="p-5">
-          <div className="flex items-center justify-between">
+      {/* Stats Row */}
+      <div className="mb-8 grid grid-cols-2 gap-3 sm:grid-cols-4">
+        <Card className="p-4 hover:border-accent transition-colors">
+          <div className="flex items-center justify-between mb-2">
             <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
               Students
             </p>
-            <Users className="h-4 w-4 text-primary" />
+            <span className="rounded bg-green-50 px-1.5 py-0.5 text-[10px] font-bold text-green-600">
+              +{students?.length ?? 0}
+            </span>
           </div>
-          <p className="mt-2 font-display text-3xl font-bold">{students?.length ?? "—"}</p>
-          <Link
-            to="/dashboard/admin/students"
-            className="mt-1 flex items-center gap-1 text-xs font-semibold text-primary hover:underline"
-          >
-            Manage <ArrowRight className="h-3 w-3" />
-          </Link>
+          <p className="font-display text-2xl font-extrabold text-accent-foreground">
+            {students?.length ?? "—"}
+          </p>
         </Card>
-        <Card className="p-5">
-          <div className="flex items-center justify-between">
+        <Card className="p-4 hover:border-accent transition-colors">
+          <div className="flex items-center justify-between mb-2">
             <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
               Courses
             </p>
-            <BookOpen className="h-4 w-4 text-sky-500" />
+            <span className="rounded bg-green-50 px-1.5 py-0.5 text-[10px] font-bold text-green-600">
+              Active
+            </span>
           </div>
-          <p className="mt-2 font-display text-3xl font-bold">{courseCount ?? "—"}</p>
-          <Link
-            to="/dashboard/admin/courses"
-            className="mt-1 flex items-center gap-1 text-xs font-semibold text-primary hover:underline"
-          >
-            Manage <ArrowRight className="h-3 w-3" />
-          </Link>
+          <p className="font-display text-2xl font-extrabold">{courseCount ?? "—"}</p>
         </Card>
-        <Card className="p-5">
-          <div className="flex items-center justify-between">
+        <Card className="p-4 hover:border-accent transition-colors">
+          <div className="flex items-center justify-between mb-2">
             <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-              Tapped In Today
+              Attendance
             </p>
-            <CalendarCheck className="h-4 w-4 text-emerald-500" />
+            <span className="rounded bg-green-50 px-1.5 py-0.5 text-[10px] font-bold text-green-600">
+              {todayIns.length > 0
+                ? `${Math.round(((todayIns.length - lateToday) / todayIns.length) * 100)}%`
+                : "—"}
+            </span>
           </div>
-          <p className="mt-2 font-display text-3xl font-bold">{todayIns.length}</p>
-          <p className="mt-1 text-xs text-muted-foreground">{lateToday} late</p>
+          <p className="font-display text-2xl font-extrabold">{todayIns.length}</p>
         </Card>
-        <Card className="p-5">
-          <div className="flex items-center justify-between">
+        <Card className="p-4 hover:border-accent transition-colors">
+          <div className="flex items-center justify-between mb-2">
             <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
               Announcements
             </p>
-            <Megaphone className="h-4 w-4 text-amber-500" />
+            <Megaphone className="h-4 w-4 text-muted-foreground" />
           </div>
-          <p className="mt-2 font-display text-3xl font-bold">{announcementCount ?? "—"}</p>
-          <Link
-            to="/dashboard/admin/announcements"
-            className="mt-1 flex items-center gap-1 text-xs font-semibold text-primary hover:underline"
-          >
-            Post new <ArrowRight className="h-3 w-3" />
-          </Link>
+          <p className="font-display text-2xl font-extrabold">{announcementCount ?? "—"}</p>
         </Card>
       </div>
 
-      <div className="mt-6">
-        <div className="mb-3 flex items-center justify-between">
-          <h2 className="font-display text-lg font-bold">Live Gate Feed</h2>
-          <Link
-            to="/dashboard/admin/settings"
-            className="flex items-center gap-1 text-xs font-semibold text-primary hover:underline"
-          >
-            Kiosk settings <ArrowRight className="h-3 w-3" />
-          </Link>
+      {/* Content Grid */}
+      <div className="grid gap-6 lg:grid-cols-3">
+        {/* Recent Activity */}
+        <div className="lg:col-span-2">
+          <div className="flex items-center justify-between mb-3">
+            <h2 className="text-sm font-bold uppercase tracking-wide">Recent Activity</h2>
+            <Link
+              to="/dashboard/admin/students"
+              className="text-xs font-semibold text-primary hover:underline flex items-center gap-1"
+            >
+              View all <ArrowRight className="h-3 w-3" />
+            </Link>
+          </div>
+          <Card className="divide-y divide-border/50">
+            {todayLogs.length === 0 && (
+              <p className="p-4 text-sm text-muted-foreground">No activity today.</p>
+            )}
+            {todayLogs.slice(0, 8).map((log) => (
+              <div key={log.id} className="flex items-center gap-3 px-4 py-3">
+                <div
+                  className={`h-2 w-2 rounded-full flex-shrink-0 ${log.status === "late" ? "bg-yellow-500" : "bg-green-500"}`}
+                />
+                <div className="min-w-0 flex-1">
+                  <p className="text-sm">
+                    <span className="font-semibold">{nameOf.get(log.student_id) ?? "Unknown"}</span>{" "}
+                    scanned {log.scan_type === "in" ? "in" : "out"}
+                  </p>
+                  <p className="text-xs text-muted-foreground">{fmtTime(log.timestamp)}</p>
+                </div>
+                <Badge tone={log.status === "late" ? "amber" : "green"}>{log.status}</Badge>
+              </div>
+            ))}
+          </Card>
         </div>
-        <Card className="divide-y divide-border">
-          {(logs ?? []).slice(0, 10).map((l) => (
-            <div key={l.id} className="flex items-center gap-3 p-4">
-              <div
-                className={`flex h-9 w-9 items-center justify-center rounded-xl ${
-                  l.scan_type === "in"
-                    ? "bg-emerald-100 text-emerald-600"
-                    : "bg-sky-100 text-sky-600"
-                }`}
-              >
-                <CalendarCheck className="h-4 w-4" />
+
+        {/* Quick Links */}
+        <div>
+          <h2 className="text-sm font-bold uppercase tracking-wide mb-3">Quick Actions</h2>
+          <div className="space-y-2">
+            <Link
+              to="/dashboard/admin/students"
+              className="flex items-center gap-3 rounded-xl border border-border/60 bg-card p-4 transition-colors hover:border-accent"
+            >
+              <Users className="h-5 w-5 text-primary" />
+              <div>
+                <p className="text-sm font-semibold">Students</p>
+                <p className="text-xs text-muted-foreground">Manage roster & RFID</p>
               </div>
-              <div className="flex-1">
-                <p className="text-sm font-semibold">
-                  {nameOf.get(l.student_id) ?? "Unknown student"}
-                </p>
-                <p className="text-xs text-muted-foreground">{fmtTime(l.timestamp)}</p>
+              <ArrowRight className="ml-auto h-4 w-4 text-muted-foreground" />
+            </Link>
+            <Link
+              to="/dashboard/admin/courses"
+              className="flex items-center gap-3 rounded-xl border border-border/60 bg-card p-4 transition-colors hover:border-accent"
+            >
+              <BookOpen className="h-5 w-5 text-sky-500" />
+              <div>
+                <p className="text-sm font-semibold">Courses</p>
+                <p className="text-xs text-muted-foreground">Create & manage courses</p>
               </div>
-              <Badge
-                tone={l.scan_type === "in" ? (l.status === "late" ? "amber" : "green") : "sky"}
-              >
-                {l.scan_type === "in"
-                  ? l.status === "late"
-                    ? "IN · Late"
-                    : "IN · On time"
-                  : "OUT"}
-              </Badge>
-            </div>
-          ))}
-          {(logs ?? []).length === 0 && (
-            <p className="p-6 text-center text-sm text-muted-foreground">
-              No scans recorded yet today.
-            </p>
-          )}
-        </Card>
+              <ArrowRight className="ml-auto h-4 w-4 text-muted-foreground" />
+            </Link>
+            <Link
+              to="/dashboard/admin/announcements"
+              className="flex items-center gap-3 rounded-xl border border-border/60 bg-card p-4 transition-colors hover:border-accent"
+            >
+              <Megaphone className="h-5 w-5 text-amber-500" />
+              <div>
+                <p className="text-sm font-semibold">Announcements</p>
+                <p className="text-xs text-muted-foreground">Post updates & alerts</p>
+              </div>
+              <ArrowRight className="ml-auto h-4 w-4 text-muted-foreground" />
+            </Link>
+            <Link
+              to="/dashboard/admin/attendance"
+              className="flex items-center gap-3 rounded-xl border border-border/60 bg-card p-4 transition-colors hover:border-accent"
+            >
+              <CalendarCheck className="h-5 w-5 text-green-500" />
+              <div>
+                <p className="text-sm font-semibold">Attendance</p>
+                <p className="text-xs text-muted-foreground">View logs & reports</p>
+              </div>
+              <ArrowRight className="ml-auto h-4 w-4 text-muted-foreground" />
+            </Link>
+          </div>
+        </div>
       </div>
     </AppShell>
   );
