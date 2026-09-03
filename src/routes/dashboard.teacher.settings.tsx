@@ -3,12 +3,10 @@ import { useCallback, useEffect, useRef, useState, type InputHTMLAttributes } fr
 import { toast } from "sonner";
 import {
   Bell,
-  Camera,
   GraduationCap,
   KeyRound,
   Nfc,
   Save,
-  ScanFace,
   ShieldCheck,
   SlidersHorizontal,
   Upload,
@@ -16,16 +14,7 @@ import {
   X,
 } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
-import {
-  AppShell,
-  Badge,
-  CameraPanel,
-  Card,
-  Modal,
-  TEACHER_NAV,
-  useProfile,
-  useRfidScanner,
-} from "@/components/lms";
+import { AppShell, Badge, Card, TEACHER_NAV, useProfile, useRfidScanner } from "@/components/lms";
 import {
   findProfileByCredential,
   updateSessionProfile,
@@ -47,7 +36,7 @@ export const Route = createFileRoute("/dashboard/teacher/settings")({
       {
         name: "description",
         content:
-          "Faculty settings: profile and identity, keycard enrollment, and teaching defaults for attendance and worksheet retakes.",
+          "Faculty settings: profile and identity, keycard and face enrollment, and teaching defaults for attendance and worksheet retakes.",
       },
       { property: "og:title", content: "Teacher Settings | MIOW - MSU-IIT IDS Online Workspace" },
       {
@@ -129,27 +118,6 @@ function Toggle({
   );
 }
 
-/**
- * Derive a compact face descriptor from the live webcam frame: the frame is
- * downscaled to an 8×16 luminance grid, which is stored as the profile's
- * face_embedding vector for kiosk/sign-in matching.
- */
-function frameToEmbedding(video: HTMLVideoElement): string | null {
-  const canvas = document.createElement("canvas");
-  canvas.width = 16;
-  canvas.height = 8;
-  const ctx = canvas.getContext("2d");
-  if (!ctx || !video.videoWidth) return null;
-  ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-  const { data } = ctx.getImageData(0, 0, canvas.width, canvas.height);
-  const vector: number[] = [];
-  for (let i = 0; i < data.length; i += 4) {
-    const lum = (0.299 * data[i]! + 0.587 * data[i + 1]! + 0.114 * data[i + 2]!) / 255;
-    vector.push(Number(lum.toFixed(4)));
-  }
-  return JSON.stringify(vector);
-}
-
 function TeacherSettingsPage() {
   const profile = useProfile(["teacher"]);
   const queryClient = useQueryClient();
@@ -175,9 +143,6 @@ function TeacherSettingsPage() {
 
   // Security tab
   const [listening, setListening] = useState(false);
-  const [faceOpen, setFaceOpen] = useState(false);
-  const [capturing, setCapturing] = useState(false);
-  const videoRef = useRef<HTMLVideoElement | null>(null);
   const [oldPin, setOldPin] = useState("");
   const [newPin, setNewPin] = useState("");
   const [confirmPin, setConfirmPin] = useState("");
@@ -341,32 +306,6 @@ function TeacherSettingsPage() {
       toast.error("Could not update PIN");
     } finally {
       setPinBusy(false);
-    }
-  };
-
-  const captureFace = async () => {
-    const video = videoRef.current;
-    setCapturing(true);
-    try {
-      const embedding = video ? frameToEmbedding(video) : null;
-      if (!embedding) {
-        toast.error("Camera not ready — allow webcam access and try again");
-        return;
-      }
-      await updateTeacherSettings({ face_embedding: embedding });
-      persist(
-        {
-          ...settings,
-          faceStatus: `Active — Re-enrolled ${new Date().toLocaleDateString("en-PH")}`,
-        },
-        "Face enrollment updated",
-      );
-      logAudit("Face enrollment", `${profile.full_name} captured a new face embedding`);
-      setFaceOpen(false);
-    } catch {
-      toast.error("Could not save the face embedding");
-    } finally {
-      setCapturing(false);
     }
   };
 
@@ -648,26 +587,6 @@ function TeacherSettingsPage() {
                   </p>
                 )}
               </Card>
-
-              <Card className="p-6">
-                <div className="flex items-start justify-between gap-3">
-                  <div>
-                    <h2 className="font-display text-lg font-bold">Face Verification</h2>
-                    <p className="text-xs text-muted-foreground">
-                      Biometric profile used at the gate kiosk and for faculty sign-in.
-                    </p>
-                  </div>
-                  <Badge tone="green">
-                    <ScanFace className="h-3 w-3" /> {settings.faceStatus}
-                  </Badge>
-                </div>
-                <button
-                  onClick={() => setFaceOpen(true)}
-                  className="mt-4 flex items-center gap-2 rounded-xl border border-border bg-card px-4 py-2.5 text-sm font-semibold transition-colors hover:bg-muted"
-                >
-                  <Camera className="h-4 w-4" /> Capture / update face enrollment
-                </button>
-              </Card>
             </>
           )}
 
@@ -807,37 +726,6 @@ function TeacherSettingsPage() {
           )}
         </div>
       </div>
-
-      {/* Face enrollment modal — live webcam preview */}
-      <Modal
-        open={faceOpen}
-        onClose={() => !capturing && setFaceOpen(false)}
-        title="Face Verification Enrollment"
-      >
-        <p className="mb-3 text-sm text-muted-foreground">
-          Center your face in the frame and hold still. The captured descriptor replaces your stored
-          face embedding.
-        </p>
-        {faceOpen && (
-          <CameraPanel scanning={capturing} videoRef={videoRef} className="aspect-video" />
-        )}
-        <div className="mt-4 flex justify-end gap-2">
-          <button
-            onClick={() => setFaceOpen(false)}
-            disabled={capturing}
-            className="rounded-xl border border-border bg-card px-4 py-2 text-sm font-semibold transition-colors hover:bg-muted disabled:opacity-50"
-          >
-            Cancel
-          </button>
-          <button
-            onClick={() => void captureFace()}
-            disabled={capturing}
-            className="flex items-center gap-2 rounded-xl bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground shadow-lift transition-opacity hover:opacity-90 disabled:opacity-50"
-          >
-            <ScanFace className="h-4 w-4" /> {capturing ? "Capturing…" : "Capture"}
-          </button>
-        </div>
-      </Modal>
     </AppShell>
   );
 }

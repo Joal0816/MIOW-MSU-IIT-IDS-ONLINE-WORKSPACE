@@ -3,7 +3,6 @@ import { useCallback, useEffect, useRef, useState, type InputHTMLAttributes } fr
 import { toast } from "sonner";
 import {
   Bell,
-  Camera,
   Contrast,
   KeyRound,
   Monitor,
@@ -11,7 +10,6 @@ import {
   Nfc,
   Palette,
   Save,
-  ScanFace,
   ShieldCheck,
   Sun,
   Type,
@@ -20,16 +18,7 @@ import {
   X,
 } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
-import {
-  AppShell,
-  Badge,
-  CameraPanel,
-  Card,
-  Modal,
-  STUDENT_NAV,
-  useProfile,
-  useRfidScanner,
-} from "@/components/lms";
+import { AppShell, Badge, Card, STUDENT_NAV, useProfile, useRfidScanner } from "@/components/lms";
 import {
   findProfileByCredential,
   updateProfile,
@@ -58,8 +47,7 @@ export const Route = createFileRoute("/dashboard/student/settings")({
       { title: "Student Settings | MIOW - MSU-IIT IDS Online Workspace" },
       {
         name: "description",
-        content:
-          "Manage your profile, RFID card, face verification, notifications, and accessibility preferences.",
+        content: "Manage your profile, RFID card, notifications, and accessibility preferences.",
       },
       { property: "og:title", content: "Student Settings | MIOW - MSU-IIT IDS Online Workspace" },
       {
@@ -154,8 +142,6 @@ function StudentSettings() {
 
   // Hardware state
   const [listening, setListening] = useState(false);
-  const [faceOpen, setFaceOpen] = useState(false);
-  const [capturing, setCapturing] = useState(false);
   const [oldPin, setOldPin] = useState("");
   const [newPin, setNewPin] = useState("");
   const [confirmPin, setConfirmPin] = useState("");
@@ -288,22 +274,6 @@ function StudentSettings() {
       setAvatarBusy(false);
       if (fileRef.current) fileRef.current.value = "";
     }
-  };
-
-  const retakeFace = () => {
-    setCapturing(true);
-    window.setTimeout(() => {
-      setCapturing(false);
-      setFaceOpen(false);
-      persist(
-        {
-          ...settings,
-          faceStatus: `Active — Re-enrolled ${new Date().toLocaleDateString("en-PH")}`,
-        },
-        "Facial profile updated",
-      );
-      logAudit("Face re-enrollment", `${profile.full_name} retook their face snapshot`);
-    }, 1800);
   };
 
   const changePin = async () => {
@@ -537,26 +507,6 @@ function StudentSettings() {
               </Card>
 
               <Card className="p-6">
-                <div className="flex items-start justify-between gap-3">
-                  <div>
-                    <h2 className="font-display text-lg font-bold">Facial Recognition</h2>
-                    <p className="text-xs text-muted-foreground">
-                      Biometric profile used at the sign-in kiosk.
-                    </p>
-                  </div>
-                  <Badge tone="green">
-                    <ScanFace className="h-3 w-3" /> {settings.faceStatus}
-                  </Badge>
-                </div>
-                <button
-                  onClick={() => setFaceOpen(true)}
-                  className="mt-4 flex items-center gap-2 rounded-xl border border-border bg-card px-4 py-2.5 text-sm font-semibold transition-colors hover:bg-muted"
-                >
-                  <Camera className="h-4 w-4" /> Retake face snapshot
-                </button>
-              </Card>
-
-              <Card className="p-6">
                 <h2 className="font-display text-lg font-bold">Reset Account PIN</h2>
                 <p className="mb-4 text-xs text-muted-foreground">
                   Your current PIN is verified first; the new PIN is stored as a bcrypt hash and
@@ -775,34 +725,6 @@ function StudentSettings() {
           )}
         </div>
       </div>
-
-      {/* Face retake modal */}
-      <Modal
-        open={faceOpen}
-        onClose={() => !capturing && setFaceOpen(false)}
-        title="Retake Face Snapshot"
-      >
-        <p className="mb-3 text-sm text-muted-foreground">
-          Center your face in the frame and hold still while we capture a new biometric profile.
-        </p>
-        <CameraPanel scanning={capturing} className="aspect-video" />
-        <div className="mt-4 flex justify-end gap-2">
-          <button
-            onClick={() => setFaceOpen(false)}
-            disabled={capturing}
-            className="rounded-xl border border-border bg-card px-4 py-2 text-sm font-semibold transition-colors hover:bg-muted disabled:opacity-50"
-          >
-            Cancel
-          </button>
-          <button
-            onClick={retakeFace}
-            disabled={capturing}
-            className="flex items-center gap-2 rounded-xl bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground shadow-lift transition-opacity hover:opacity-90 disabled:opacity-50"
-          >
-            <ScanFace className="h-4 w-4" /> {capturing ? "Scanning…" : "Capture"}
-          </button>
-        </div>
-      </Modal>
     </AppShell>
   );
 }

@@ -31,7 +31,7 @@ import {
   listTeachersFn,
   listTeacherDirectoryFn,
   createTeacherFn,
-  enrollRfidFn,
+  enrollBiometricsFn,
   logAttendanceFn,
   myQuizSummariesFn,
   quizAttemptInfoFn,
@@ -72,7 +72,6 @@ export interface Profile {
   role: Role;
   rfid_uid: string | null;
   avatar_url: string | null;
-  face_embedding: string | null;
   grade_level: number | null;
   section: string | null;
   created_at: string;
@@ -80,8 +79,6 @@ export interface Profile {
   employee_id?: string | null;
   prefix?: string | null;
   department?: string | null;
-  biometric_enrolled_at?: string | null;
-  is_face_enrolled?: boolean;
   /** Server-set indicators; credential values themselves are never sent to the browser. */
   has_pin?: boolean;
   has_rfid?: boolean;
@@ -653,7 +650,6 @@ export async function updateTeacherSettings(patch: {
   avatar_url?: string | null;
   pin?: string | null;
   rfid_uid?: string | null;
-  face_embedding?: string | null;
 }): Promise<Profile> {
   const updated = (await updateTeacherSettingsFn({
     data: { patch: patch as never, token: sessionToken() },
@@ -839,14 +835,14 @@ export async function createTeacher(input: {
 }
 
 /**
- * Register or clear a card / face descriptor. Admins may enroll any account
+ * Register or clear an RFID card. Admins may enroll any account
  * (admin-assisted registration); everyone else only their own record.
  */
-export async function enrollRfid(
+export async function enrollBiometrics(
   id: string,
-  fields: { face_embedding?: string | null; rfid_uid?: string | null },
+  fields: { rfid_uid?: string | null },
 ): Promise<Profile> {
-  return (await enrollRfidFn({
+  return (await enrollBiometricsFn({
     data: { id, ...fields, token: sessionToken() } as never,
   })) as Profile;
 }

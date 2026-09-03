@@ -28,7 +28,7 @@ const attachmentMeta = z.object({
 });
 
 export const schemas = {
-  rfidLogin: z.object({ uid: z.string().min(1).max(64) }),
+  rfid: z.object({ uid: z.string().min(1).max(64) }),
   pinLogin: z.object({ login: z.string().min(1).max(320), secret: z.string().min(1).max(200) }),
   avatarUpload: z.object({
     data: z.string().min(1).max(3_000_000),
@@ -96,9 +96,8 @@ export const schemas = {
       .optional(),
     ...token,
   }),
-  rfid: z.object({
+  biometrics: z.object({
     id: uuid,
-    face_embedding: z.string().max(20000).nullable().optional(),
     rfid_uid: z
       .string()
       .regex(/^\d{6,20}$/)
@@ -145,7 +144,6 @@ export const schemas = {
           .string()
           .regex(/^\d{6,20}$/)
           .nullable(),
-        face_embedding: z.string().max(20000).nullable(),
       })
       .partial(),
     ...token,
