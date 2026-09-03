@@ -1,4 +1,4 @@
-// Profiles & kiosk auth — CRUD, PIN login, RFID.
+// Profiles & kiosk auth — CRUD, PIN login, RFID, biometrics.
 import bcrypt from "bcryptjs";
 import { z } from "zod";
 import { db, supabaseAdmin } from "@/integrations/db/client.server";
@@ -8,7 +8,7 @@ import { createSessionToken, revokeSessions, sessionSecret } from "@/lib/server/
 import { schemas } from "@/lib/server/schemas.server";
 import { type ProfileRow, type ProfileRole, type HttpError } from "@/lib/server/db-types";
 
-/* ---------- Safe profile shaping (strip credentials) ---------- */
+/* ---------- Safe profile shaping (strip credentials/biometrics) ---------- */
 
 export function safeProfile(p: ProfileRow) {
   return {
@@ -25,12 +25,9 @@ export function safeProfile(p: ProfileRow) {
     employee_id: p.employee_id,
     prefix: p.prefix,
     department: p.department,
-    biometric_enrolled_at: p.biometric_enrolled_at,
-    is_face_enrolled: !!p.face_embedding,
-    // Credentials and biometrics never leave the server.
+    // Credentials never leave the server.
     pin: null,
     rfid_uid: null,
-    face_embedding: null,
     has_pin: !!p.pin_hash || !!p.pin,
     has_rfid: !!p.rfid_uid,
   };
@@ -224,7 +221,7 @@ export function selfServicePatch(patch: Record<string, unknown>): Record<string,
   return out;
 }
 
-const CREDENTIAL_KEYS = ["pin", "rfid_uid", "email", "username", "password", "face_embedding"];
+const CREDENTIAL_KEYS = ["pin", "rfid_uid", "email", "username", "password"];
 
 export async function authorizeProfileUpdate(
   token: string,
@@ -438,7 +435,7 @@ export async function createTeacher(input: z.infer<typeof schemas.teacherInput>)
   return { ...safeProfile(created), courses: [] as { id: string; title: string; code: string }[] };
 }
 
-export async function enrollRfid(id: string, fields: { rfid_uid?: string | null }) {
+export async function enrollBiometrics(id: string, fields: { rfid_uid?: string | null }) {
   const row: Record<string, unknown> = {};
   if ("rfid_uid" in fields) row["rfid_uid"] = fields.rfid_uid ?? null;
   if (Object.keys(row).length === 0) throw new Error("Nothing to enroll");

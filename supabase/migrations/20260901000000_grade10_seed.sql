@@ -52,16 +52,16 @@ DELETE FROM public.announcements;
 -- ── 2. Insert new seed data ───────────────────────────────────────────────
 
 -- ── Teacher — Dr. Alan L. Vergara (sole teacher) ────────────────────────────
-INSERT INTO public.profiles (id, student_id, email, pin, full_name, role, rfid_uid, avatar_url, face_embedding, grade_level, section) VALUES
-('b0000000-0000-4000-8000-000000000003', NULL, 'alan.vergara@g.msuiit.edu.ph', '3333', 'Dr. Alan L. Vergara', 'teacher', '0099888555', 'https://ui-avatars.com/api/?name=Alan+Vergara&background=059669&color=fff', '[0.22,0.55,-0.31,0.68]', NULL, NULL);
+INSERT INTO public.profiles (id, student_id, email, pin, full_name, role, rfid_uid, avatar_url, grade_level, section) VALUES
+('b0000000-0000-4000-8000-000000000003', NULL, 'alan.vergara@g.msuiit.edu.ph', '3333', 'Dr. Alan L. Vergara', 'teacher', '0099888555', 'https://ui-avatars.com/api/?name=Alan+Vergara&background=059669&color=fff', NULL, NULL);
 
 -- ── IT10 Course ─────────────────────────────────────────────────────────────
 INSERT INTO public.courses (id, title, code, grade_level, teacher_id, color) VALUES
 ('d0000000-0000-4000-8000-000000000007', 'Information Technology 10', 'IT10', 10, 'b0000000-0000-4000-8000-000000000003', 'teal');
 
 -- ── Joseph Alan B. Vergara (student) ────────────────────────────────────────
-INSERT INTO public.profiles (id, student_id, email, pin, full_name, role, rfid_uid, avatar_url, face_embedding, grade_level, section) VALUES
-('c0000000-0000-4000-8000-00000000000b', '2026-0000', 'josephalan.vergara@g.msuiit.edu.ph', '1234', 'Joseph Alan B. Vergara', 'student', NULL, 'https://ui-avatars.com/api/?name=Joseph+Vergara&background=4f46e5&color=fff', '[0.35,-0.48,0.61,0.19]', 10, 'Omega');
+INSERT INTO public.profiles (id, student_id, email, pin, full_name, role, rfid_uid, avatar_url, grade_level, section) VALUES
+('c0000000-0000-4000-8000-00000000000b', '2026-0000', 'josephalan.vergara@g.msuiit.edu.ph', '1234', 'Joseph Alan B. Vergara', 'student', NULL, 'https://ui-avatars.com/api/?name=Joseph+Vergara&background=4f46e5&color=fff', 10, 'Omega');
 
 -- ─────────────────────────────────────────────────────────────────────────────
 -- GRADE 10 STUDENTS — 121 students across 4 sections
@@ -216,8 +216,8 @@ SELECT p.id, c.id FROM public.profiles p, public.courses c
 WHERE c.code = 'IT10' AND p.role = 'student';
 
 -- ── Admin profile (needed as announcement author) ──────────────────────────
-INSERT INTO public.profiles (id, student_id, email, pin, full_name, role, rfid_uid, avatar_url, face_embedding, grade_level, section) VALUES
-('a0000000-0000-4000-8000-000000000001', NULL, 'ana.reyes@northview.edu', '0000', 'Ana Reyes', 'admin', NULL, 'https://ui-avatars.com/api/?name=Ana+Reyes&background=dc2626&color=fff', NULL, NULL, NULL)
+INSERT INTO public.profiles (id, student_id, email, pin, full_name, role, rfid_uid, avatar_url, grade_level, section) VALUES
+('a0000000-0000-4000-8000-000000000001', NULL, 'ana.reyes@northview.edu', '0000', 'Ana Reyes', 'admin', NULL, 'https://ui-avatars.com/api/?name=Ana+Reyes&background=dc2626&color=fff', NULL, NULL)
 ON CONFLICT (id) DO NOTHING;
 
 -- ── Announcements ───────────────────────────────────────────────────────────
