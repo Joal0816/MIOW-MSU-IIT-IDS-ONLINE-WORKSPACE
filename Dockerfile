@@ -1,16 +1,19 @@
-FROM oven/bun:1 AS base
+# ── Stage 1: Build ─────────────────────────────────────────────
+FROM oven/bun:1 AS builder
 WORKDIR /app
 
-# Install dependencies first (cache layer)
 COPY package.json bun.lock ./
 RUN bun install --frozen-lockfile
 
-# Copy source
 COPY . .
-
-# Build for production
 RUN bun run build
+
+# ── Stage 2: Production ───────────────────────────────────────
+FROM oven/bun:1-slim AS runner
+WORKDIR /app
+
+COPY --from=builder /app/.output .output
 
 EXPOSE 3000
 
-CMD ["node", ".output/server/index.mjs"]
+CMD ["bun", "run", ".output/server/index.mjs"]
