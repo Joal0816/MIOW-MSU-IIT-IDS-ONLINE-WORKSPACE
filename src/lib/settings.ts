@@ -100,6 +100,7 @@ export interface UserSettings {
   phone: string;
   address: string;
   avatar: string | null;
+  faceStatus: string;
   notif: {
     deadline24h: boolean;
     deadline1h: boolean;
@@ -114,6 +115,7 @@ export const DEFAULT_USER_SETTINGS: UserSettings = {
   phone: "",
   address: "",
   avatar: null,
+  faceStatus: "Active — Enrolled",
   notif: {
     deadline24h: true,
     deadline1h: true,
@@ -147,6 +149,7 @@ export interface TeacherSettings {
   department: string;
   bio: string;
   officeHours: string;
+  faceStatus: string;
   /** Default grace period (minutes) applied to new course schedules. */
   lateThreshold: number;
   /** Defaults applied when creating a new worksheet/assignment. */
@@ -166,6 +169,7 @@ export const DEFAULT_TEACHER_SETTINGS: TeacherSettings = {
   department: "",
   bio: "",
   officeHours: "",
+  faceStatus: "Active — Enrolled",
   lateThreshold: 10,
   defaultMaxAttempts: 1,
   defaultScorePolicy: "highest_score",
@@ -203,6 +207,8 @@ export interface AdminConfig {
   rfidPrefix: string;
   rfidSuffix: string;
   enterDelimiter: boolean;
+  faceSensitivity: number;
+  detectTimeout: number;
   audioChime: boolean;
   overlayDuration: number;
   autoResetDelay: number;
@@ -222,6 +228,8 @@ export const DEFAULT_ADMIN_CONFIG: AdminConfig = {
   rfidPrefix: "",
   rfidSuffix: "",
   enterDelimiter: true,
+  faceSensitivity: 85,
+  detectTimeout: 10,
   audioChime: true,
   overlayDuration: 3,
   autoResetDelay: 5,

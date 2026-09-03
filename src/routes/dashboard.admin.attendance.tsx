@@ -21,6 +21,7 @@ import {
   TEACHER_NAV,
   AppShell,
   Badge,
+  CameraPanel,
   Card,
   FilterTabs,
   attendanceTone,
@@ -37,12 +38,12 @@ export const Route = createFileRoute("/dashboard/admin/attendance")({
       { title: "Attendance Kiosk | MIOW - MSU-IIT IDS Online Workspace" },
       {
         name: "description",
-        content: "Gate kiosk: RFID tap-in/tap-out with live feed.",
+        content: "Gate kiosk: RFID tap-in/tap-out with face verification and live feed.",
       },
       { property: "og:title", content: "Attendance Kiosk | MIOW - MSU-IIT IDS Online Workspace" },
       {
         property: "og:description",
-        content: "Gate kiosk: RFID tap-in/tap-out with live feed.",
+        content: "Gate kiosk: RFID tap-in/tap-out with face verification and live feed.",
       },
     ],
   }),
@@ -278,11 +279,7 @@ function AttendanceKiosk() {
 
       <div className="grid gap-6 lg:grid-cols-2">
         <div className="space-y-4">
-          <Card className="flex aspect-[4/3] w-full flex-col items-center justify-center gap-2 rounded-2xl border border-border bg-slate-900 p-8 text-center text-slate-400">
-            <Nfc className="h-10 w-10" />
-            <p className="text-sm font-semibold">RFID Kiosk</p>
-            <p className="text-xs">Tap a card or enter a UID below</p>
-          </Card>
+          <CameraPanel scanning={busy} className="aspect-[4/3] w-full" />
           <form
             onSubmit={(e) => {
               e.preventDefault();

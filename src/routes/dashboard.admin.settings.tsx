@@ -7,6 +7,7 @@ import {
   Download,
   Nfc,
   Save,
+  ScanFace,
   School,
   ScrollText,
   Search,
@@ -76,13 +77,13 @@ type Tab = "school" | "kiosk" | "roles" | "logs";
 
 const TABS: Array<{ value: Tab; label: string; icon: React.ReactNode }> = [
   { value: "school", label: "School System", icon: <School className="h-4 w-4" /> },
-  { value: "kiosk", label: "Hardware & Kiosk", icon: <Nfc className="h-4 w-4" /> },
+  { value: "kiosk", label: "Hardware & Kiosk", icon: <ScanFace className="h-4 w-4" /> },
   { value: "roles", label: "Users & Roles", icon: <Users className="h-4 w-4" /> },
   { value: "logs", label: "Logs & Backups", icon: <ScrollText className="h-4 w-4" /> },
 ];
 
 const SCHEMA_DUMP = `-- MIOW — PostgreSQL schema dump (demo export)
-CREATE TABLE profiles (id uuid PRIMARY KEY, full_name text NOT NULL, student_id text, email text, role text NOT NULL, grade_level int, section text, pin_hash text, rfid_uid text, avatar_url text, created_at timestamptz DEFAULT now());
+CREATE TABLE profiles (id uuid PRIMARY KEY, full_name text NOT NULL, student_id text, email text, role text NOT NULL, grade_level int, section text, pin_hash text, rfid_uid text, face_embedding jsonb, avatar_url text, created_at timestamptz DEFAULT now());
 CREATE TABLE announcements (id uuid PRIMARY KEY, title text NOT NULL, content text NOT NULL, category text NOT NULL, target_audience text DEFAULT 'all', pinned boolean DEFAULT false, author_id uuid REFERENCES profiles(id), created_at timestamptz DEFAULT now());
 CREATE TABLE courses (id uuid PRIMARY KEY, code text NOT NULL, title text NOT NULL, grade_level int NOT NULL, teacher_id uuid REFERENCES profiles(id), color text);
 CREATE TABLE enrollments (id uuid PRIMARY KEY, student_id uuid REFERENCES profiles(id), course_id uuid REFERENCES courses(id));
@@ -747,6 +748,37 @@ function AdminSettings() {
 
               <Card className="p-6">
                 <h2 className="flex items-center gap-2 font-display text-lg font-bold">
+                  <ScanFace className="h-5 w-5 text-primary" /> Facial Verification
+                </h2>
+                <label className="mt-4 block">
+                  <span className="mb-1 flex justify-between text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                    <span>Match confidence threshold</span>
+                    <span className="text-foreground">{cfg.faceSensitivity}%</span>
+                  </span>
+                  <input
+                    type="range"
+                    min={70}
+                    max={99}
+                    value={cfg.faceSensitivity}
+                    onChange={(e) => setCfg({ ...cfg, faceSensitivity: Number(e.target.value) })}
+                    aria-label="Face match confidence threshold"
+                    className="w-full accent-indigo-600"
+                  />
+                </label>
+                <div className="mt-3 max-w-xs">
+                  <Field
+                    label="Detection timeout (seconds)"
+                    type="number"
+                    min={3}
+                    max={60}
+                    value={cfg.detectTimeout}
+                    onChange={(e) => setCfg({ ...cfg, detectTimeout: Number(e.target.value) })}
+                  />
+                </div>
+              </Card>
+
+              <Card className="p-6">
+                <h2 className="flex items-center gap-2 font-display text-lg font-bold">
                   <Volume2 className="h-5 w-5 text-primary" /> Kiosk Terminal
                 </h2>
                 <div className="mt-4 space-y-2">
@@ -778,7 +810,10 @@ function AdminSettings() {
                   <button
                     onClick={() => {
                       persistCfg(cfg, "Kiosk configuration saved");
-                      logAudit("Kiosk config updated", "Kiosk settings saved");
+                      logAudit(
+                        "Kiosk config updated",
+                        `Sensitivity ${cfg.faceSensitivity}% · timeout ${cfg.detectTimeout}s`,
+                      );
                       setAudit(listAudit());
                     }}
                     className="flex items-center gap-2 rounded-xl bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground shadow-lift transition-opacity hover:opacity-90"

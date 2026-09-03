@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { AnimatePresence, motion } from "framer-motion";
+import { ScanFace } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { MiowWatermark } from "@/components/brand";
 import { useTheme } from "@/hooks";
@@ -267,6 +268,78 @@ export function FilterTabs<T extends string>({
           )}
         </button>
       ))}
+    </div>
+  );
+}
+
+/* ---------- Camera panel ---------- */
+
+export function CameraPanel({
+  scanning = false,
+  videoRef,
+  className,
+}: {
+  scanning?: boolean;
+  videoRef?: React.RefObject<HTMLVideoElement | null>;
+  className?: string;
+}) {
+  const internalRef = useRef<HTMLVideoElement | null>(null);
+  const ref = videoRef ?? internalRef;
+  const [live, setLive] = useState(false);
+
+  useEffect(() => {
+    let stream: MediaStream | null = null;
+    let cancelled = false;
+    if (navigator.mediaDevices?.getUserMedia) {
+      navigator.mediaDevices
+        .getUserMedia({ video: { facingMode: "user" } })
+        .then((s: MediaStream) => {
+          if (cancelled) {
+            s.getTracks().forEach((t) => t.stop());
+            return;
+          }
+          stream = s;
+          if (ref.current) {
+            ref.current.srcObject = s;
+            setLive(true);
+          }
+        })
+        .catch(() => setLive(false));
+    }
+    return () => {
+      cancelled = true;
+      stream?.getTracks().forEach((t) => t.stop());
+    };
+  }, [ref]);
+
+  return (
+    <div
+      className={cn(
+        "relative overflow-hidden rounded-2xl border border-border bg-slate-900",
+        className,
+      )}
+    >
+      <video
+        ref={ref}
+        autoPlay
+        playsInline
+        muted
+        className={cn("h-full w-full object-cover", !live && "hidden")}
+      />
+      {!live && (
+        <div className="flex h-full w-full flex-col items-center justify-center gap-2 text-slate-400">
+          <ScanFace className="h-10 w-10" />
+          <p className="text-xs">Camera preview (simulated)</p>
+        </div>
+      )}
+      <MiowWatermark />
+      {scanning && (
+        <>
+          <div className="absolute left-0 h-1 w-full animate-scanline bg-emerald-400/90 shadow-[0_0_18px_4px_rgba(52,211,153,0.7)]" />
+          <div className="pointer-events-none absolute inset-6 rounded-xl border-2 border-dashed border-emerald-300/70" />
+          <div className="pointer-events-none absolute inset-10 animate-pulse-ring rounded-full border-2 border-emerald-300/50" />
+        </>
+      )}
     </div>
   );
 }

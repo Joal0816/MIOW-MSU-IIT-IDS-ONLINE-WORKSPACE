@@ -98,6 +98,7 @@ export const schemas = {
   }),
   biometrics: z.object({
     id: uuid,
+    face_embedding: z.string().max(20000).nullable().optional(),
     rfid_uid: z
       .string()
       .regex(/^\d{6,20}$/)
@@ -144,6 +145,7 @@ export const schemas = {
           .string()
           .regex(/^\d{6,20}$/)
           .nullable(),
+        face_embedding: z.string().max(20000).nullable(),
       })
       .partial(),
     ...token,

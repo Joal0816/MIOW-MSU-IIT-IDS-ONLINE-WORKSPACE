@@ -82,13 +82,14 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       {
         name: "description",
         content:
-          "MSU-IIT IDS Online Workspace (MIOW): RFID kiosk attendance, courses, timed worksheets, and DepEd-compliant grading for junior and senior high school.",
+          "MSU-IIT IDS Online Workspace (MIOW): RFID kiosk attendance, face-verified sign-in, courses, timed worksheets, and DepEd-compliant grading for junior and senior high school.",
       },
       { name: "author", content: "Joseph Vergara" },
       { property: "og:title", content: "MIOW - MSU-IIT IDS Online Workspace" },
       {
         property: "og:description",
-        content: "RFID kiosk attendance, courses, timed worksheets, and DepEd-compliant grading.",
+        content:
+          "RFID kiosk attendance, face-verified sign-in, courses, timed worksheets, and DepEd-compliant grading.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },

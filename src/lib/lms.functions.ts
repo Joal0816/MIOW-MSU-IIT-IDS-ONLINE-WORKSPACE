@@ -116,7 +116,8 @@ export const enrollBiometricsFn = createServerFn({ method: "POST" })
   .handler(async ({ data }) => {
     const caller = await server.requireSession(data.token);
     if (caller.role !== "admin" && caller.id !== data.id) throw new Error("Forbidden");
-    const fields: { rfid_uid?: string | null } = {};
+    const fields: { face_embedding?: string | null; rfid_uid?: string | null } = {};
+    if ("face_embedding" in data) fields.face_embedding = data.face_embedding ?? null;
     if ("rfid_uid" in data) fields.rfid_uid = data.rfid_uid ?? null;
     return server.enrollBiometrics(data.id, fields);
   });

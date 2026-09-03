@@ -16,6 +16,7 @@ export {
   FilterTabs,
   courseStyle,
   COURSE_STYLE,
+  CameraPanel,
   Modal,
 } from "@/components/ui-elements";
 
