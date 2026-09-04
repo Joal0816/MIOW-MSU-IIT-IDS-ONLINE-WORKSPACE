@@ -3,6 +3,13 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { Search } from "lucide-react";
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
   attendancePercent,
   listAttendance,
   listCourses,
@@ -50,7 +57,13 @@ function TeacherStudentsPage() {
 
   const [search, setSearch] = useState("");
   const [gradeFilter, setGradeFilter] = useState("all");
+  const [sectionFilter, setSectionFilter] = useState("all");
   const [selected, setSelected] = useState<Profile | null>(null);
+
+  const sections = useMemo(() => {
+    const set = new Set((students ?? []).map((s) => s.section).filter(Boolean));
+    return Array.from(set).sort();
+  }, [students]);
 
   // Teacher's own courses; admin sees all
   const teacherCourses = useMemo(() => {
@@ -66,6 +79,7 @@ function TeacherStudentsPage() {
     const q = search.trim().toLowerCase();
     return (students ?? []).filter((s) => {
       if (gradeFilter !== "all" && s.grade_level !== parseInt(gradeFilter)) return false;
+      if (sectionFilter !== "all" && s.section !== sectionFilter) return false;
       if (!q) return true;
       return (
         s.full_name.toLowerCase().includes(q) ||
@@ -74,7 +88,7 @@ function TeacherStudentsPage() {
         (s.section ?? "").toLowerCase().includes(q)
       );
     });
-  }, [students, search, gradeFilter]);
+  }, [students, search, gradeFilter, sectionFilter]);
 
   if (!profile) return null;
 
@@ -101,18 +115,32 @@ function TeacherStudentsPage() {
             className="h-11 w-full rounded-xl border border-input bg-background pl-9 pr-3 text-sm outline-none focus:ring-2 focus:ring-ring"
           />
         </div>
-        <select
-          value={gradeFilter}
-          onChange={(e) => setGradeFilter(e.target.value)}
-          className="h-11 rounded-xl border border-input bg-background px-3 text-sm outline-none focus:ring-2 focus:ring-ring"
-        >
-          <option value="all">All grades</option>
-          {[7, 8, 9, 10, 11, 12, 13, 14, 15, 16].map((g) => (
-            <option key={g} value={String(g)}>
-              {g <= 12 ? `Grade ${g}` : `College Yr${g - 12}`}
-            </option>
-          ))}
-        </select>
+        <Select value={gradeFilter} onValueChange={setGradeFilter}>
+          <SelectTrigger className="h-11 w-[160px] rounded-xl">
+            <SelectValue placeholder="All grades" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All grades</SelectItem>
+            {[7, 8, 9, 10, 11, 12, 13, 14, 15, 16].map((g) => (
+              <SelectItem key={g} value={String(g)}>
+                {g <= 12 ? `Grade ${g}` : `College Yr${g - 12}`}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        <Select value={sectionFilter} onValueChange={setSectionFilter}>
+          <SelectTrigger className="h-11 w-[160px] rounded-xl">
+            <SelectValue placeholder="All sections" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All sections</SelectItem>
+            {sections.map((sec) => (
+              <SelectItem key={sec} value={sec!}>
+                {sec}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </div>
 
       {filtered.length === 0 ? (
