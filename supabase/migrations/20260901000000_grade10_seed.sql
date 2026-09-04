@@ -33,7 +33,7 @@ DELETE FROM public.enrollments
 DELETE FROM public.courses WHERE code IN ('MATH10','SCI10','ENG10','FIL10','AP10','TLE10');
 
 DELETE FROM public.profiles
-  WHERE email LIKE '%@northview.edu'
+  WHERE email LIKE '%@g.msuiit.edu.ph'
      OR id IN ('b0000000-0000-4000-8000-000000000001', 'b0000000-0000-4000-8000-000000000002');
 
 -- Also remove old student profiles by UUID prefix
@@ -217,7 +217,7 @@ WHERE c.code = 'IT10' AND p.role = 'student';
 
 -- ── Admin profile (needed as announcement author) ──────────────────────────
 INSERT INTO public.profiles (id, student_id, email, pin, full_name, role, rfid_uid, avatar_url, grade_level, section) VALUES
-('a0000000-0000-4000-8000-000000000001', NULL, 'ana.reyes@northview.edu', '0000', 'Ana Reyes', 'admin', NULL, 'https://ui-avatars.com/api/?name=Ana+Reyes&background=dc2626&color=fff', NULL, NULL)
+('a0000000-0000-4000-8000-000000000001', NULL, 'admin@g.msuiit.edu.ph', '0000', 'Admin', 'admin', NULL, 'https://ui-avatars.com/api/?name=Ana+Reyes&background=dc2626&color=fff', NULL, NULL)
 ON CONFLICT (id) DO NOTHING;
 
 -- ── Announcements ───────────────────────────────────────────────────────────

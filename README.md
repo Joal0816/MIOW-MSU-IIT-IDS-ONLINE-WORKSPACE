@@ -18,7 +18,7 @@ Open `http://127.0.0.1:3000` — you'll see the login page.
 
 | Email | Role | PIN |
 |---|---|---|
-| `ana.reyes@northview.edu` | Admin | `0000` |
+| `admin@g.msuiit.edu.ph` | Admin | `0000` |
 | `maria.santos@northview.edu` | Teacher | `1111` |
 | `juan.delacruz@student.northview.edu` | Student | `1234` |
 

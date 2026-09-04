@@ -14,5 +14,5 @@ SET username = 'schooladmin',
     password_hash = '$2b$12$ufGBbDVDKLfFMRd5ATKXLe8vouoKXyvbgncRVGYkHxJV1ZJUI0oGO',
     failed_login_attempts = 0,
     locked_until = NULL
-WHERE email = 'ana.reyes@northview.edu'
+WHERE email = 'admin@g.msuiit.edu.ph'
   AND deleted_at IS NULL;

@@ -149,7 +149,7 @@ alter table public.attendance_logs enable row level security;
 create policy "Public demo access" on public.attendance_logs for all to anon, authenticated using (true) with check (true);
 
 insert into public.profiles (id, student_id, email, pin, full_name, role, rfid_uid, avatar_url, face_embedding, grade_level, section) values
-('a0000000-0000-4000-8000-000000000001', null, 'ana.reyes@northview.edu', '0000', 'Dr. Ana Reyes', 'admin', '0099999999', 'https://ui-avatars.com/api/?name=Ana+Reyes&background=312e81&color=fff', '[0.11,-0.32,0.87,0.04]', null, null),
+('a0000000-0000-4000-8000-000000000001', null, 'admin@g.msuiit.edu.ph', '0000', 'Admin', 'admin', '0099999999', 'https://ui-avatars.com/api/?name=Ana+Reyes&background=312e81&color=fff', '[0.11,-0.32,0.87,0.04]', null, null),
 ('b0000000-0000-4000-8000-000000000001', null, 'maria.santos@northview.edu', '1111', 'Ms. Maria Santos', 'teacher', '0099888777', 'https://ui-avatars.com/api/?name=Maria+Santos&background=4338ca&color=fff', '[0.42,0.19,-0.55,0.71]', null, null),
 ('b0000000-0000-4000-8000-000000000002', null, 'jose.ramirez@northview.edu', '2222', 'Mr. Jose Ramirez', 'teacher', '0099888666', 'https://ui-avatars.com/api/?name=Jose+Ramirez&background=1e40af&color=fff', '[-0.08,0.66,0.23,-0.41]', null, null),
 ('c0000000-0000-4000-8000-000000000001', '2024-0001', 'juan.delacruz@student.northview.edu', '1234', 'Juan Dela Cruz', 'student', '0012345678', 'https://ui-avatars.com/api/?name=Juan+Dela+Cruz&background=4f46e5&color=fff', '[0.91,-0.14,0.38,0.52]', 10, 'Emerald'),
