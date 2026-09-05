@@ -20,6 +20,7 @@ import {
   X,
 } from "lucide-react";
 import { toast } from "sonner";
+import { extractTextFromFile, isWorksheetAcceptedFile } from "@/lib/extract-text";
 import {
   COMPONENT_LABELS,
   createAssignment,
@@ -1267,18 +1268,15 @@ function CoursesPage() {
                     setQuizFileDrag(false);
                     const file = e.dataTransfer.files?.[0];
                     if (!file) return;
-                    if (!/\.(txt|md)$/i.test(file.name)) {
-                      toast.error(
-                        "Only .txt and .md files are supported. You can also paste the content directly.",
-                      );
+                    if (!isWorksheetAcceptedFile(file)) {
+                      toast.error("Only .txt, .md, .pdf, and .docx files are supported.");
                       return;
                     }
                     if (file.size > COURSE_MATERIAL_MAX_BYTES) {
                       toast.error("File is too large (max 10MB).");
                       return;
                     }
-                    file
-                      .text()
+                    extractTextFromFile(file)
                       .then((text) => {
                         setQuizFileName(file.name);
                         setQuizForm((f) => ({ ...f, questions: text }));
@@ -1287,7 +1285,7 @@ function CoursesPage() {
                           `Loaded ${questions.length} question(s) from file${dropped ? ` (${dropped} skipped)` : ""}`,
                         );
                       })
-                      .catch(() => toast.error("Could not read the file."));
+                      .catch(() => toast.error("Could not read or extract text from the file."));
                   }}
                   className={cn(
                     "flex cursor-pointer flex-col items-center justify-center gap-1 rounded-xl border-2 border-dashed px-3 py-5 text-center transition",
@@ -1306,19 +1304,18 @@ function CoursesPage() {
                     Drag & drop a file here, or click to browse
                   </p>
                   <p className="text-[11px] text-muted-foreground">
-                    Supports .txt, .md (Max 10MB) — optional, for source material context.
+                    Supports .txt, .md, .pdf, .docx (Max 10MB) — optional, for source material
+                    context.
                   </p>
                   <input
                     type="file"
-                    accept=".txt,.md"
+                    accept=".txt,.md,.pdf,.docx"
                     className="hidden"
                     onChange={(e) => {
                       const file = e.target.files?.[0];
                       if (!file) return;
-                      if (!/\.(txt|md)$/i.test(file.name)) {
-                        toast.error(
-                          "Only .txt and .md files are supported. You can also paste the content directly.",
-                        );
+                      if (!isWorksheetAcceptedFile(file)) {
+                        toast.error("Only .txt, .md, .pdf, and .docx files are supported.");
                         e.target.value = "";
                         return;
                       }
@@ -1327,8 +1324,7 @@ function CoursesPage() {
                         e.target.value = "";
                         return;
                       }
-                      file
-                        .text()
+                      extractTextFromFile(file)
                         .then((text) => {
                           setQuizFileName(file.name);
                           setQuizForm((f) => ({ ...f, questions: text }));

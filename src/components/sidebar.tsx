@@ -22,6 +22,7 @@ import { cn } from "@/lib/utils";
 import { MiowMark, MiowWordmark } from "@/components/brand";
 import { ThemeToggle } from "@/components/ui-elements";
 import { useSignOut } from "@/hooks";
+import { ChatWidget } from "@/components/chat-widget";
 
 export interface NavItem {
   to: string;
@@ -313,6 +314,7 @@ export function AppShell({
         </nav>
         <main className="mx-auto w-full max-w-6xl flex-1 p-4 sm:p-6 lg:p-8">{children}</main>
       </div>
+      <ChatWidget profile={profile} />
     </div>
   );
 }
