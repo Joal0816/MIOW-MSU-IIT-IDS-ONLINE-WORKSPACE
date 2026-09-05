@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
@@ -87,6 +87,9 @@ function QuizzesPage() {
   const [idx, setIdx] = useState(0);
   const [secondsLeft, setSecondsLeft] = useState(0);
   const [result, setResult] = useState<QuizSuccess | null>(null);
+  // Persist timer + answers per quiz so closing/reopening doesn't reset progress
+  const savedTimerRef = useRef<Map<string, number>>(new Map());
+  const savedAnswersRef = useRef<Map<string, Record<string, string>>>(new Map());
 
   const activeQuiz = useMemo(
     () => (quizzes ?? []).find((q) => q.id === activeId),
@@ -105,15 +108,22 @@ function QuizzesPage() {
     return () => setAssessmentMode(false);
   }, [taking]);
 
-  // Fresh attempt state: clear inputs while the server preserves prior
-  // attempts in quiz_attempts history.
+  // Resume or start attempt: restore saved timer/answers if the student
+  // closed and reopened the same worksheet within this session.
   const beginAttempt = async (id: string) => {
     const { quiz, questions } = await getQuiz(id);
     setQuestions(questions);
-    setAnswers({});
     setResult(null);
+    // Restore saved answers if they exist for this quiz
+    setAnswers(savedAnswersRef.current.get(id) ?? {});
     setIdx(0);
-    setSecondsLeft(quiz.duration_minutes * 60);
+    // Restore saved timer or start fresh
+    const saved = savedTimerRef.current.get(id);
+    if (saved != null && saved > 0) {
+      setSecondsLeft(saved);
+    } else {
+      setSecondsLeft(quiz.duration_minutes * 60);
+    }
   };
 
   useEffect(() => {
@@ -122,14 +132,31 @@ function QuizzesPage() {
 
   useEffect(() => {
     if (!activeId || result || secondsLeft <= 0) return;
+    // Persist remaining time so closing/reopening preserves it
+    savedTimerRef.current.set(activeId, secondsLeft);
     const t = setTimeout(() => setSecondsLeft((s) => s - 1), 1000);
     return () => clearTimeout(t);
   }, [activeId, secondsLeft, result]);
+
+  // Persist answers per quiz so closing/reopening preserves progress
+  useEffect(() => {
+    if (activeId && Object.keys(answers).length > 0) {
+      savedAnswersRef.current.set(activeId, answers);
+    }
+  }, [activeId, answers]);
 
   useEffect(() => {
     if (activeId && secondsLeft === 0 && !result && questions.length) finish();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [secondsLeft]);
+
+  // Clear saved progress on successful submission
+  useEffect(() => {
+    if (result?.ok && activeId) {
+      savedTimerRef.current.delete(activeId);
+      savedAnswersRef.current.delete(activeId);
+    }
+  }, [result, activeId]);
 
   if (!profile) return null;
 

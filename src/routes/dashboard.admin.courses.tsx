@@ -1209,16 +1209,21 @@ function CoursesPage() {
             placeholder="Worksheet title *"
             className="h-11 rounded-xl border border-input bg-background px-3 text-sm outline-none focus:ring-2 focus:ring-ring"
           />
-          <div className="flex items-center gap-2">
-            <input
-              value={quizForm.question_count}
-              onChange={(e) => setQuizForm((f) => ({ ...f, question_count: e.target.value }))}
-              placeholder="Questions per student (0 = all)"
-              inputMode="numeric"
-              className="h-11 flex-1 rounded-xl border border-input bg-background px-3 text-sm outline-none focus:ring-2 focus:ring-ring"
-            />
-            <span className="text-[11px] text-muted-foreground whitespace-nowrap">
-              0 = show all
+          <div className="flex items-center gap-3">
+            <label className="flex items-center gap-2">
+              <span className="text-xs font-semibold text-muted-foreground whitespace-nowrap">
+                Questions per student
+              </span>
+              <input
+                value={quizForm.question_count}
+                onChange={(e) => setQuizForm((f) => ({ ...f, question_count: e.target.value }))}
+                placeholder="0"
+                inputMode="numeric"
+                className="h-9 w-20 rounded-lg border border-input bg-background px-3 text-sm text-center outline-none focus:ring-2 focus:ring-ring"
+              />
+            </label>
+            <span className="text-[11px] text-muted-foreground">
+              0 = all questions · e.g. 10 = random 10 per student
             </span>
           </div>
           <PolicyFields

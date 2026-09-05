@@ -385,7 +385,7 @@ function GradebookPage() {
       )}
 
       {/* ── Quiz Scores Section ───────────────────────────────────── */}
-      {courseId && visibleRoster.length > 0 && quizScores && quizScores.length > 0 && (
+      {courseId && visibleRoster.length > 0 && quizScores && (
         <div className="mt-8">
           <h2 className="font-display text-lg font-bold mb-3">Quiz & Worksheet Scores</h2>
           <p className="mb-4 text-xs text-muted-foreground">
@@ -409,6 +409,16 @@ function GradebookPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-border">
+                {quizScores.length === 0 && (
+                  <tr>
+                    <td
+                      colSpan={quizScores.length + 1}
+                      className="p-6 text-center text-muted-foreground"
+                    >
+                      No worksheets with submissions yet for this course.
+                    </td>
+                  </tr>
+                )}
                 {visibleRoster.map((s) => (
                   <tr key={s.id}>
                     <td className="p-4">
