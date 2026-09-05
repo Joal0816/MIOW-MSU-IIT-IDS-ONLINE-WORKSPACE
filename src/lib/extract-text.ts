@@ -4,16 +4,20 @@
  */
 
 /**
- * Extract plain text from a PDF file using pdf.js.
- * Returns the concatenated text of all pages.
+ * Extract plain text from a PDF file using pdf.js (main-thread, no web worker).
+ * For worksheet source material (<10MB), main-thread processing is fast enough.
  */
 async function extractPdfText(file: File): Promise<string> {
   const pdfjsLib = await import("pdfjs-dist");
-  // Use the legacy build for browser compatibility
-  pdfjsLib.GlobalWorkerOptions.workerSrc = `https://unpkg.com/pdfjs-dist@${pdfjsLib.version}/build/pdf.worker.min.mjs`;
+  // Disable web worker — run on main thread. Fine for <10MB files.
+  pdfjsLib.GlobalWorkerOptions.workerSrc = "";
 
   const arrayBuffer = await file.arrayBuffer();
-  const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+  const pdf = await pdfjsLib.getDocument({
+    data: arrayBuffer,
+    useWorkerFetch: false,
+    useSystemFonts: true,
+  }).promise;
 
   const pages: string[] = [];
   for (let i = 1; i <= pdf.numPages; i++) {

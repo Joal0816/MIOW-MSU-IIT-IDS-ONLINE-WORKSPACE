@@ -1285,7 +1285,12 @@ function CoursesPage() {
                           `Loaded ${questions.length} question(s) from file${dropped ? ` (${dropped} skipped)` : ""}`,
                         );
                       })
-                      .catch(() => toast.error("Could not read or extract text from the file."));
+                      .catch((err) => {
+                        console.error(err);
+                        toast.error(
+                          "Could not extract text from this file. Try a different file or paste the content directly.",
+                        );
+                      });
                   }}
                   className={cn(
                     "flex cursor-pointer flex-col items-center justify-center gap-1 rounded-xl border-2 border-dashed px-3 py-5 text-center transition",
@@ -1333,7 +1338,12 @@ function CoursesPage() {
                             `Loaded ${questions.length} question(s)${dropped ? ` (${dropped} skipped)` : ""}`,
                           );
                         })
-                        .catch(() => toast.error("Could not read the file."));
+                        .catch((err) => {
+                          console.error(err);
+                          toast.error(
+                            "Could not extract text from this file. Try a different file or paste the content directly.",
+                          );
+                        });
                       e.target.value = "";
                     }}
                   />
