@@ -43,7 +43,10 @@ export const Route = createFileRoute("/dashboard/student/")({
     meta: [
       { title: "Student Dashboard | MIOW - Integrated Developmental School" },
       { name: "description", content: "Your classes, grades, tasks and attendance at a glance." },
-      { property: "og:title", content: "Student Dashboard | MIOW - Integrated Developmental School" },
+      {
+        property: "og:title",
+        content: "Student Dashboard | MIOW - Integrated Developmental School",
+      },
       {
         property: "og:description",
         content: "Your classes, grades, tasks and attendance at a glance.",
@@ -55,38 +58,45 @@ export const Route = createFileRoute("/dashboard/student/")({
 
 function StudentDashboard() {
   const profile = useProfile(["student"]);
-  const { data: courses } = useQuery({
+  const { data: courses, isLoading: coursesLoading } = useQuery({
     queryKey: ["courses"],
     queryFn: listCourses,
     enabled: !!profile,
   });
-  const { data: grades } = useQuery({
+  const { data: grades, isLoading: gradesLoading } = useQuery({
     queryKey: ["grades", profile?.id],
     queryFn: () => listGradesForStudent(profile!.id),
     enabled: !!profile,
   });
-  const { data: assignments } = useQuery({
+  const { data: assignments, isLoading: assignmentsLoading } = useQuery({
     queryKey: ["assignments"],
     queryFn: listAssignments,
     enabled: !!profile,
   });
-  const { data: submissions } = useQuery({
+  const { data: submissions, isLoading: submissionsLoading } = useQuery({
     queryKey: ["submissions", profile?.id],
     queryFn: () => listSubmissionsForStudent(profile!.id),
     enabled: !!profile,
   });
-  const { data: announcements } = useQuery({
+  const { data: announcements, isLoading: announcementsLoading } = useQuery({
     queryKey: ["announcements"],
     queryFn: listAnnouncements,
     enabled: !!profile,
   });
-  const { data: logs } = useQuery({
+  const { data: logs, isLoading: logsLoading } = useQuery({
     queryKey: ["attendance", profile?.id],
     queryFn: () => listAttendance(profile!.id),
     enabled: !!profile,
   });
 
   if (!profile) return null;
+  const isLoading =
+    coursesLoading ||
+    gradesLoading ||
+    assignmentsLoading ||
+    submissionsLoading ||
+    announcementsLoading ||
+    logsLoading;
 
   const myCourses = (courses ?? []).filter(
     (c) => String(c.grade_level) === String(profile.grade_level),
@@ -171,20 +181,31 @@ function StudentDashboard() {
         </FadeIn>
       )}
 
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        {stats.map((s, i) => (
-          <MotionCard key={s.label} delay={0.05 * i} className="p-5">
-            <div className="flex items-center justify-between">
-              <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                {s.label}
-              </p>
-              {s.icon}
-            </div>
-            <p className="mt-2 font-display text-3xl font-bold">{s.value}</p>
-            <p className="text-xs text-muted-foreground">{s.sub}</p>
-          </MotionCard>
-        ))}
-      </div>
+      {isLoading ? (
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          {[1, 2, 3, 4].map((i) => (
+            <Card key={i} className="p-5 animate-pulse">
+              <div className="h-4 w-20 rounded bg-muted mb-2" />
+              <div className="h-8 w-12 rounded bg-muted" />
+            </Card>
+          ))}
+        </div>
+      ) : (
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          {stats.map((s, i) => (
+            <MotionCard key={s.label} delay={0.05 * i} className="p-5">
+              <div className="flex items-center justify-between">
+                <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                  {s.label}
+                </p>
+                {s.icon}
+              </div>
+              <p className="mt-2 font-display text-3xl font-bold">{s.value}</p>
+              <p className="text-xs text-muted-foreground">{s.sub}</p>
+            </MotionCard>
+          ))}
+        </div>
+      )}
 
       <div className="mt-6 grid gap-6 lg:grid-cols-3">
         <div className="space-y-6 lg:col-span-2">
@@ -335,7 +356,7 @@ function StudentAnnouncementAttachments({ announcementId }: { announcementId: st
           <li key={a.id} className="flex items-center gap-2 rounded bg-background/70 px-2 py-1">
             <FileText className="h-3 w-3 shrink-0 text-primary" />
             <a
-              href={`${a.file_url}&t=${encodeURIComponent("")}`}
+              href={a.file_url}
               target="_blank"
               rel="noreferrer"
               className="min-w-0 flex-1 truncate text-[11px] font-medium text-primary hover:underline"

@@ -491,7 +491,7 @@ function AnnouncementsPage() {
                   >
                     <FileText className="h-3.5 w-3.5 shrink-0 text-primary" />
                     <a
-                      href={`${a.file_url}&t=${encodeURIComponent("")}`}
+                      href={a.file_url}
                       target="_blank"
                       rel="noreferrer"
                       className="min-w-0 flex-1 truncate text-xs font-medium text-primary hover:underline"
@@ -561,7 +561,7 @@ function AnnouncementAttachmentsSmall({ announcementId }: { announcementId: stri
       {attachments.map((a) => (
         <a
           key={a.id}
-          href={`${a.file_url}&t=${encodeURIComponent("")}`}
+          href={a.file_url}
           target="_blank"
           rel="noreferrer"
           className="flex items-center gap-1 rounded-lg border border-border/60 bg-muted/40 px-2 py-1 text-[11px] font-medium text-primary hover:underline"

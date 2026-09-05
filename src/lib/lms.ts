@@ -611,11 +611,15 @@ export async function findProfileByCredential(login: string, pin: string): Promi
 }
 
 export async function createProfile(input: Partial<Profile>): Promise<Profile> {
-  return createProfileFn({ data: { ...(input as object), token: sessionToken() } as never });
+  return createProfileFn({
+    data: { ...(input as object), token: sessionToken() } as Record<string, unknown>,
+  });
 }
 
 export async function updateProfile(id: string, patch: Partial<Profile>): Promise<void> {
-  await updateProfileFn({ data: { id, patch: patch as never, token: sessionToken() } });
+  await updateProfileFn({
+    data: { id, patch: patch as Record<string, unknown>, token: sessionToken() },
+  });
 }
 
 function fileToBase64(file: File): Promise<string> {
@@ -665,7 +669,7 @@ export async function updateTeacherSettings(patch: {
   rfid_uid?: string | null;
 }): Promise<Profile> {
   const updated = (await updateTeacherSettingsFn({
-    data: { patch: patch as never, token: sessionToken() },
+    data: { patch: patch as Record<string, unknown>, token: sessionToken() },
   })) as Profile;
   updateSessionProfile({
     full_name: updated.full_name,
@@ -690,7 +694,7 @@ export async function listAnnouncements(): Promise<Announcement[]> {
 
 export async function createAnnouncement(input: Partial<Announcement>): Promise<string> {
   const id = (await createAnnouncementFn({
-    data: { ...(input as object), token: sessionToken() } as never,
+    data: { ...(input as object), token: sessionToken() } as Record<string, unknown>,
   })) as string;
   logAudit(
     "Announcement broadcast",
@@ -700,7 +704,9 @@ export async function createAnnouncement(input: Partial<Announcement>): Promise<
 }
 
 export async function updateAnnouncement(id: string, patch: Partial<Announcement>): Promise<void> {
-  await updateAnnouncementFn({ data: { id, patch: patch as never, token: sessionToken() } });
+  await updateAnnouncementFn({
+    data: { id, patch: patch as Record<string, unknown>, token: sessionToken() },
+  });
   logAudit("Announcement updated", `"${patch.title ?? id}" edited`);
 }
 
@@ -743,11 +749,15 @@ export async function listCourses(): Promise<Course[]> {
 }
 
 export async function createCourse(input: Partial<Course>): Promise<void> {
-  await createCourseFn({ data: { ...(input as object), token: sessionToken() } as never });
+  await createCourseFn({
+    data: { ...(input as object), token: sessionToken() } as Record<string, unknown>,
+  });
 }
 
 export async function updateCourse(id: string, patch: Partial<Course>): Promise<void> {
-  await updateCourseFn({ data: { id, patch: patch as never, token: sessionToken() } });
+  await updateCourseFn({
+    data: { id, patch: patch as Record<string, unknown>, token: sessionToken() },
+  });
 }
 
 export async function deleteCourse(id: string): Promise<void> {
@@ -759,7 +769,9 @@ export async function listAssignments(): Promise<Assignment[]> {
 }
 
 export async function createAssignment(input: Partial<Assignment>): Promise<void> {
-  await createAssignmentFn({ data: { ...(input as object), token: sessionToken() } as never });
+  await createAssignmentFn({
+    data: { ...(input as object), token: sessionToken() } as Record<string, unknown>,
+  });
 }
 
 // Activity aliases — pedagogical rename, DB stays `assignments`
@@ -771,7 +783,9 @@ export async function listSubmissionsForStudent(studentId: string): Promise<Subm
 }
 
 export async function submitAssignment(input: Partial<Submission>): Promise<void> {
-  await submitAssignmentFn({ data: { ...(input as object), token: sessionToken() } as never });
+  await submitAssignmentFn({
+    data: { ...(input as object), token: sessionToken() } as Record<string, unknown>,
+  });
 }
 
 export async function listQuizzes(): Promise<Quiz[]> {
@@ -831,7 +845,9 @@ export async function createQuizWithQuestions(
   quiz: Partial<Quiz>,
   questions: Array<Partial<QuizQuestion>>,
 ): Promise<void> {
-  await createQuizWithQuestionsFn({ data: { quiz, questions, token: sessionToken() } as never });
+  await createQuizWithQuestionsFn({
+    data: { quiz, questions, token: sessionToken() } as Record<string, unknown>,
+  });
 }
 
 export async function listGradesForStudent(studentId: string): Promise<Grade[]> {
@@ -843,7 +859,9 @@ export async function listGradesForCourse(courseId: string, quarter: number): Pr
 }
 
 export async function upsertGrade(input: Partial<Grade>): Promise<void> {
-  await upsertGradeFn({ data: { ...(input as object), token: sessionToken() } as never });
+  await upsertGradeFn({
+    data: { ...(input as object), token: sessionToken() } as Record<string, unknown>,
+  });
   logAudit("Grade modified", `Student ${input.student_id} · Q${input.quarter}`);
 }
 
@@ -876,7 +894,7 @@ export async function createTeacher(input: {
   rfid_uid?: string | null;
 }): Promise<TeacherRecord> {
   return (await createTeacherFn({
-    data: { ...input, token: sessionToken() } as never,
+    data: { ...input, token: sessionToken() } as Record<string, unknown>,
   })) as TeacherRecord;
 }
 
@@ -889,7 +907,7 @@ export async function enrollBiometrics(
   fields: { rfid_uid?: string | null },
 ): Promise<Profile> {
   return (await enrollBiometricsFn({
-    data: { id, ...fields, token: sessionToken() } as never,
+    data: { id, ...fields, token: sessionToken() } as Record<string, unknown>,
   })) as Profile;
 }
 
@@ -957,7 +975,9 @@ export async function enrollStudent(student_id: string, course_id: string): Prom
 }
 
 export async function countRows(table: string): Promise<number> {
-  return countRowsFn({ data: { table: table as never, token: sessionToken() } });
+  return countRowsFn({
+    data: { table: table as unknown as Record<string, unknown>, token: sessionToken() },
+  });
 }
 
 /* ---------- Misc helpers ---------- */
@@ -1087,7 +1107,9 @@ export async function updateQuiz(
   },
   questions?: Array<{ question: string; options: string[]; correct_answer: string }>,
 ): Promise<void> {
-  await updateQuizFn({ data: { id, patch, questions, token: sessionToken() } as never });
+  await updateQuizFn({
+    data: { id, patch, questions, token: sessionToken() } as Record<string, unknown>,
+  });
 }
 
 /** Soft delete keeps attempts/grades; hard delete also purges attached files. */
@@ -1104,7 +1126,9 @@ export async function updateAssignment(
     >
   >,
 ): Promise<void> {
-  await updateAssignmentFn({ data: { id, patch: patch as never, token: sessionToken() } });
+  await updateAssignmentFn({
+    data: { id, patch: patch as Record<string, unknown>, token: sessionToken() },
+  });
 }
 
 export async function deleteAssignment(id: string, mode: "soft" | "hard" = "soft"): Promise<void> {

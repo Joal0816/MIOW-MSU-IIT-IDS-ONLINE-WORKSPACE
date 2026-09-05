@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useCallback, useEffect, useRef, useState, type InputHTMLAttributes } from "react";
 import { toast } from "sonner";
+import { AVATAR_MAX_BYTES } from "@/components/courses/constants";
 import {
   Bell,
   GraduationCap,
@@ -38,7 +39,10 @@ export const Route = createFileRoute("/dashboard/teacher/settings")({
         content:
           "Faculty settings: profile and identity, keycard and face enrollment, and teaching defaults for attendance and worksheet retakes.",
       },
-      { property: "og:title", content: "Teacher Settings | MIOW - Integrated Developmental School" },
+      {
+        property: "og:title",
+        content: "Teacher Settings | MIOW - Integrated Developmental School",
+      },
       {
         property: "og:description",
         content: "Manage your faculty profile, kiosk credentials, and classroom defaults.",
@@ -252,7 +256,7 @@ function TeacherSettingsPage() {
       toast.error("Please choose a PNG, JPEG, WebP, or GIF image");
       return;
     }
-    if (f.size > 2 * 1024 * 1024) {
+    if (f.size > AVATAR_MAX_BYTES) {
       toast.error("Please choose an image under 2 MB");
       return;
     }

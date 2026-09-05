@@ -77,6 +77,14 @@ export function policyPayload(f: typeof EMPTY_POLICY) {
 export const ACCEPTED = ".pdf,.doc,.docx,.png,.jpg,.jpeg,.zip";
 export const MAX_FILE_BYTES = 25 * 1024 * 1024;
 export const MAX_BATCH_BYTES = 60 * 1024 * 1024;
+export const AVATAR_MAX_BYTES = 2 * 1024 * 1024;
+export const ASSIGNMENT_MAX_BYTES = 15 * 1024 * 1024;
+export const COURSE_MATERIAL_MAX_BYTES = 10 * 1024 * 1024;
+export const ATTENDANCE_LIMIT_DASHBOARD = 50;
+export const ATTENDANCE_LIMIT_KIOSK = 60;
+export const ATTENDANCE_LIMIT_GRADES = 500;
+export const ATTENDANCE_LIMIT_PURGE = 100;
+export const SCAN_BANNER_DISMISS_MS = 4000;
 export const ACCEPTED_MIME = [
   "application/pdf",
   "application/msword",

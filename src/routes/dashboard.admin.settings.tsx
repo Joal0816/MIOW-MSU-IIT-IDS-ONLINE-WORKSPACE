@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState, type InputHTMLAttributes } from "react";
 import { toast } from "sonner";
+import { ATTENDANCE_LIMIT_PURGE } from "@/components/courses/constants";
 import {
   Database,
   Download,
@@ -268,15 +269,19 @@ function AdminSettings() {
   };
 
   const exportStudents = async () => {
-    const rows = await listStudents();
-    const csv = toCsv([
-      ["Student ID", "Full Name", "Email", "Grade Level", "Section"],
-      ...rows.map((s) => [s.student_id, s.full_name, s.email, s.grade_level, s.section]),
-    ]);
-    downloadFile("northview-students.csv", csv, "text/csv");
-    logAudit("Data export", `Student database CSV exported (${rows.length} rows)`);
-    setAudit(listAudit());
-    toast.success("Student database exported");
+    try {
+      const rows = await listStudents();
+      const csv = toCsv([
+        ["Student ID", "Full Name", "Email", "Grade Level", "Section"],
+        ...rows.map((s) => [s.student_id, s.full_name, s.email, s.grade_level, s.section]),
+      ]);
+      downloadFile("northview-students.csv", csv, "text/csv");
+      logAudit("Data export", `Student database CSV exported (${rows.length} rows)`);
+      setAudit(listAudit());
+      toast.success("Student database exported");
+    } catch {
+      toast.error("Failed to export student data");
+    }
   };
 
   const exportGradebook = async () => {
@@ -296,6 +301,8 @@ function AdminSettings() {
       logAudit("Data export", `Complete gradebook JSON exported (Q${cfg.activeQuarter})`);
       setAudit(listAudit());
       toast.success("Gradebook exported");
+    } catch {
+      toast.error("Failed to export gradebook");
     } finally {
       setBusy(false);
     }
@@ -322,7 +329,7 @@ function AdminSettings() {
         setAudit(listAudit());
         toast.success("Mock data reset to defaults");
       } else if (confirmAction === "purge") {
-        const logs = await listAllAttendance(100);
+        const logs = await listAllAttendance(ATTENDANCE_LIMIT_PURGE);
         for (const l of logs) await deleteAttendanceLog(l.id);
         logAudit("Data purge", `${logs.length} demo attendance logs purged`);
         setAudit(listAudit());
@@ -330,6 +337,8 @@ function AdminSettings() {
       }
       setConfirmAction(null);
       setConfirmText("");
+    } catch {
+      toast.error("Operation failed — please try again");
     } finally {
       setBusy(false);
     }
@@ -1125,8 +1134,7 @@ function AdminSettings() {
                       <div className="text-right">
                         <p className="text-xs font-semibold">{e.actor}</p>
                         <p className="text-xs text-muted-foreground">
-                          {fmtDate(e.at)} {fmtTime(e.at)} · 10.8.{((i * 7) % 250) + 2}.
-                          {((i * 13) % 250) + 4}
+                          {fmtDate(e.at)} {fmtTime(e.at)}
                         </p>
                       </div>
                       <Badge

@@ -17,27 +17,27 @@ import * as server from "./server";
 /* ---------- Profiles & kiosk auth (public — they issue tokens) ---------- */
 
 export const getProfileByRfidFn = createServerFn({ method: "POST" })
-  .inputValidator((data) => server.schemas.rfid.parse(data))
+  .validator((data) => server.schemas.rfid.parse(data))
   .handler(async ({ data }) => server.findByRfid(data.uid));
 
 // Unified sign-in for ALL roles: one identifier (student ID, email, or
 // username) + secret (PIN or password). Public because it ISSUES the token;
 // server-side lockout (5 attempts / 15 min) protects every account type.
 export const pinLoginFn = createServerFn({ method: "POST" })
-  .inputValidator((data) => server.schemas.pinLogin.parse(data))
+  .validator((data) => server.schemas.pinLogin.parse(data))
   .handler(async ({ data }) => server.verifyPinLogin(data.login, data.secret));
 
 /* ---------- Profile management (staff only) ---------- */
 
 export const createProfileFn = createServerFn({ method: "POST" })
-  .inputValidator((data) => server.schemas.profileInput.parse(data))
+  .validator((data) => server.schemas.profileInput.parse(data))
   .handler(async ({ data }) => {
     await server.requireStaff(data.token);
     return server.createProfile(data);
   });
 
 export const updateProfileFn = createServerFn({ method: "POST" })
-  .inputValidator((data) => server.schemas.profilePatch.parse(data))
+  .validator((data) => server.schemas.profilePatch.parse(data))
   .handler(async ({ data }) => {
     // Authorization lives server-side: self-service for the owner, roster
     // maintenance for staff on student records, and admin-only for staff
@@ -49,7 +49,7 @@ export const updateProfileFn = createServerFn({ method: "POST" })
 // User removal is ADMIN-only (teachers cannot remove accounts) and runs
 // as a soft delete with self-deletion and last-admin safeguards.
 export const deleteProfileFn = createServerFn({ method: "POST" })
-  .inputValidator((data) => server.schemas.id.parse(data))
+  .validator((data) => server.schemas.id.parse(data))
   .handler(async ({ data }) => {
     const admin = await server.requireAdmin(data.token);
     return server.deleteUser(admin.id, data.id);
@@ -58,7 +58,7 @@ export const deleteProfileFn = createServerFn({ method: "POST" })
 // Teacher-only self-service settings mutation. requireTeacher rejects
 // students AND admins; the target row is always the caller's own profile.
 export const updateTeacherSettingsFn = createServerFn({ method: "POST" })
-  .inputValidator((data) => server.schemas.teacherSettings.parse(data))
+  .validator((data) => server.schemas.teacherSettings.parse(data))
   .handler(async ({ data }) => {
     const teacher = await server.requireTeacher(data.token);
     return server.updateTeacherSettings(teacher.id, data.patch);
@@ -67,18 +67,18 @@ export const updateTeacherSettingsFn = createServerFn({ method: "POST" })
 // Avatar upload: any valid session may upload their OWN photo — the server
 // resolves the caller from the token and always writes to their profile.
 export const uploadAvatarFn = createServerFn({ method: "POST" })
-  .inputValidator((data) => server.schemas.avatarUpload.parse(data))
+  .validator((data) => server.schemas.avatarUpload.parse(data))
   .handler(async ({ data }) => server.uploadAvatar(data.token, data.data, data.content_type));
 
 export const listStudentsFn = createServerFn({ method: "POST" })
-  .inputValidator((data) => server.schemas.session.parse(data))
+  .validator((data) => server.schemas.session.parse(data))
   .handler(async ({ data }) => {
     await server.requireStaff(data.token);
     return server.listStudents();
   });
 
 export const listStaffFn = createServerFn({ method: "POST" })
-  .inputValidator((data) => server.schemas.session.parse(data))
+  .validator((data) => server.schemas.session.parse(data))
   .handler(async ({ data }) => {
     await server.requireStaff(data.token);
     return server.listStaff();
@@ -86,7 +86,7 @@ export const listStaffFn = createServerFn({ method: "POST" })
 
 // Teaching roster for course-lead pickers — admins are NOT included.
 export const listTeachersFn = createServerFn({ method: "POST" })
-  .inputValidator((data) => server.schemas.session.parse(data))
+  .validator((data) => server.schemas.session.parse(data))
   .handler(async ({ data }) => {
     await server.requireStaff(data.token);
     return server.listTeachers();
@@ -94,7 +94,7 @@ export const listTeachersFn = createServerFn({ method: "POST" })
 
 // Faculty directory with assigned-course relations — ADMIN-only console read.
 export const listTeacherDirectoryFn = createServerFn({ method: "POST" })
-  .inputValidator((data) => server.schemas.session.parse(data))
+  .validator((data) => server.schemas.session.parse(data))
   .handler(async ({ data }) => {
     await server.requireAdmin(data.token);
     return server.listTeacherDirectory();
@@ -103,7 +103,7 @@ export const listTeacherDirectoryFn = createServerFn({ method: "POST" })
 // Faculty account creation — ADMIN-only; role is forced to 'teacher' and the
 // initial PIN is hashed server-side before persistence.
 export const createTeacherFn = createServerFn({ method: "POST" })
-  .inputValidator((data) => server.schemas.teacherInput.parse(data))
+  .validator((data) => server.schemas.teacherInput.parse(data))
   .handler(async ({ data }) => {
     await server.requireAdmin(data.token);
     return server.createTeacher(data);
@@ -112,7 +112,7 @@ export const createTeacherFn = createServerFn({ method: "POST" })
 // Biometric / RFID enrolment. Admins may enroll anyone; everyone else may
 // only enroll their OWN record (target id is checked against the token).
 export const enrollBiometricsFn = createServerFn({ method: "POST" })
-  .inputValidator((data) => server.schemas.biometrics.parse(data))
+  .validator((data) => server.schemas.biometrics.parse(data))
   .handler(async ({ data }) => {
     const caller = await server.requireSession(data.token);
     if (caller.role !== "admin" && caller.id !== data.id) throw new Error("Forbidden");
@@ -123,14 +123,14 @@ export const enrollBiometricsFn = createServerFn({ method: "POST" })
 
 // Role administration is ADMIN-only (teachers cannot reassign roles).
 export const listAllUsersFn = createServerFn({ method: "POST" })
-  .inputValidator((data) => server.schemas.session.parse(data))
+  .validator((data) => server.schemas.session.parse(data))
   .handler(async ({ data }) => {
     await server.requireAdmin(data.token);
     return server.listAllUsers();
   });
 
 export const updateUserRoleFn = createServerFn({ method: "POST" })
-  .inputValidator((data) => server.schemas.roleUpdate.parse(data))
+  .validator((data) => server.schemas.roleUpdate.parse(data))
   .handler(async ({ data }) => {
     const admin = await server.requireAdmin(data.token);
     return server.updateUserRole(admin.id, data.id, data.role);
@@ -140,7 +140,7 @@ export const updateUserRoleFn = createServerFn({ method: "POST" })
 // client session store can be updated after an admin changes their role —
 // permissions re-evaluate without requiring a fresh sign-in.
 export const refreshSessionFn = createServerFn({ method: "POST" })
-  .inputValidator((data) => server.schemas.session.parse(data))
+  .validator((data) => server.schemas.session.parse(data))
   .handler(async ({ data }) => server.requireSession(data.token));
 
 /* ---------- Announcements ---------- */
@@ -151,28 +151,28 @@ export const listAnnouncementsFn = createServerFn({ method: "GET" }).handler(asy
 );
 
 export const createAnnouncementFn = createServerFn({ method: "POST" })
-  .inputValidator((data) => server.schemas.announcementInput.parse(data))
+  .validator((data) => server.schemas.announcementInput.parse(data))
   .handler(async ({ data }) => {
     await server.requireStaff(data.token);
     return server.createAnnouncement(data);
   });
 
 export const updateAnnouncementFn = createServerFn({ method: "POST" })
-  .inputValidator((data) => server.schemas.announcementPatch.parse(data))
+  .validator((data) => server.schemas.announcementPatch.parse(data))
   .handler(async ({ data }) => {
     await server.requireStaff(data.token);
     return server.updateAnnouncement(data.id, data.patch);
   });
 
 export const deleteAnnouncementFn = createServerFn({ method: "POST" })
-  .inputValidator((data) => server.schemas.id.parse(data))
+  .validator((data) => server.schemas.id.parse(data))
   .handler(async ({ data }) => {
     await server.requireStaff(data.token);
     return server.deleteAnnouncement(data.id);
   });
 
 export const uploadAnnouncementMaterialFn = createServerFn({ method: "POST" })
-  .inputValidator((data) => server.schemas.announcementMaterialUpload.parse(data))
+  .validator((data) => server.schemas.announcementMaterialUpload.parse(data))
   .handler(async ({ data }) =>
     server.uploadAnnouncementMaterial(
       data.token,
@@ -184,17 +184,20 @@ export const uploadAnnouncementMaterialFn = createServerFn({ method: "POST" })
   );
 
 export const removeAnnouncementMaterialFn = createServerFn({ method: "POST" })
-  .inputValidator((data) => server.schemas.announcementMaterialRemove.parse(data))
+  .validator((data) => server.schemas.announcementMaterialRemove.parse(data))
   .handler(async ({ data }) => server.removeAnnouncementAttachment(data.token, data.attachment_id));
 
 export const listAnnouncementAttachmentsFn = createServerFn({ method: "POST" })
-  .inputValidator((data) => server.schemas.id.parse(data))
-  .handler(async ({ data }) => server.listAnnouncementAttachments(data.id));
+  .validator((data) => server.schemas.id.parse(data))
+  .handler(async ({ data }) => {
+    await server.requireSession(data.token);
+    return server.listAnnouncementAttachments(data.id);
+  });
 
 /* ---------- Courses, assignments, enrollments ---------- */
 
 export const listCoursesFn = createServerFn({ method: "POST" })
-  .inputValidator((data) => server.schemas.session.parse(data))
+  .validator((data) => server.schemas.session.parse(data))
   .handler(async ({ data }) => {
     await server.requireSession(data.token);
     return server.listCourses();
@@ -203,35 +206,35 @@ export const listCoursesFn = createServerFn({ method: "POST" })
 // Course lifecycle (create / reassign lead / delete) is ADMIN-ONLY: teachers
 // may only edit metadata on courses they already lead.
 export const createCourseFn = createServerFn({ method: "POST" })
-  .inputValidator((data) => server.schemas.courseInput.parse(data))
+  .validator((data) => server.schemas.courseInput.parse(data))
   .handler(async ({ data }) => {
     await server.requireAdmin(data.token);
     return server.createCourse(data);
   });
 
 export const updateCourseFn = createServerFn({ method: "POST" })
-  .inputValidator((data) => server.schemas.coursePatch.parse(data))
+  .validator((data) => server.schemas.coursePatch.parse(data))
   .handler(async ({ data }) => {
     const patch = await server.authorizeCourseUpdate(data.token, data.id, data.patch);
     return server.updateCourse(data.id, patch);
   });
 
 export const deleteCourseFn = createServerFn({ method: "POST" })
-  .inputValidator((data) => server.schemas.id.parse(data))
+  .validator((data) => server.schemas.id.parse(data))
   .handler(async ({ data }) => {
     await server.requireAdmin(data.token);
     return server.deleteCourse(data.id);
   });
 
 export const listAssignmentsFn = createServerFn({ method: "POST" })
-  .inputValidator((data) => server.schemas.session.parse(data))
+  .validator((data) => server.schemas.session.parse(data))
   .handler(async ({ data }) => {
     await server.requireSession(data.token);
     return server.listAssignments();
   });
 
 export const createAssignmentFn = createServerFn({ method: "POST" })
-  .inputValidator((data) => server.schemas.assignmentInput.parse(data))
+  .validator((data) => server.schemas.assignmentInput.parse(data))
   .handler(async ({ data }) => {
     // Teachers may only post into courses they lead; admins are universal.
     await server.requireCourseOwnerOrAdmin(data.token, data.course_id);
@@ -239,21 +242,21 @@ export const createAssignmentFn = createServerFn({ method: "POST" })
   });
 
 export const enrollmentsForCourseFn = createServerFn({ method: "POST" })
-  .inputValidator((data) => server.schemas.courseScoped.parse(data))
+  .validator((data) => server.schemas.courseScoped.parse(data))
   .handler(async ({ data }) => {
     await server.requireStaff(data.token);
     return server.enrollmentsForCourse(data.courseId);
   });
 
 export const enrollmentsForStudentFn = createServerFn({ method: "POST" })
-  .inputValidator((data) => server.schemas.studentScoped.parse(data))
+  .validator((data) => server.schemas.studentScoped.parse(data))
   .handler(async ({ data }) => {
     await server.requireSelfOrStaff(data.token, data.studentId);
     return server.enrollmentsForStudent(data.studentId);
   });
 
 export const enrollStudentFn = createServerFn({ method: "POST" })
-  .inputValidator((data) => server.schemas.enrollment.parse(data))
+  .validator((data) => server.schemas.enrollment.parse(data))
   .handler(async ({ data }) => {
     await server.requireStaff(data.token);
     return server.enrollStudent(data.student_id, data.course_id);
@@ -262,14 +265,14 @@ export const enrollStudentFn = createServerFn({ method: "POST" })
 /* ---------- Submissions ---------- */
 
 export const listSubmissionsForStudentFn = createServerFn({ method: "POST" })
-  .inputValidator((data) => server.schemas.studentScoped.parse(data))
+  .validator((data) => server.schemas.studentScoped.parse(data))
   .handler(async ({ data }) => {
     await server.requireSelfOrStaff(data.token, data.studentId);
     return server.listSubmissionsForStudent(data.studentId);
   });
 
 export const submitAssignmentFn = createServerFn({ method: "POST" })
-  .inputValidator((data) => server.schemas.submissionInput.parse(data))
+  .validator((data) => server.schemas.submissionInput.parse(data))
   .handler(async ({ data }) => {
     await server.requireSelfOrStaff(data.token, data.student_id);
     return server.submitAssignment(data);
@@ -278,14 +281,14 @@ export const submitAssignmentFn = createServerFn({ method: "POST" })
 /* ---------- Quizzes ---------- */
 
 export const listQuizzesFn = createServerFn({ method: "POST" })
-  .inputValidator((data) => server.schemas.session.parse(data))
+  .validator((data) => server.schemas.session.parse(data))
   .handler(async ({ data }) => {
     await server.requireSession(data.token);
     return server.listQuizzes();
   });
 
 export const getQuizFn = createServerFn({ method: "POST" })
-  .inputValidator((data) => server.schemas.id.parse(data))
+  .validator((data) => server.schemas.id.parse(data))
   .handler(async ({ data }) => {
     await server.requireSession(data.token);
     return server.getQuizPublic(data.id);
@@ -295,22 +298,22 @@ export const getQuizFn = createServerFn({ method: "POST" })
 // policy BEFORE recording: submissions past the attempt ceiling are rejected
 // with a typed { ok: false, reason } payload and nothing is written.
 export const submitQuizAttemptFn = createServerFn({ method: "POST" })
-  .inputValidator((data) => server.schemas.quizGrade.parse(data))
+  .validator((data) => server.schemas.quizGrade.parse(data))
   .handler(async ({ data }) => server.submitQuizAttempt(data.quiz_id, data.answers, data.token));
 
 // Attempt summaries for every worksheet, for the signed-in student.
 export const myQuizSummariesFn = createServerFn({ method: "POST" })
-  .inputValidator((data) => server.schemas.session.parse(data))
+  .validator((data) => server.schemas.session.parse(data))
   .handler(async ({ data }) => server.listMyQuizSummaries(data.token));
 
 export const quizAttemptInfoFn = createServerFn({ method: "POST" })
-  .inputValidator((data) => server.schemas.quizScoped.parse(data))
+  .validator((data) => server.schemas.quizScoped.parse(data))
   .handler(async ({ data }) => server.quizAttemptInfo(data.quiz_id, data.token));
 
 /* ----- Retake policy management (staff; teachers limited to own courses) ----- */
 
 export const updateQuizRetakePolicyFn = createServerFn({ method: "POST" })
-  .inputValidator((data) => server.schemas.quizPolicy.parse(data))
+  .validator((data) => server.schemas.quizPolicy.parse(data))
   .handler(async ({ data }) =>
     server.updateQuizRetakePolicy(
       data.id,
@@ -324,19 +327,19 @@ export const updateQuizRetakePolicyFn = createServerFn({ method: "POST" })
   );
 
 export const listQuizAttemptsFn = createServerFn({ method: "POST" })
-  .inputValidator((data) => server.schemas.quizScoped.parse(data))
+  .validator((data) => server.schemas.quizScoped.parse(data))
   .handler(async ({ data }) => server.listQuizAttemptsForQuiz(data.quiz_id, data.token));
 
 export const grantQuizRetakeFn = createServerFn({ method: "POST" })
-  .inputValidator((data) => server.schemas.retakeGrant.parse(data))
+  .validator((data) => server.schemas.retakeGrant.parse(data))
   .handler(async ({ data }) => server.grantQuizRetake(data.quiz_id, data.student_id, data.token));
 
 export const resetQuizAttemptsFn = createServerFn({ method: "POST" })
-  .inputValidator((data) => server.schemas.retakeGrant.parse(data))
+  .validator((data) => server.schemas.retakeGrant.parse(data))
   .handler(async ({ data }) => server.resetQuizAttempts(data.quiz_id, data.student_id, data.token));
 
 export const createQuizWithQuestionsFn = createServerFn({ method: "POST" })
-  .inputValidator((data) => server.schemas.quizBundle.parse(data))
+  .validator((data) => server.schemas.quizBundle.parse(data))
   .handler(async ({ data }) => {
     // Worksheets (answer key included) may only be created in a course the
     // caller leads; admins may create anywhere.
@@ -347,14 +350,14 @@ export const createQuizWithQuestionsFn = createServerFn({ method: "POST" })
 /* ---------- Grades ---------- */
 
 export const listGradesForStudentFn = createServerFn({ method: "POST" })
-  .inputValidator((data) => server.schemas.studentScoped.parse(data))
+  .validator((data) => server.schemas.studentScoped.parse(data))
   .handler(async ({ data }) => {
     await server.requireSelfOrStaff(data.token, data.studentId);
     return server.listGradesForStudent(data.studentId);
   });
 
 export const listGradesForCourseFn = createServerFn({ method: "POST" })
-  .inputValidator((data) => server.schemas.courseQuarter.parse(data))
+  .validator((data) => server.schemas.courseQuarter.parse(data))
   .handler(async ({ data }) => {
     await server.requireStaff(data.token);
     return server.listGradesForCourse(data.courseId, data.quarter);
@@ -362,7 +365,7 @@ export const listGradesForCourseFn = createServerFn({ method: "POST" })
 
 // Gradebook editing is TEACHER-only: admins manage the system, not grades.
 export const upsertGradeFn = createServerFn({ method: "POST" })
-  .inputValidator((data) => server.schemas.gradeInput.parse(data))
+  .validator((data) => server.schemas.gradeInput.parse(data))
   .handler(async ({ data }) => {
     await server.requireTeacher(data.token);
     return server.upsertGrade(data);
@@ -371,21 +374,21 @@ export const upsertGradeFn = createServerFn({ method: "POST" })
 /* ---------- Attendance ---------- */
 
 export const listAttendanceFn = createServerFn({ method: "POST" })
-  .inputValidator((data) => server.schemas.studentScoped.parse(data))
+  .validator((data) => server.schemas.studentScoped.parse(data))
   .handler(async ({ data }) => {
     await server.requireSelfOrStaff(data.token, data.studentId);
     return server.listAttendance(data.studentId);
   });
 
 export const listAllAttendanceFn = createServerFn({ method: "POST" })
-  .inputValidator((data) => server.schemas.limit.parse(data))
+  .validator((data) => server.schemas.limit.parse(data))
   .handler(async ({ data }) => {
     await server.requireStaff(data.token);
     return server.listAllAttendance(data.limit);
   });
 
 export const logAttendanceFn = createServerFn({ method: "POST" })
-  .inputValidator((data) => server.schemas.attendance.parse(data))
+  .validator((data) => server.schemas.attendance.parse(data))
   .handler(async ({ data }) => {
     await server.requireStaff(data.token);
     return server.logAttendance(data.student_id, data.scan_type, data.status);
@@ -395,21 +398,21 @@ export const logAttendanceFn = createServerFn({ method: "POST" })
 // the reader's timestamp; the server toggles in/out and evaluates on-time vs
 // late against the tapped person's class schedule for the day.
 export const recordTapFn = createServerFn({ method: "POST" })
-  .inputValidator((data) => server.schemas.tap.parse(data))
+  .validator((data) => server.schemas.tap.parse(data))
   .handler(async ({ data }) => {
     await server.requireStaff(data.token);
     return server.recordTap(data.uid, data.at);
   });
 
 export const updateAttendanceLogFn = createServerFn({ method: "POST" })
-  .inputValidator((data) => server.schemas.attendancePatch.parse(data))
+  .validator((data) => server.schemas.attendancePatch.parse(data))
   .handler(async ({ data }) => {
     await server.requireStaff(data.token);
     return server.updateAttendanceLog(data.id, data.patch);
   });
 
 export const deleteAttendanceLogFn = createServerFn({ method: "POST" })
-  .inputValidator((data) => server.schemas.id.parse(data))
+  .validator((data) => server.schemas.id.parse(data))
   .handler(async ({ data }) => {
     await server.requireStaff(data.token);
     return server.deleteAttendanceLog(data.id);
@@ -418,7 +421,7 @@ export const deleteAttendanceLogFn = createServerFn({ method: "POST" })
 /* ---------- Misc ---------- */
 
 export const countRowsFn = createServerFn({ method: "POST" })
-  .inputValidator((data) => server.schemas.countable.parse(data))
+  .validator((data) => server.schemas.countable.parse(data))
   .handler(async ({ data }) => {
     await server.requireStaff(data.token);
     return server.countRows(data.table);
@@ -429,7 +432,7 @@ export const countRowsFn = createServerFn({ method: "POST" })
  * courses where they are the assigned lead. */
 
 export const uploadCourseMaterialFn = createServerFn({ method: "POST" })
-  .inputValidator((data) => server.schemas.materialUpload.parse(data))
+  .validator((data) => server.schemas.materialUpload.parse(data))
   .handler(async ({ data }) =>
     server.uploadCourseMaterial(
       data.token,
@@ -441,29 +444,29 @@ export const uploadCourseMaterialFn = createServerFn({ method: "POST" })
   );
 
 export const attachCourseMaterialFn = createServerFn({ method: "POST" })
-  .inputValidator((data) => server.schemas.materialAttach.parse(data))
+  .validator((data) => server.schemas.materialAttach.parse(data))
   .handler(async ({ data }) =>
     server.attachCourseMaterial(data.token, data.target, data.id, data.attachment),
   );
 
 export const removeCourseMaterialFn = createServerFn({ method: "POST" })
-  .inputValidator((data) => server.schemas.materialRemove.parse(data))
+  .validator((data) => server.schemas.materialRemove.parse(data))
   .handler(async ({ data }) =>
     server.removeCourseMaterial(data.token, data.target, data.id, data.path),
   );
 
 export const updateQuizFn = createServerFn({ method: "POST" })
-  .inputValidator((data) => server.schemas.quizUpdate.parse(data))
+  .validator((data) => server.schemas.quizUpdate.parse(data))
   .handler(async ({ data }) => server.updateQuiz(data.token, data.id, data.patch, data.questions));
 
 export const deleteQuizFn = createServerFn({ method: "POST" })
-  .inputValidator((data) => server.schemas.contentDelete.parse(data))
+  .validator((data) => server.schemas.contentDelete.parse(data))
   .handler(async ({ data }) => server.deleteQuiz(data.token, data.id, data.mode));
 
 export const updateAssignmentFn = createServerFn({ method: "POST" })
-  .inputValidator((data) => server.schemas.assignmentPatch.parse(data))
+  .validator((data) => server.schemas.assignmentPatch.parse(data))
   .handler(async ({ data }) => server.updateAssignment(data.token, data.id, data.patch));
 
 export const deleteAssignmentFn = createServerFn({ method: "POST" })
-  .inputValidator((data) => server.schemas.contentDelete.parse(data))
+  .validator((data) => server.schemas.contentDelete.parse(data))
   .handler(async ({ data }) => server.deleteAssignment(data.token, data.id, data.mode));

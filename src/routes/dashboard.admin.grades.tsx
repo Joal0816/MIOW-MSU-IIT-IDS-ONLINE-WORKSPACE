@@ -3,6 +3,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Download, Send } from "lucide-react";
 import { toast } from "sonner";
+import { ATTENDANCE_LIMIT_GRADES } from "@/components/courses/constants";
 import {
   attendancePercent,
   enrollmentsForCourse,
@@ -44,7 +45,7 @@ interface CellState {
 }
 
 function GradebookPage() {
-  const profile = useProfile(["teacher"]);
+  const profile = useProfile(["admin", "teacher"]);
   const qc = useQueryClient();
   const { data: courses } = useQuery({
     queryKey: ["courses"],
@@ -59,7 +60,7 @@ function GradebookPage() {
   // Gate attendance feeds the Attendance (10%) component of the grading scheme.
   const { data: allLogs } = useQuery({
     queryKey: ["all-attendance"],
-    queryFn: () => listAllAttendance(500),
+    queryFn: () => listAllAttendance(ATTENDANCE_LIMIT_GRADES),
     enabled: !!profile,
   });
 

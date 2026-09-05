@@ -107,7 +107,7 @@ export async function uploadCourseMaterial(
   if (!ext) throw new Error("Unsupported file type — use PDF, DOCX, PNG, JPG, or ZIP");
   const buffer = Buffer.from(base64, "base64");
   if (buffer.byteLength === 0) throw new Error("Empty file");
-  if (buffer.byteLength > MAX_MATERIAL_BYTES) throw new Error("File must be under 15 MB");
+  if (buffer.byteLength > MAX_MATERIAL_BYTES) throw new Error("File must be under 25 MB");
   const sniffed = await sniffMime(buffer);
   if (!sniffed || !MATERIAL_ALLOWED_MIMES.has(sniffed)) {
     throw new Error(

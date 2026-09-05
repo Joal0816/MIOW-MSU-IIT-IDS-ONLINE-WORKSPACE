@@ -8,7 +8,8 @@ export const APP_COMPACT_NAME = "IDS";
 export const APP_DESCRIPTOR = "INTEGRATED DEVELOPMENTAL SCHOOL ONLINE WORKSPACE";
 export const APP_TAGLINE = "Integrated Developmental School – Online Workspace";
 export const KIOSK_TITLE = "MIOW Attendance Kiosk";
-export const KIOSK_EVENT_HEADER = "MIOW ATTENDANCE: INTEGRATED DEVELOPMENTAL SCHOOL ONLINE WORKSPACE";
+export const KIOSK_EVENT_HEADER =
+  "MIOW ATTENDANCE: INTEGRATED DEVELOPMENTAL SCHOOL ONLINE WORKSPACE";
 export const NOTIFICATION_SIGNOFF = "Sincerely,\nThe MIOW Administration Team";
 
 /** Official system palette (locked — see identity system). */

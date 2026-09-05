@@ -77,6 +77,7 @@ import {
   POLICY_LABELS,
   ACCEPTED,
   MAX_FILE_BYTES,
+  COURSE_MATERIAL_MAX_BYTES,
   isAcceptedFile,
   policyPayload,
   type WizardStep,
@@ -1272,7 +1273,7 @@ function CoursesPage() {
                       );
                       return;
                     }
-                    if (file.size > 10 * 1024 * 1024) {
+                    if (file.size > COURSE_MATERIAL_MAX_BYTES) {
                       toast.error("File is too large (max 10MB).");
                       return;
                     }

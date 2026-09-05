@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useCallback, useEffect, useRef, useState, type InputHTMLAttributes } from "react";
 import { toast } from "sonner";
+import { AVATAR_MAX_BYTES } from "@/components/courses/constants";
 import {
   Bell,
   Contrast,
@@ -49,7 +50,10 @@ export const Route = createFileRoute("/dashboard/student/settings")({
         name: "description",
         content: "Manage your profile, RFID card, notifications, and accessibility preferences.",
       },
-      { property: "og:title", content: "Student Settings | MIOW - Integrated Developmental School" },
+      {
+        property: "og:title",
+        content: "Student Settings | MIOW - Integrated Developmental School",
+      },
       {
         property: "og:description",
         content: "Manage your profile, hardware, notifications, and accessibility preferences.",
@@ -252,7 +256,7 @@ function StudentSettings() {
       toast.error("Please choose a PNG, JPEG, WebP, or GIF image");
       return;
     }
-    if (f.size > 2 * 1024 * 1024) {
+    if (f.size > AVATAR_MAX_BYTES) {
       toast.error("Please choose an image under 2 MB");
       return;
     }

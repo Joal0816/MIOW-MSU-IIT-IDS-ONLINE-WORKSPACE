@@ -3,6 +3,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { CloudUpload, FileText, Paperclip, Send, ShieldCheck, X } from "lucide-react";
 import { toast } from "sonner";
+import { ASSIGNMENT_MAX_BYTES } from "@/components/courses/constants";
 import { setAssessmentMode } from "@/lib/assessment-mode";
 import {
   COMPONENT_LABELS,
@@ -113,7 +114,7 @@ function AssignmentsPage() {
 
   const pickFile = (f: File | undefined | null) => {
     if (!f) return;
-    if (f.size > 15 * 1024 * 1024) {
+    if (f.size > ASSIGNMENT_MAX_BYTES) {
       toast.error("File is too large (max 15 MB).");
       return;
     }

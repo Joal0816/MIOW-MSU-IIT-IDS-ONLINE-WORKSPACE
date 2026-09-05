@@ -14,7 +14,6 @@ import {
 import { toast } from "sonner";
 import { setAssessmentMode } from "@/lib/assessment-mode";
 import {
-  formatFileSize,
   getQuiz,
   listCourses,
   listQuizzes,
@@ -88,7 +87,6 @@ function QuizzesPage() {
   const [idx, setIdx] = useState(0);
   const [secondsLeft, setSecondsLeft] = useState(0);
   const [result, setResult] = useState<QuizSuccess | null>(null);
-  const [uploadFile, setUploadFile] = useState<File | null>(null);
 
   const activeQuiz = useMemo(
     () => (quizzes ?? []).find((q) => q.id === activeId),
@@ -115,7 +113,6 @@ function QuizzesPage() {
     setAnswers({});
     setResult(null);
     setIdx(0);
-    setUploadFile(null);
     setSecondsLeft(quiz.duration_minutes * 60);
   };
 
@@ -488,24 +485,7 @@ function QuizzesPage() {
               </div>
             )}
 
-            {/* Task 24: worksheet file upload placeholder (25MB each, not yet wired to submission_files) */}
-            <div className="mt-5 rounded-xl border border-border/60 bg-muted/30 p-3">
-              <p className="text-xs font-semibold">Attach supporting file (optional)</p>
-              <p className="text-[11px] text-muted-foreground">
-                Up to 25MB each — stored via submission_files (coming soon).
-              </p>
-              <input
-                type="file"
-                aria-label="Worksheet supporting file"
-                onChange={(e) => setUploadFile(e.target.files?.[0] ?? null)}
-                className="mt-2 block w-full text-xs file:mr-3 file:rounded-lg file:border-0 file:bg-primary file:px-3 file:py-1.5 file:text-xs file:font-semibold file:text-primary-foreground hover:file:opacity-90"
-              />
-              {uploadFile && (
-                <p className="mt-1.5 text-xs text-muted-foreground">
-                  {uploadFile.name} · {formatFileSize(uploadFile.size)}
-                </p>
-              )}
-            </div>
+            {/* File upload for quiz submissions is not yet implemented — see submission_files table */}
 
             <div className="mt-6 flex items-center gap-2">
               <button

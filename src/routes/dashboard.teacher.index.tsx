@@ -19,23 +19,24 @@ export const Route = createFileRoute("/dashboard/teacher/")({
 
 function TeacherDashboard() {
   const profile = useProfile(["teacher", "admin"]);
-  const { data: courses } = useQuery({
+  const { data: courses, isLoading: coursesLoading } = useQuery({
     queryKey: ["courses"],
     queryFn: listCourses,
     enabled: !!profile,
   });
-  const { data: students } = useQuery({
+  const { data: students, isLoading: studentsLoading } = useQuery({
     queryKey: ["students"],
     queryFn: listStudents,
     enabled: !!profile,
   });
-  const { data: announcementCount } = useQuery({
+  const { data: announcementCount, isLoading: announcementsLoading } = useQuery({
     queryKey: ["count", "announcements"],
     queryFn: () => countRows("announcements"),
     enabled: !!profile,
   });
 
   if (!profile) return null;
+  const isLoading = coursesLoading || studentsLoading || announcementsLoading;
   const myCourses = (courses ?? []).filter((c) => c.teacher_id === profile.id);
 
   return (
@@ -43,57 +44,68 @@ function TeacherDashboard() {
       <h1 className="font-display text-2xl font-bold sm:text-3xl">Teacher Dashboard</h1>
       <p className="mb-6 mt-1 text-sm text-muted-foreground">Welcome back, {profile.full_name}.</p>
 
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        <Card className="p-5">
-          <div className="flex items-center justify-between">
-            <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-              My Courses
+      {isLoading ? (
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {[1, 2, 3].map((i) => (
+            <Card key={i} className="p-5 animate-pulse">
+              <div className="h-4 w-20 rounded bg-muted mb-2" />
+              <div className="h-8 w-12 rounded bg-muted" />
+            </Card>
+          ))}
+        </div>
+      ) : (
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          <Card className="p-5">
+            <div className="flex items-center justify-between">
+              <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                My Courses
+              </p>
+              <BookOpen className="h-4 w-4 text-sky-500" />
+            </div>
+            <p className="mt-2 font-display text-3xl font-bold">{myCourses.length}</p>
+            <p className="mt-1 text-xs text-muted-foreground">
+              {courses?.length ?? 0} total in campus
             </p>
-            <BookOpen className="h-4 w-4 text-sky-500" />
-          </div>
-          <p className="mt-2 font-display text-3xl font-bold">{myCourses.length}</p>
-          <p className="mt-1 text-xs text-muted-foreground">
-            {courses?.length ?? 0} total in campus
-          </p>
-          <Link
-            to="/dashboard/admin/courses"
-            className="mt-3 flex items-center gap-1 text-xs font-semibold text-primary hover:underline"
-          >
-            Manage courses <ArrowRight className="h-3 w-3" />
-          </Link>
-        </Card>
-        <Card className="p-5">
-          <div className="flex items-center justify-between">
-            <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-              Students
-            </p>
-            <Users className="h-4 w-4 text-primary" />
-          </div>
-          <p className="mt-2 font-display text-3xl font-bold">{students?.length ?? "—"}</p>
-          <p className="mt-1 text-xs text-muted-foreground">Enrolled learners</p>
-          <Link
-            to="/dashboard/teacher/students"
-            className="mt-3 flex items-center gap-1 text-xs font-semibold text-primary hover:underline"
-          >
-            View Students Info <ArrowRight className="h-3 w-3" />
-          </Link>
-        </Card>
-        <Card className="p-5">
-          <div className="flex items-center justify-between">
-            <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-              Announcements
-            </p>
-            <Megaphone className="h-4 w-4 text-amber-500" />
-          </div>
-          <p className="mt-2 font-display text-3xl font-bold">{announcementCount ?? "—"}</p>
-          <Link
-            to="/dashboard/admin/announcements"
-            className="mt-3 flex items-center gap-1 text-xs font-semibold text-primary hover:underline"
-          >
-            Post announcement <ArrowRight className="h-3 w-3" />
-          </Link>
-        </Card>
-      </div>
+            <Link
+              to="/dashboard/admin/courses"
+              className="mt-3 flex items-center gap-1 text-xs font-semibold text-primary hover:underline"
+            >
+              Manage courses <ArrowRight className="h-3 w-3" />
+            </Link>
+          </Card>
+          <Card className="p-5">
+            <div className="flex items-center justify-between">
+              <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                Students
+              </p>
+              <Users className="h-4 w-4 text-primary" />
+            </div>
+            <p className="mt-2 font-display text-3xl font-bold">{students?.length ?? "—"}</p>
+            <p className="mt-1 text-xs text-muted-foreground">Enrolled learners</p>
+            <Link
+              to="/dashboard/teacher/students"
+              className="mt-3 flex items-center gap-1 text-xs font-semibold text-primary hover:underline"
+            >
+              View Students Info <ArrowRight className="h-3 w-3" />
+            </Link>
+          </Card>
+          <Card className="p-5">
+            <div className="flex items-center justify-between">
+              <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                Announcements
+              </p>
+              <Megaphone className="h-4 w-4 text-amber-500" />
+            </div>
+            <p className="mt-2 font-display text-3xl font-bold">{announcementCount ?? "—"}</p>
+            <Link
+              to="/dashboard/admin/announcements"
+              className="mt-3 flex items-center gap-1 text-xs font-semibold text-primary hover:underline"
+            >
+              Post announcement <ArrowRight className="h-3 w-3" />
+            </Link>
+          </Card>
+        </div>
+      )}
 
       <div className="mt-6 grid gap-4 sm:grid-cols-2">
         <Card className="p-5">

@@ -1,6 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { ArrowRight, BookOpen, CalendarCheck, Megaphone, Users } from "lucide-react";
+import { ATTENDANCE_LIMIT_DASHBOARD } from "@/components/courses/constants";
 import { countRows, fmtTime, listAllAttendance, listStudents } from "@/lib/lms";
 import { ADMIN_NAV, AppShell, Badge, Card, useProfile } from "@/components/lms";
 
@@ -24,28 +25,29 @@ export const Route = createFileRoute("/dashboard/admin/")({
 
 function AdminDashboard() {
   const profile = useProfile(["admin"]);
-  const { data: students } = useQuery({
+  const { data: students, isLoading: studentsLoading } = useQuery({
     queryKey: ["students"],
     queryFn: listStudents,
     enabled: !!profile,
   });
-  const { data: courseCount } = useQuery({
+  const { data: courseCount, isLoading: coursesLoading } = useQuery({
     queryKey: ["count", "courses"],
     queryFn: () => countRows("courses"),
     enabled: !!profile,
   });
-  const { data: announcementCount } = useQuery({
+  const { data: announcementCount, isLoading: announcementsLoading } = useQuery({
     queryKey: ["count", "announcements"],
     queryFn: () => countRows("announcements"),
     enabled: !!profile,
   });
-  const { data: logs } = useQuery({
+  const { data: logs, isLoading: logsLoading } = useQuery({
     queryKey: ["attendance-all"],
-    queryFn: () => listAllAttendance(50),
+    queryFn: () => listAllAttendance(ATTENDANCE_LIMIT_DASHBOARD),
     enabled: !!profile,
   });
 
   if (!profile) return null;
+  const isLoading = studentsLoading || coursesLoading || announcementsLoading || logsLoading;
 
   const today = new Date().toDateString();
   const todayLogs = (logs ?? []).filter((l) => new Date(l.timestamp).toDateString() === today);
@@ -76,54 +78,65 @@ function AdminDashboard() {
       </div>
 
       {/* Stats Row */}
-      <div className="mb-8 grid grid-cols-2 gap-3 sm:grid-cols-4">
-        <Card className="p-4 hover:border-accent transition-colors">
-          <div className="flex items-center justify-between mb-2">
-            <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-              Students
+      {isLoading ? (
+        <div className="mb-8 grid grid-cols-2 gap-3 sm:grid-cols-4">
+          {[1, 2, 3, 4].map((i) => (
+            <Card key={i} className="p-4 animate-pulse">
+              <div className="h-4 w-20 rounded bg-muted mb-2" />
+              <div className="h-8 w-12 rounded bg-muted" />
+            </Card>
+          ))}
+        </div>
+      ) : (
+        <div className="mb-8 grid grid-cols-2 gap-3 sm:grid-cols-4">
+          <Card className="p-4 hover:border-accent transition-colors">
+            <div className="flex items-center justify-between mb-2">
+              <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                Students
+              </p>
+              <span className="rounded bg-green-50 px-1.5 py-0.5 text-[10px] font-bold text-green-600">
+                +{students?.length ?? 0}
+              </span>
+            </div>
+            <p className="font-display text-2xl font-extrabold text-accent-foreground">
+              {students?.length ?? "—"}
             </p>
-            <span className="rounded bg-green-50 px-1.5 py-0.5 text-[10px] font-bold text-green-600">
-              +{students?.length ?? 0}
-            </span>
-          </div>
-          <p className="font-display text-2xl font-extrabold text-accent-foreground">
-            {students?.length ?? "—"}
-          </p>
-        </Card>
-        <Card className="p-4 hover:border-accent transition-colors">
-          <div className="flex items-center justify-between mb-2">
-            <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-              Courses
-            </p>
-            <span className="rounded bg-green-50 px-1.5 py-0.5 text-[10px] font-bold text-green-600">
-              Active
-            </span>
-          </div>
-          <p className="font-display text-2xl font-extrabold">{courseCount ?? "—"}</p>
-        </Card>
-        <Card className="p-4 hover:border-accent transition-colors">
-          <div className="flex items-center justify-between mb-2">
-            <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-              Attendance
-            </p>
-            <span className="rounded bg-green-50 px-1.5 py-0.5 text-[10px] font-bold text-green-600">
-              {todayIns.length > 0
-                ? `${Math.round(((todayIns.length - lateToday) / todayIns.length) * 100)}%`
-                : "—"}
-            </span>
-          </div>
-          <p className="font-display text-2xl font-extrabold">{todayIns.length}</p>
-        </Card>
-        <Card className="p-4 hover:border-accent transition-colors">
-          <div className="flex items-center justify-between mb-2">
-            <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-              Announcements
-            </p>
-            <Megaphone className="h-4 w-4 text-muted-foreground" />
-          </div>
-          <p className="font-display text-2xl font-extrabold">{announcementCount ?? "—"}</p>
-        </Card>
-      </div>
+          </Card>
+          <Card className="p-4 hover:border-accent transition-colors">
+            <div className="flex items-center justify-between mb-2">
+              <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                Courses
+              </p>
+              <span className="rounded bg-green-50 px-1.5 py-0.5 text-[10px] font-bold text-green-600">
+                Active
+              </span>
+            </div>
+            <p className="font-display text-2xl font-extrabold">{courseCount ?? "—"}</p>
+          </Card>
+          <Card className="p-4 hover:border-accent transition-colors">
+            <div className="flex items-center justify-between mb-2">
+              <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                Attendance
+              </p>
+              <span className="rounded bg-green-50 px-1.5 py-0.5 text-[10px] font-bold text-green-600">
+                {todayIns.length > 0
+                  ? `${Math.round(((todayIns.length - lateToday) / todayIns.length) * 100)}%`
+                  : "—"}
+              </span>
+            </div>
+            <p className="font-display text-2xl font-extrabold">{todayIns.length}</p>
+          </Card>
+          <Card className="p-4 hover:border-accent transition-colors">
+            <div className="flex items-center justify-between mb-2">
+              <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                Announcements
+              </p>
+              <Megaphone className="h-4 w-4 text-muted-foreground" />
+            </div>
+            <p className="font-display text-2xl font-extrabold">{announcementCount ?? "—"}</p>
+          </Card>
+        </div>
+      )}
 
       {/* Content Grid */}
       <div className="grid gap-6 lg:grid-cols-3">

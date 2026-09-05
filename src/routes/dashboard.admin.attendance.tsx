@@ -4,6 +4,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { AnimatePresence, motion } from "framer-motion";
 import { LogIn, LogOut, Nfc, Trash2, Volume2, VolumeX, Zap } from "lucide-react";
 import { toast } from "sonner";
+import { ATTENDANCE_LIMIT_KIOSK, SCAN_BANNER_DISMISS_MS } from "@/components/courses/constants";
 import {
   createMockTapPayload,
   deleteAttendanceLog,
@@ -39,7 +40,10 @@ export const Route = createFileRoute("/dashboard/admin/attendance")({
         name: "description",
         content: "Gate kiosk: RFID tap-in/tap-out with live feed.",
       },
-      { property: "og:title", content: "Attendance Kiosk | MIOW - Integrated Developmental School" },
+      {
+        property: "og:title",
+        content: "Attendance Kiosk | MIOW - Integrated Developmental School",
+      },
       {
         property: "og:description",
         content: "Gate kiosk: RFID tap-in/tap-out with live feed.",
@@ -81,11 +85,11 @@ function playTone(ok: boolean, muted: boolean) {
 }
 
 function AttendanceKiosk() {
-  const profile = useProfile(["teacher"]);
+  const profile = useProfile(["admin", "teacher"]);
   const qc = useQueryClient();
   const { data: logs } = useQuery({
     queryKey: ["attendance-all"],
-    queryFn: () => listAllAttendance(60),
+    queryFn: () => listAllAttendance(ATTENDANCE_LIMIT_KIOSK),
     enabled: !!profile,
   });
   const { data: students } = useQuery({
@@ -108,7 +112,7 @@ function AttendanceKiosk() {
   // Auto-dismiss the scan banner
   useEffect(() => {
     if (!lastScan) return;
-    const t = setTimeout(() => setLastScan(null), 4000);
+    const t = setTimeout(() => setLastScan(null), SCAN_BANNER_DISMISS_MS);
     return () => clearTimeout(t);
   }, [lastScan]);
 
