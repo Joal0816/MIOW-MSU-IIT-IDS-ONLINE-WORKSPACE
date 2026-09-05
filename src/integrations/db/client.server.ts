@@ -71,6 +71,11 @@ export function getPoolRaw(): Pool {
 
 import { storage as localStorage } from "./storage";
 
+// Storage backend: Supabase Storage when SUPABASE_URL is set (and no STORAGE_PATH override),
+// local filesystem otherwise. Set STORAGE_PATH to force local even on Supabase.
+const storageBackend =
+  USE_SUPABASE && !process.env["STORAGE_PATH"] ? getSupabase().storage : localStorage;
+
 interface DbError {
   code?: string;
   message?: string;
@@ -109,8 +114,8 @@ if (USE_SUPABASE) {
   _db = createPgCompatLayer();
 }
 
-export const db: DbLike & { storage: typeof localStorage } = Object.assign(_db, {
-  storage: localStorage,
+export const db: DbLike & { storage: typeof storageBackend } = Object.assign(_db, {
+  storage: storageBackend,
 });
 
 // supabaseAdmin is an alias for db (for routes that import it by name)

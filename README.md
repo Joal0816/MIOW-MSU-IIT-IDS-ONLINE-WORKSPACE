@@ -24,13 +24,21 @@ Open `http://127.0.0.1:3000` — you'll see the login page.
 
 ## Database Setup
 
-The app supports **two backends** — pick one:
+The app uses **Supabase** as its primary database backend.
 
-### Option A: Supabase (cloud)
+### Supabase (cloud)
 
 1. Create a project at [supabase.com](https://supabase.com)
-2. Run the SQL migrations in `supabase/migrations/` via the SQL Editor
-3. In `.env`, set:
+2. Link the Supabase CLI:
+   ```sh
+   supabase login
+   supabase link --project-ref tqohsptzgbftwrxtxcka
+   ```
+3. Push the schema:
+   ```sh
+   supabase db push
+   ```
+4. In `.env`, set:
    ```
    SUPABASE_URL=https://your-project.supabase.co
    SUPABASE_SERVICE_ROLE_KEY=eyJ...
@@ -38,15 +46,13 @@ The app supports **two backends** — pick one:
    VITE_SUPABASE_PUBLISHABLE_KEY=eyJ...
    ```
 
-### Option B: Local Postgres (self-hosted)
+### Local Postgres (development)
+
+For local development without Supabase:
 
 1. Run Postgres (Docker recommended):
    ```sh
-   docker run -d --name miow-postgres \
-     -e POSTGRES_USER=miow \
-     -e POSTGRES_PASSWORD=miow_dev_password \
-     -e POSTGRES_DB=miow \
-     -p 5432:5432 postgres:16-alpine
+   docker compose up -d
    ```
 2. Run migrations:
    ```sh
@@ -66,8 +72,8 @@ See `.env.example` for the full list. Required:
 | Variable | Description |
 |---|---|
 | `SESSION_SECRET` | HMAC key for session tokens (`openssl rand -hex 32`) |
-| `DATABASE_URL` | Postgres connection string (Option B) |
-| `SUPABASE_URL` + `SUPABASE_SERVICE_ROLE_KEY` | Supabase credentials (Option A) |
+| `SUPABASE_URL` + `SUPABASE_SERVICE_ROLE_KEY` | Supabase credentials |
+| `VITE_SUPABASE_URL` + `VITE_SUPABASE_PUBLISHABLE_KEY` | Supabase client-side credentials |
 
 ## Features
 
