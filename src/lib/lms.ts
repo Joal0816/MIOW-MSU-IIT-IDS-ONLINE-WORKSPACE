@@ -24,6 +24,7 @@ import {
   listGradesForCourseFn,
   listGradesForStudentFn,
   listQuizAttemptsFn,
+  listQuizScoresForCourseFn,
   listQuizzesFn,
   listStaffFn,
   listStudentsFn,
@@ -844,6 +845,16 @@ export async function resetQuizAttempts(quizId: string, studentId: string): Prom
   await resetQuizAttemptsFn({
     data: { quiz_id: quizId, student_id: studentId, token: sessionToken() },
   });
+}
+
+export type QuizCourseScore = {
+  quiz_id: string;
+  title: string;
+  scores: Record<string, { score: number; total: number }>;
+};
+
+export async function listQuizScoresForCourse(courseId: string): Promise<QuizCourseScore[]> {
+  return listQuizScoresForCourseFn({ data: { courseId, token: sessionToken() } });
 }
 
 export async function createQuizWithQuestions(

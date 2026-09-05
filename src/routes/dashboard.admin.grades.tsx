@@ -16,8 +16,18 @@ import {
   upsertGrade,
   weightedInitial,
   type AttendanceLog,
+  listQuizScoresForCourse,
+  type QuizCourseScore,
 } from "@/lib/lms";
-import { TEACHER_NAV, AppShell, Badge, Card, EmptyState, useProfile } from "@/components/lms";
+import {
+  TEACHER_NAV,
+  AppShell,
+  Badge,
+  Card,
+  EmptyState,
+  MotionCard,
+  useProfile,
+} from "@/components/lms";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/dashboard/admin/grades")({
@@ -94,6 +104,11 @@ function GradebookPage() {
   const { data: existing } = useQuery({
     queryKey: ["course-grades", courseId, quarter],
     queryFn: () => listGradesForCourse(courseId, quarter),
+    enabled: !!courseId,
+  });
+  const { data: quizScores } = useQuery({
+    queryKey: ["quiz-scores", courseId],
+    queryFn: () => listQuizScoresForCourse(courseId),
     enabled: !!courseId,
   });
 
@@ -367,6 +382,73 @@ function GradebookPage() {
             </tbody>
           </table>
         </Card>
+      )}
+
+      {/* ── Quiz Scores Section ───────────────────────────────────── */}
+      {courseId && visibleRoster.length > 0 && quizScores && quizScores.length > 0 && (
+        <div className="mt-8">
+          <h2 className="font-display text-lg font-bold mb-3">Quiz & Worksheet Scores</h2>
+          <p className="mb-4 text-xs text-muted-foreground">
+            Best score per student per worksheet. Use these scores to inform the Written Work (WW)
+            component above.
+          </p>
+          <Card className="overflow-x-auto">
+            <table className="w-full min-w-[600px] text-sm">
+              <thead>
+                <tr className="border-b border-border text-left text-xs uppercase tracking-wide text-muted-foreground">
+                  <th className="p-4">Student</th>
+                  {quizScores.map((q) => (
+                    <th
+                      key={q.quiz_id}
+                      className="p-4 text-center max-w-[140px] truncate"
+                      title={q.title}
+                    >
+                      {q.title}
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-border">
+                {visibleRoster.map((s) => (
+                  <tr key={s.id}>
+                    <td className="p-4">
+                      <p className="font-semibold">{s.full_name}</p>
+                      <p className="text-xs text-muted-foreground">{s.student_id}</p>
+                    </td>
+                    {quizScores.map((q) => {
+                      const score = q.scores[s.id];
+                      if (!score)
+                        return (
+                          <td key={q.quiz_id} className="p-4 text-center text-muted-foreground">
+                            —
+                          </td>
+                        );
+                      const pct =
+                        score.total > 0 ? Math.round((score.score / score.total) * 100) : 0;
+                      return (
+                        <td key={q.quiz_id} className="p-4 text-center">
+                          <span
+                            className={cn(
+                              "font-semibold",
+                              pct >= 90
+                                ? "text-emerald-600 dark:text-emerald-400"
+                                : pct >= 75
+                                  ? "text-amber-600 dark:text-amber-400"
+                                  : "text-rose-600 dark:text-rose-400",
+                            )}
+                          >
+                            {score.score}/{score.total}
+                          </span>
+                          <span className="ml-1 text-xs text-muted-foreground">({pct}%)</span>
+                        </td>
+                      );
+                    })}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </Card>
+        </div>
       )}
     </AppShell>
   );

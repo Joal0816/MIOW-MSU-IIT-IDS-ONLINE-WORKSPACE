@@ -472,3 +472,7 @@ export const updateAssignmentFn = createServerFn({ method: "POST" })
 export const deleteAssignmentFn = createServerFn({ method: "POST" })
   .validator((data) => server.schemas.contentDelete.parse(data))
   .handler(async ({ data }) => server.deleteAssignment(data.token, data.id, data.mode));
+
+export const listQuizScoresForCourseFn = createServerFn({ method: "POST" })
+  .validator((data) => server.schemas.courseScoped.parse(data))
+  .handler(async ({ data }) => server.listQuizScoresForCourse(data.courseId, data.token));
