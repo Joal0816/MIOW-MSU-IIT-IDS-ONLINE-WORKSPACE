@@ -1293,10 +1293,9 @@ function CoursesPage() {
                               course: `${course.code} — ${course.title}`,
                               title: quizForm.title.trim(),
                               sourceMaterial: text,
+                              autoMessage: `Generate ${quizForm.duration_minutes || 15} parser-ready multiple-choice and fill-in-the-blank questions based on the uploaded material for "${quizForm.title.trim()}". Follow the strict 4-section format with Answer Key.`,
                             });
-                            toast.success(
-                              "File loaded — ClassMate is ready to generate questions from it.",
-                            );
+                            toast.success("File loaded — ClassMate is generating questions now.");
                           } else {
                             toast.success(
                               "File loaded. Select a course and title, then click 'Generate with ClassMate'.",
@@ -1364,10 +1363,9 @@ function CoursesPage() {
                                 course: `${course.code} — ${course.title}`,
                                 title: quizForm.title.trim(),
                                 sourceMaterial: text,
+                                autoMessage: `Generate ${quizForm.duration_minutes || 15} parser-ready multiple-choice and fill-in-the-blank questions based on the uploaded material for "${quizForm.title.trim()}". Follow the strict 4-section format with Answer Key.`,
                               });
-                              toast.success(
-                                "File loaded — ClassMate is ready to generate questions from it.",
-                              );
+                              toast.success("File loaded — ClassMate is generating questions now.");
                             } else {
                               toast.success(
                                 "File loaded. Select a course and title, then click 'Generate with ClassMate'.",

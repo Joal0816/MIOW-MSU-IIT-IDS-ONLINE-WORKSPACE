@@ -153,16 +153,11 @@ function ChatPanel({
   // Auto-send message when opened from file upload (e.g. PDF/DOCX source material)
   const autoSentRef = useRef(false);
   useEffect(() => {
-    if (
-      assistCtx?.autoMessage &&
-      status === "ready" &&
-      !autoSentRef.current &&
-      messages.length === 0
-    ) {
+    if (assistCtx?.autoMessage && status === "ready" && !autoSentRef.current) {
       autoSentRef.current = true;
       sendMessage({ text: assistCtx.autoMessage });
     }
-  }, [assistCtx?.autoMessage, status, messages.length, sendMessage]);
+  }, [assistCtx?.autoMessage, status, sendMessage]);
 
   const busy = status === "submitted" || status === "streaming";
   const prompts = profile.role === "student" ? STUDENT_PROMPTS : STAFF_PROMPTS;
@@ -331,6 +326,9 @@ export function ChatWidget({ profile }: { profile: Profile }) {
         };
         if (typeof detail.sourceMaterial === "string" && detail.sourceMaterial) {
           ctx.sourceMaterial = detail.sourceMaterial.slice(0, 15000);
+        }
+        if (typeof detail.autoMessage === "string" && detail.autoMessage) {
+          ctx.autoMessage = detail.autoMessage;
         }
         setAssistCtx(ctx);
       }
