@@ -9,8 +9,11 @@
  */
 async function extractPdfText(file: File): Promise<string> {
   const pdfjsLib = await import("pdfjs-dist");
-  // Disable web worker — run on main thread. Fine for <10MB files.
-  pdfjsLib.GlobalWorkerOptions.workerSrc = "";
+  // Point to the worker module so the fake-worker (main-thread) fallback can import() it.
+  pdfjsLib.GlobalWorkerOptions.workerSrc = new URL(
+    "pdfjs-dist/build/pdf.worker.mjs",
+    import.meta.url,
+  ).href;
 
   const arrayBuffer = await file.arrayBuffer();
   const pdf = await pdfjsLib.getDocument({
