@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Download, Send } from "lucide-react";
+import { Download, Search, Send } from "lucide-react";
 import { toast } from "sonner";
 import { ATTENDANCE_LIMIT_GRADES } from "@/components/courses/constants";
 import {
@@ -81,6 +81,7 @@ function GradebookPage() {
   const [saving, setSaving] = useState(false);
   const [published, setPublished] = useState(false);
   const [gradeTab, setGradeTab] = useState<"grades" | "quizzes">("grades");
+  const [search, setSearch] = useState("");
 
   const course = useMemo(() => (courses ?? []).find((c) => c.id === courseId), [courses, courseId]);
 
@@ -145,7 +146,17 @@ function GradebookPage() {
   const sections = [
     ...new Set(roster.map((s) => s.section).filter((x): x is string => !!x)),
   ].sort();
-  const visibleRoster = section === "all" ? roster : roster.filter((s) => s.section === section);
+  const sectionRoster = section === "all" ? roster : roster.filter((s) => s.section === section);
+  const q = search.toLowerCase().trim();
+  const visibleRoster = q
+    ? sectionRoster.filter(
+        (s) =>
+          s.full_name.toLowerCase().includes(q) ||
+          (s.student_id ?? "").toLowerCase().includes(q) ||
+          (s.email ?? "").toLowerCase().includes(q) ||
+          (s.section ?? "").toLowerCase().includes(q),
+      )
+    : sectionRoster;
 
   const num = (v: string) => (v.trim() === "" ? null : Math.max(0, Math.min(100, Number(v))));
 
@@ -281,6 +292,23 @@ function GradebookPage() {
             ))}
           </select>
         )}
+        <div className="relative flex-1 min-w-[200px] max-w-xs">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <input
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Search name, student no., email or section..."
+            className="h-11 w-full rounded-xl border border-input bg-background pl-9 pr-3 text-sm outline-none focus:ring-2 focus:ring-ring"
+          />
+          {search && (
+            <button
+              onClick={() => setSearch("")}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+            >
+              ×
+            </button>
+          )}
+        </div>
         <div className="ml-auto flex gap-2">
           <button
             onClick={exportCsv}
