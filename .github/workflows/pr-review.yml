@@ -17,84 +17,23 @@ jobs:
           fetch-depth: 0
 
       - name: Get PR diff
-        id: diff
         run: |
-          DIFF=$(gh pr diff ${{ github.event.pull_request.number }} --repo ${{ github.repository }})
-          # Truncate to 12000 chars to fit in API context
-          DIFF=$(echo "$DIFF" | head -c 12000)
-          # Write to file to avoid shell escaping issues
-          echo "$DIFF" > /tmp/pr_diff.txt
-          echo "diff_file=/tmp/pr_diff.txt" >> $GITHUB_OUTPUT
+          gh pr diff ${{ github.event.pull_request.number }} --repo ${{ github.repository }} | head -c 12000 > /tmp/pr_diff.txt
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Review PR with AI
-        id: review
-        run: |
-          DIFF=$(cat /tmp/pr_diff.txt)
-          TITLE="${{ github.event.pull_request.title }}"
-          BODY="${{ github.event.pull_request.body }}"
-          AUTHOR="${{ github.event.pull_request.user.login }}"
-          URL="${{ github.event.pull_request.html_url }}"
-
-          PAYLOAD=$(python3 -c "
-          import json, sys
-          diff = open('/tmp/pr_diff.txt').read()
-          prompt = '''You are a senior code reviewer. Review this pull request and provide:
-1. **Summary** — What the PR does (1-2 sentences)
-2. **Issues** — Bugs, security problems, or code smells (if any)
-3. **Suggestions** — Improvements or best practices
-4. **Rating** — ✅ LGTM, ⚠️ Minor issues, or 🚨 Needs changes
-
-Be concise and actionable. Use emoji headers.
-
-PR: $TITLE
-Author: $AUTHOR
-URL: $URL
-
-Diff:
-''' + diff
-          print(json.dumps({'model': 'mimo-v2.5', 'messages': [{'role': 'user', 'content': prompt}], 'stream': False}))
-          ")
-
-          RESPONSE=$(curl -s -X POST "https://opencode.ai/zen/go/v1/chat/completions" \
-            -H "Content-Type: application/json" \
-            -H "Authorization: Bearer sk-Xk9C4aJzD3KfG7mNqPvR2tW5bY8dF0hL6oU1iE4sA7wZ3xB9cQ2jV5kM8nG0rT3uY6wA1dF4hJ7lP0s" \
-            -d "$PAYLOAD")
-
-          REVIEW=$(echo "$RESPONSE" | python3 -c "
-          import sys,json
-          try:
-              d = json.load(sys.stdin)
-              print(d['choices'][0]['message']['content'])
-          except:
-              print('Error generating review')
-          ")
-
-          # Write review to file
-          echo "$REVIEW" > /tmp/review.txt
+        run: python3 scripts/review-pr.py
+        env:
+          OPENCODE_API_KEY: ${{ secrets.OPENCODE_API_KEY }}
+          PR_TITLE: ${{ github.event.pull_request.title }}
+          PR_AUTHOR: ${{ github.event.pull_request.user.login }}
+          PR_URL: ${{ github.event.pull_request.html_url }}
 
       - name: Post review to Discord
-        run: |
-          REVIEW=$(cat /tmp/review.txt)
-          URL="${{ github.event.pull_request.html_url }}"
-          TITLE="${{ github.event.pull_request.title }}"
-          AUTHOR="${{ github.event.pull_request.user.login }}"
-
-          PAYLOAD=$(python3 -c "
-          import json, sys
-          review = open('/tmp/review.txt').read()
-          embed = {
-              'title': '📝 PR Review: $TITLE',
-              'url': '$URL',
-              'description': review[:4000],
-              'color': 5814783,
-              'author': {'name': '$AUTHOR'},
-              'footer': {'text': 'Hermes Agent • Auto Review'}
-          }
-          print(json.dumps({'embeds': [embed]}))
-          ")
-
-          curl -s -X POST "${{ secrets.DISCORD_WEBHOOK_URL }}" \
-            -H "Content-Type: application/json" \
-            -d "$PAYLOAD"
+        run: python3 scripts/post-review.py
+        env:
+          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+          PR_TITLE: ${{ github.event.pull_request.title }}
+          PR_AUTHOR: ${{ github.event.pull_request.user.login }}
+          PR_URL: ${{ github.event.pull_request.html_url }}
