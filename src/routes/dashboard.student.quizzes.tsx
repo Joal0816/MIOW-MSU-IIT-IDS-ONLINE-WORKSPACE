@@ -141,8 +141,12 @@ function QuizzesPage() {
     if (!activeId || result || !questions.length) return;
     try {
       // Answers are scored server-side; the server enforces the retake policy
-      // before recording the attempt.
-      const res = await submitQuizAnswers(activeId, answers);
+      // before recording the attempt. Pass question_ids for question bank scoring.
+      const res = await submitQuizAnswers(
+        activeId,
+        answers,
+        questions.map((q) => q.id),
+      );
       await queryClient.invalidateQueries({ queryKey: ["quiz-summaries"] });
       if (!res.ok) {
         toast.error(

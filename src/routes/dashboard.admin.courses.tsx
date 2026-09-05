@@ -145,6 +145,7 @@ function CoursesPage() {
     course_id: "",
     title: "",
     duration_minutes: "15",
+    question_count: "0",
     questions: "",
   });
   const [quizMode, setQuizMode] = useState<QuizMode>("classmate");
@@ -164,6 +165,7 @@ function CoursesPage() {
     ...EMPTY_POLICY,
     title: "",
     duration_minutes: "15",
+    question_count: "0",
     questions: "",
     score_released: false,
     answer_key_released: false,
@@ -393,6 +395,7 @@ function CoursesPage() {
         course_id: "",
         title: "",
         duration_minutes: "15",
+        question_count: "0",
         questions: "",
       });
       setManualQuestions([]);
@@ -437,6 +440,7 @@ function CoursesPage() {
       retake_score_policy: q.retake_score_policy,
       title: q.title,
       duration_minutes: String(q.duration_minutes),
+      question_count: String(q.question_count ?? 0),
       questions: "",
       score_released: !!q.score_released,
       answer_key_released: !!q.answer_key_released,
@@ -471,6 +475,7 @@ function CoursesPage() {
         {
           title: editQuizForm.title.trim(),
           duration_minutes: Math.max(1, parseInt(editQuizForm.duration_minutes) || 15),
+          question_count: parseInt(editQuizForm.question_count) || 0,
           ...policyPayload(editQuizForm),
           score_released: !!editQuizForm.score_released,
           answer_key_released: !!editQuizForm.answer_key_released,
@@ -1204,6 +1209,18 @@ function CoursesPage() {
             placeholder="Worksheet title *"
             className="h-11 rounded-xl border border-input bg-background px-3 text-sm outline-none focus:ring-2 focus:ring-ring"
           />
+          <div className="flex items-center gap-2">
+            <input
+              value={quizForm.question_count}
+              onChange={(e) => setQuizForm((f) => ({ ...f, question_count: e.target.value }))}
+              placeholder="Questions per student (0 = all)"
+              inputMode="numeric"
+              className="h-11 flex-1 rounded-xl border border-input bg-background px-3 text-sm outline-none focus:ring-2 focus:ring-ring"
+            />
+            <span className="text-[11px] text-muted-foreground whitespace-nowrap">
+              0 = show all
+            </span>
+          </div>
           <PolicyFields
             value={quizForm}
             onChange={(patch) => setQuizForm((f) => ({ ...f, ...patch }))}

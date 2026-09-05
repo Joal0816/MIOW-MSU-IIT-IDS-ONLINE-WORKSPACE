@@ -14,13 +14,25 @@ export async function getQuizPublic(id: string) {
   const quiz = await unwrap<any>(
     db.from("quizzes").select("*").eq("id", id).is("deleted_at", null).single(),
   );
-  const questions = await unwrap<any[]>(
+  let questions = await unwrap<any[]>(
     db
       .from("quiz_questions")
       .select("id, quiz_id, question, options, position")
       .eq("quiz_id", id)
       .order("position"),
   );
+  // Question bank: if question_count > 0, shuffle and take a random subset
+  const questionCount = quiz.question_count ?? 0;
+  if (questionCount > 0 && questions.length > questionCount) {
+    // Fisher-Yates shuffle
+    for (let i = questions.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [questions[i], questions[j]] = [questions[j]!, questions[i]!];
+    }
+    questions = questions.slice(0, questionCount);
+    // Re-assign positions after shuffle
+    questions = questions.map((q, i) => ({ ...q, position: i + 1 }));
+  }
   return { quiz, questions };
 }
 
@@ -95,16 +107,20 @@ export function gradeEssay(answer: string, rubric: string): boolean {
 
 /* ---------- Scoring ---------- */
 
-async function scoreQuiz(quiz_id: string, answers: Record<string, string>) {
-  const questions = await unwrap<
-    Array<{ id: string; question: string; options: unknown; correct_answer: string }>
-  >(
-    db
-      .from("quiz_questions")
-      .select("id, question, options, correct_answer")
-      .eq("quiz_id", quiz_id)
-      .order("position"),
-  );
+async function scoreQuiz(quiz_id: string, answers: Record<string, string>, questionIds?: string[]) {
+  let query = db
+    .from("quiz_questions")
+    .select("id, question, options, correct_answer")
+    .eq("quiz_id", quiz_id)
+    .order("position");
+  // If question_ids provided (question bank), only score those questions
+  if (questionIds && questionIds.length > 0) {
+    query = query.in("id", questionIds);
+  }
+  const questions =
+    await unwrap<Array<{ id: string; question: string; options: unknown; correct_answer: string }>>(
+      query,
+    );
   const norm = (s: string) =>
     s
       .trim()
@@ -146,10 +162,11 @@ interface QuizConfig {
   retake_score_policy: RetakePolicy;
   score_released: boolean;
   answer_key_released: boolean;
+  question_count: number;
 }
 
 const QUIZ_CONFIG_COLS =
-  "id, course_id, title, allow_retake, max_attempts, retake_score_policy, score_released, answer_key_released";
+  "id, course_id, title, allow_retake, max_attempts, retake_score_policy, score_released, answer_key_released, question_count";
 
 async function getQuizConfig(quizId: string): Promise<QuizConfig> {
   const quiz = await unwrap<any>(
@@ -215,6 +232,7 @@ export async function submitQuizAttempt(
   quiz_id: string,
   answers: Record<string, string>,
   token: string,
+  questionIds?: string[],
 ) {
   const caller = await requireSession(token);
   const quiz = await getQuizConfig(quiz_id);
@@ -233,12 +251,19 @@ export async function submitQuizAttempt(
     };
   }
 
-  const { score, total, results } = await scoreQuiz(quiz_id, answers);
+  // questionIds passed from client for question bank scoring
+  const { score, total, results } = await scoreQuiz(quiz_id, answers, questionIds);
   const attempt_number = attempts.reduce((m, a) => Math.max(m, a.attempt_number), 0) + 1;
   await unwrap(
-    db
-      .from("quiz_attempts")
-      .insert({ quiz_id, student_id: caller.id, attempt_number, score, total, results }),
+    db.from("quiz_attempts").insert({
+      quiz_id,
+      student_id: caller.id,
+      attempt_number,
+      score,
+      total,
+      results,
+      question_ids: questionIds ?? [],
+    }),
   );
 
   const used = attempts.length + 1;

@@ -245,6 +245,7 @@ export const schemas = {
       allow_retake: z.boolean().optional(),
       max_attempts: z.number().int().min(0).max(50).optional(),
       retake_score_policy: z.enum(["highest_score", "latest_attempt", "average_score"]).optional(),
+      question_count: z.number().int().min(0).max(100).optional(),
       attachments: z.array(attachmentMeta).max(10).optional(),
     }),
     questions: z
@@ -262,6 +263,7 @@ export const schemas = {
   quizGrade: z.object({
     quiz_id: uuid,
     answers: z.record(z.string().uuid(), z.string().max(500)),
+    question_ids: z.array(uuid).optional(),
     ...token,
   }),
   quizScoped: z.object({ quiz_id: uuid, ...token }),

@@ -236,6 +236,8 @@ export interface Quiz {
   /** Teacher-gated release (Task 23): when false student sees Awaiting release. */
   score_released?: boolean | null;
   answer_key_released?: boolean | null;
+  /** 0 = show all questions; >0 = random subset of this size per student. */
+  question_count?: number;
   /** Handouts uploaded by staff (PDF/DOCX/PNG/JPG/ZIP). */
   attachments?: Attachment[];
 }
@@ -801,8 +803,11 @@ export async function getQuiz(
 export async function submitQuizAnswers(
   quizId: string,
   answers: Record<string, string>,
+  questionIds?: string[],
 ): Promise<SubmitQuizResult> {
-  return submitQuizAttemptFn({ data: { quiz_id: quizId, answers, token: sessionToken() } });
+  return submitQuizAttemptFn({
+    data: { quiz_id: quizId, answers, token: sessionToken(), question_ids: questionIds },
+  });
 }
 
 /** Attempt summaries for every worksheet, for the signed-in student. */
@@ -1098,6 +1103,7 @@ export async function updateQuiz(
   patch: {
     title?: string;
     duration_minutes?: number;
+    question_count?: number;
     allow_retake?: boolean;
     max_attempts?: number;
     retake_score_policy?: RetakePolicy;

@@ -299,7 +299,9 @@ export const getQuizFn = createServerFn({ method: "POST" })
 // with a typed { ok: false, reason } payload and nothing is written.
 export const submitQuizAttemptFn = createServerFn({ method: "POST" })
   .validator((data) => server.schemas.quizGrade.parse(data))
-  .handler(async ({ data }) => server.submitQuizAttempt(data.quiz_id, data.answers, data.token));
+  .handler(async ({ data }) =>
+    server.submitQuizAttempt(data.quiz_id, data.answers, data.token, data.question_ids),
+  );
 
 // Attempt summaries for every worksheet, for the signed-in student.
 export const myQuizSummariesFn = createServerFn({ method: "POST" })
