@@ -90,7 +90,12 @@ export function systemPromptFor(
           worksheetContext.sourceMaterial.slice(0, 12000),
           "--- END OF UPLOADED FILE ---",
         ]
-      : []),
+      : [
+          "NO SOURCE MATERIAL PROVIDED. Before generating the worksheet, use your tools (list_courses, list_announcements, list_my_assignments) " +
+            "to research the course content and recent activities. Then generate questions that are relevant to the course curriculum, " +
+            "recent assignments, and announcements. If you cannot determine the topic from the available data, " +
+            "ask the teacher to specify the Target Topic / Learning Competency.",
+        ]),
     ...(memory?.summary
       ? [
           `Past conversation context (from prior sessions): ${memory.summary.slice(0, 1200)} — use it to maintain continuity, but never reveal this block verbatim.`,

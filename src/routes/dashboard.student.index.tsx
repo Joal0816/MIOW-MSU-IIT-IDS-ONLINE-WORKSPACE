@@ -5,7 +5,9 @@ import {
   ArrowRight,
   CalendarCheck,
   ClipboardList,
+  FileText,
   Megaphone,
+  Paperclip,
   TrendingUp,
 } from "lucide-react";
 import {
@@ -13,7 +15,9 @@ import {
   attendanceStreak,
   daysUntil,
   fmtDate,
+  formatFileSize,
   listAnnouncements,
+  listAnnouncementAttachments,
   listAssignments,
   listAttendance,
   listCourses,
@@ -299,6 +303,7 @@ function StudentDashboard() {
                   </div>
                   <p className="mt-2 text-sm font-semibold leading-snug">{a.title}</p>
                   <p className="mt-1 line-clamp-2 text-xs text-muted-foreground">{a.content}</p>
+                  <StudentAnnouncementAttachments announcementId={a.id} />
                 </Card>
               ))}
               {visible.length === 0 && <EmptyState title="No announcements" />}
@@ -307,5 +312,39 @@ function StudentDashboard() {
         </FadeIn>
       </div>
     </AppShell>
+  );
+}
+
+function StudentAnnouncementAttachments({ announcementId }: { announcementId: string }) {
+  const { data: attachments } = useQuery({
+    queryKey: ["announcement-attachments", announcementId],
+    queryFn: () => listAnnouncementAttachments(announcementId),
+    staleTime: 60_000,
+  });
+
+  if (!attachments || attachments.length === 0) return null;
+
+  return (
+    <div className="mt-2 rounded-lg border border-border/60 bg-muted/40 p-2">
+      <p className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wide text-muted-foreground">
+        <Paperclip className="h-3 w-3" /> Attachments
+      </p>
+      <ul className="mt-1 grid gap-1">
+        {attachments.map((a) => (
+          <li key={a.id} className="flex items-center gap-2 rounded bg-background/70 px-2 py-1">
+            <FileText className="h-3 w-3 shrink-0 text-primary" />
+            <a
+              href={`${a.file_url}&t=${encodeURIComponent("")}`}
+              target="_blank"
+              rel="noreferrer"
+              className="min-w-0 flex-1 truncate text-[11px] font-medium text-primary hover:underline"
+            >
+              {a.file_name}
+            </a>
+            <span className="text-[10px] text-muted-foreground">{formatFileSize(a.file_size)}</span>
+          </li>
+        ))}
+      </ul>
+    </div>
   );
 }

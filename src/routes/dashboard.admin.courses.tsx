@@ -16,7 +16,6 @@ import {
   Settings2,
   Sparkles,
   Trash2,
-  Upload,
   Users,
   X,
 } from "lucide-react";
@@ -65,7 +64,6 @@ import {
 } from "@/components/lms";
 import { parseWorksheet } from "@/lib/worksheet-parser";
 import { openWorksheetChat } from "@/lib/worksheet-context";
-import { openGooglePicker, exportDocAsText } from "@/lib/google-docs";
 import { COURSE_LEVELS, collegeYearOf, educationLevelOf, levelLabel } from "@/lib/course-levels";
 import { CED_PROGRAMS, CED_DEPARTMENT_LABELS } from "@/lib/ced-programs";
 import { cn } from "@/lib/utils";
@@ -296,7 +294,16 @@ function CoursesPage() {
       // Upload staged reference materials first so the row is created with metadata.
       const attachments: Attachment[] = [];
       for (let i = 0; i < assignFiles.length; i++) {
-        attachments.push(await uploadCourseMaterial(assignForm.course_id, assignFiles[i]!));
+        try {
+          attachments.push(await uploadCourseMaterial(assignForm.course_id, assignFiles[i]!));
+        } catch (e) {
+          toast.error(
+            `Failed to upload ${assignFiles[i]!.name}: ${e instanceof Error ? e.message : "Upload error"}`,
+          );
+          setSaving(false);
+          setAssignUploadPct(0);
+          return;
+        }
         setAssignUploadPct(Math.round(((i + 1) / assignFiles.length) * 100));
       }
       await createAssignment({
@@ -1261,7 +1268,7 @@ function CoursesPage() {
                     if (!file) return;
                     if (!/\.(txt|md)$/i.test(file.name)) {
                       toast.error(
-                        "Only .txt and .md files are supported. For DOCX/PDF, use 'Import from Google Docs' or paste the content.",
+                        "Only .txt and .md files are supported. You can also paste the content directly.",
                       );
                       return;
                     }
@@ -1298,7 +1305,7 @@ function CoursesPage() {
                     Drag & drop a file here, or click to browse
                   </p>
                   <p className="text-[11px] text-muted-foreground">
-                    Supports .txt, .md (Max 10MB). For DOCX/PDF, use Google Docs import below.
+                    Supports .txt, .md (Max 10MB) — optional, for source material context.
                   </p>
                   <input
                     type="file"
@@ -1323,39 +1330,9 @@ function CoursesPage() {
                   />
                 </label>
               )}
-              <div className="flex items-center gap-2">
-                <label className="text-xs font-semibold text-muted-foreground flex-1">
-                  Or paste questions &amp; answer key
-                </label>
-                <button
-                  type="button"
-                  onClick={() => {
-                    openGooglePicker(async (docIds) => {
-                      if (!docIds.length) return;
-                      toast.info(`Fetching doc ${docIds[0]}…`);
-                      try {
-                        const text = await exportDocAsText(docIds[0]!);
-                        if (text) {
-                          const { questions, dropped } = parseWorksheet(text);
-                          setQuizForm((f) => ({ ...f, questions: text }));
-                          toast.success(
-                            `Loaded ${questions.length} question(s) from Google Doc${dropped ? ` (${dropped} skipped)` : ""}`,
-                          );
-                        } else {
-                          toast.error(
-                            "Could not read the doc — check sharing permissions or try pasting instead.",
-                          );
-                        }
-                      } catch (e) {
-                        toast.error(e instanceof Error ? e.message : "Export failed");
-                      }
-                    });
-                  }}
-                  className="flex h-8 items-center gap-1 rounded-lg border border-border px-2.5 text-[11px] font-semibold hover:bg-muted"
-                >
-                  <Upload className="h-3 w-3" /> Import from Google Docs
-                </button>
-              </div>
+              <label className="text-xs font-semibold text-muted-foreground">
+                Or paste questions &amp; answer key
+              </label>
               <textarea
                 value={quizForm.questions}
                 onChange={(e) => setQuizForm((f) => ({ ...f, questions: e.target.value }))}
@@ -1367,7 +1344,6 @@ function CoursesPage() {
               />
               <button
                 type="button"
-                disabled={!quizFileName}
                 onClick={() => {
                   const course = (courses ?? []).find((c) => c.id === quizForm.course_id);
                   if (!course) {
@@ -1376,24 +1352,21 @@ function CoursesPage() {
                     );
                     return;
                   }
+                  if (!quizForm.title.trim()) {
+                    toast.error("Enter a worksheet title first.");
+                    return;
+                  }
                   openWorksheetChat({
                     course: `${course.code} — ${course.title}`,
                     title: quizForm.title.trim(),
                     ...(quizForm.questions ? { sourceMaterial: quizForm.questions } : {}),
                   });
-                  toast.success(
-                    "ClassMate has your file & course — tell it the topic and item count.",
-                  );
+                  toast.success("ClassMate is ready — tell it the topic and item count.");
                 }}
-                className={cn(
-                  "flex h-10 items-center justify-center gap-1.5 rounded-xl px-4 text-sm font-semibold transition",
-                  quizFileName
-                    ? "border border-primary/40 bg-primary/10 text-primary hover:bg-primary/15"
-                    : "cursor-not-allowed border border-border bg-muted/50 text-muted-foreground/50",
-                )}
+                className="flex h-10 items-center justify-center gap-1.5 rounded-xl border border-primary/40 bg-primary/10 px-4 text-sm font-semibold text-primary transition hover:bg-primary/15"
               >
                 <Sparkles className="h-4 w-4" />
-                {quizFileName ? "Generate from uploaded file" : "Upload a file first"}
+                Generate with ClassMate
               </button>
             </>
           )}
