@@ -1315,6 +1315,18 @@ function CoursesPage() {
                     onChange={(e) => {
                       const file = e.target.files?.[0];
                       if (!file) return;
+                      if (!/\.(txt|md)$/i.test(file.name)) {
+                        toast.error(
+                          "Only .txt and .md files are supported. You can also paste the content directly.",
+                        );
+                        e.target.value = "";
+                        return;
+                      }
+                      if (file.size > COURSE_MATERIAL_MAX_BYTES) {
+                        toast.error("File is too large (max 10MB).");
+                        e.target.value = "";
+                        return;
+                      }
                       file
                         .text()
                         .then((text) => {
