@@ -5,6 +5,7 @@ import {
   CheckCircle2,
   ChevronLeft,
   ChevronRight,
+  Paperclip,
   RotateCcw,
   ShieldCheck,
   Timer,
@@ -17,6 +18,7 @@ import {
   getQuiz,
   listCourses,
   listQuizzes,
+  materialHref,
   myQuizSummaries,
   submitQuizAnswers,
   type QuizQuestionPublic,
@@ -37,12 +39,12 @@ import { cn } from "@/lib/utils";
 export const Route = createFileRoute("/dashboard/student/quizzes")({
   head: () => ({
     meta: [
-      { title: "Worksheets | MIOW - MSU-IIT IDS Online Workspace" },
+      { title: "Worksheets | MIOW - Integrated Developmental School" },
       {
         name: "description",
         content: "Take timed worksheets and exams — scores appear after teacher release.",
       },
-      { property: "og:title", content: "Worksheets | MIOW - MSU-IIT IDS Online Workspace" },
+      { property: "og:title", content: "Worksheets | MIOW - Integrated Developmental School" },
       {
         property: "og:description",
         content: "Take timed worksheets and exams — scores appear after teacher release.",
@@ -203,6 +205,22 @@ function QuizzesPage() {
                     </>
                   )}
                 </p>
+                {(q.attachments ?? []).length > 0 && (
+                  <div className="mt-2 flex flex-wrap gap-1.5">
+                    {q.attachments!.map((a) => (
+                      <a
+                        key={a.path}
+                        href={materialHref(a)}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="flex items-center gap-1 rounded-lg border border-border/60 bg-muted/40 px-2 py-1 text-[11px] font-medium text-primary hover:underline"
+                      >
+                        <Paperclip className="h-3 w-3" />
+                        {a.name}
+                      </a>
+                    ))}
+                  </div>
+                )}
                 <button
                   onClick={() => setActiveId(q.id)}
                   disabled={!canTake}

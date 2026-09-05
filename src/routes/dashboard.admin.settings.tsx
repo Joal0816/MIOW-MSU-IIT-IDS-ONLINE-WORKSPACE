@@ -55,13 +55,13 @@ import { MiowLockup, MiowMark } from "@/components/brand";
 export const Route = createFileRoute("/dashboard/admin/settings")({
   head: () => ({
     meta: [
-      { title: "Admin Settings | MIOW - MSU-IIT IDS Online Workspace" },
+      { title: "Admin Settings | MIOW - Integrated Developmental School" },
       {
         name: "description",
         content:
           "Configure grading weights, kiosk hardware, role permissions, backups, and audit logs.",
       },
-      { property: "og:title", content: "Admin Settings | MIOW - MSU-IIT IDS Online Workspace" },
+      { property: "og:title", content: "Admin Settings | MIOW - Integrated Developmental School" },
       {
         property: "og:description",
         content:
@@ -531,7 +531,7 @@ function AdminSettings() {
                             MIOW
                           </p>
                           <p className="text-[8px] uppercase tracking-[0.18em] opacity-80">
-                            MSU-IIT IDS Online Workspace
+                            Integrated Developmental School
                           </p>
                         </div>
                       </div>

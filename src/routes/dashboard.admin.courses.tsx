@@ -92,9 +92,9 @@ import { MaterialManager } from "@/components/courses/material-manager";
 export const Route = createFileRoute("/dashboard/admin/courses")({
   head: () => ({
     meta: [
-      { title: "Courses | MIOW - MSU-IIT IDS Online Workspace" },
+      { title: "Courses | MIOW - Integrated Developmental School" },
       { name: "description", content: "Manage courses, assignments and worksheets." },
-      { property: "og:title", content: "Courses | MIOW - MSU-IIT IDS Online Workspace" },
+      { property: "og:title", content: "Courses | MIOW - Integrated Developmental School" },
       { property: "og:description", content: "Manage courses, assignments and worksheets." },
     ],
   }),

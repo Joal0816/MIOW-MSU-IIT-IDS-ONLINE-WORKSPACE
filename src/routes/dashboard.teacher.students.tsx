@@ -31,12 +31,12 @@ import {
 export const Route = createFileRoute("/dashboard/teacher/students")({
   head: () => ({
     meta: [
-      { title: "Students Info | MIOW - MSU-IIT IDS Online Workspace" },
+      { title: "Students Info | MIOW - Integrated Developmental School" },
       {
         name: "description",
         content: "Students in your courses — grades, attendance and sections.",
       },
-      { property: "og:title", content: "Students Info | MIOW - MSU-IIT IDS Online Workspace" },
+      { property: "og:title", content: "Students Info | MIOW - Integrated Developmental School" },
     ],
   }),
   component: TeacherStudentsPage,

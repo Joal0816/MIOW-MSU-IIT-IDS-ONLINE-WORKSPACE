@@ -30,13 +30,13 @@ import {
 export const Route = createFileRoute("/dashboard/admin/teachers")({
   head: () => ({
     meta: [
-      { title: "Teachers | MIOW - MSU-IIT IDS Online Workspace" },
+      { title: "Teachers | MIOW - Integrated Developmental School" },
       {
         name: "description",
         content:
           "Faculty directory: manage teacher accounts, departments, course loads and kiosk hardware enrollment.",
       },
-      { property: "og:title", content: "Teachers | MIOW - MSU-IIT IDS Online Workspace" },
+      { property: "og:title", content: "Teachers | MIOW - Integrated Developmental School" },
       {
         property: "og:description",
         content: "Manage faculty accounts, departments, course loads and kiosk credentials.",

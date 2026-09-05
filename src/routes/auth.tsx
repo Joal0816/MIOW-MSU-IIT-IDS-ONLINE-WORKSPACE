@@ -21,16 +21,16 @@ import { APP_TAGLINE } from "@/lib/brand";
 export const Route = createFileRoute("/auth")({
   head: () => ({
     meta: [
-      { title: "Sign In | MIOW - MSU-IIT IDS Online Workspace" },
+      { title: "Sign In | MIOW - Integrated Developmental School" },
       {
         name: "description",
         content:
-          "Secure sign-in kiosk for MSU-IIT IDS Online Workspace (MIOW). Tap your RFID ID card or use your student number and PIN.",
+          "Secure sign-in kiosk for Integrated Developmental School (MIOW). Tap your RFID ID card or use your student number and PIN.",
       },
-      { property: "og:title", content: "Sign In | MIOW - MSU-IIT IDS Online Workspace" },
+      { property: "og:title", content: "Sign In | MIOW - Integrated Developmental School" },
       {
         property: "og:description",
-        content: "RFID sign-in kiosk for MSU-IIT IDS Online Workspace (MIOW).",
+        content: "RFID sign-in kiosk for Integrated Developmental School (MIOW).",
       },
       { property: "og:image", content: "/og-cover.jpg" },
       { name: "twitter:image", content: "/og-cover.jpg" },
@@ -168,7 +168,7 @@ function AuthPage() {
           </div>
 
           <div className="rounded-2xl border border-border bg-card p-6 shadow-lift sm:p-8">
-            <h1 className="sr-only">Sign in to MSU-IIT IDS Online Workspace (MIOW)</h1>
+            <h1 className="sr-only">Sign in to Integrated Developmental School (MIOW)</h1>
             <MiowLockup size="lg" aria-hidden />
             <p className="mt-1 text-sm text-muted-foreground">
               Enter your ID/username and PIN to continue.
@@ -268,7 +268,7 @@ function AuthPage() {
             )}
           </div>
           <p className="mt-4 text-center text-xs text-muted-foreground">
-            MSU-IIT Integrated Development School
+            Integrated Developmental School
           </p>
         </div>
       </div>

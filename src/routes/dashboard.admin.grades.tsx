@@ -22,12 +22,12 @@ import { cn } from "@/lib/utils";
 export const Route = createFileRoute("/dashboard/admin/grades")({
   head: () => ({
     meta: [
-      { title: "Gradebook | MIOW - MSU-IIT IDS Online Workspace" },
+      { title: "Gradebook | MIOW - Integrated Developmental School" },
       {
         name: "description",
         content: "Encode quarterly grades with automatic DepEd transmutation.",
       },
-      { property: "og:title", content: "Gradebook | MIOW - MSU-IIT IDS Online Workspace" },
+      { property: "og:title", content: "Gradebook | MIOW - Integrated Developmental School" },
       {
         property: "og:description",
         content: "Encode quarterly grades with automatic DepEd transmutation.",

@@ -42,12 +42,12 @@ import { cn } from "@/lib/utils";
 export const Route = createFileRoute("/dashboard/admin/announcements")({
   head: () => ({
     meta: [
-      { title: "Announcements | MIOW - MSU-IIT IDS Online Workspace" },
+      { title: "Announcements | MIOW - Integrated Developmental School" },
       {
         name: "description",
         content: "Post school-wide announcements, events and urgent advisories.",
       },
-      { property: "og:title", content: "Announcements | MIOW - MSU-IIT IDS Online Workspace" },
+      { property: "og:title", content: "Announcements | MIOW - Integrated Developmental School" },
       {
         property: "og:description",
         content: "Post school-wide announcements, events and urgent advisories.",
@@ -157,7 +157,7 @@ function AnnouncementsPage() {
     setOpen(true);
     listAnnouncementAttachments(a.id)
       .then(setExistingAttachments)
-      .catch(() => {});
+      .catch(() => toast.error("Could not load existing attachments."));
   };
 
   const save = async () => {
@@ -221,6 +221,7 @@ function AnnouncementsPage() {
       setPendingFiles([]);
       setDragging(false);
       qc.invalidateQueries({ queryKey: ["announcements"] });
+      qc.invalidateQueries({ queryKey: ["announcement-attachments"] });
     } catch {
       toast.error(editing ? "Could not update announcement." : "Could not post announcement.");
     } finally {
@@ -546,12 +547,13 @@ function AnnouncementsPage() {
 }
 
 function AnnouncementAttachmentsSmall({ announcementId }: { announcementId: string }) {
-  const { data: attachments } = useQuery({
+  const { data: attachments, isError } = useQuery({
     queryKey: ["announcement-attachments", announcementId],
     queryFn: () => listAnnouncementAttachments(announcementId),
     staleTime: 60_000,
   });
 
+  if (isError) return null;
   if (!attachments || attachments.length === 0) return null;
 
   return (

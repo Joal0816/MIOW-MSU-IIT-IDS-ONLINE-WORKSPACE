@@ -36,9 +36,9 @@ import {
 export const Route = createFileRoute("/dashboard/admin/students")({
   head: () => ({
     meta: [
-      { title: "Students | MIOW - MSU-IIT IDS Online Workspace" },
+      { title: "Students | MIOW - Integrated Developmental School" },
       { name: "description", content: "Manage student records, RFID cards and sections." },
-      { property: "og:title", content: "Students | MIOW - MSU-IIT IDS Online Workspace" },
+      { property: "og:title", content: "Students | MIOW - Integrated Developmental School" },
       { property: "og:description", content: "Manage student records, RFID cards and sections." },
     ],
   }),

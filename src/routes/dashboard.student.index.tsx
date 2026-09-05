@@ -41,9 +41,9 @@ import {
 export const Route = createFileRoute("/dashboard/student/")({
   head: () => ({
     meta: [
-      { title: "Student Dashboard | MIOW - MSU-IIT IDS Online Workspace" },
+      { title: "Student Dashboard | MIOW - Integrated Developmental School" },
       { name: "description", content: "Your classes, grades, tasks and attendance at a glance." },
-      { property: "og:title", content: "Student Dashboard | MIOW - MSU-IIT IDS Online Workspace" },
+      { property: "og:title", content: "Student Dashboard | MIOW - Integrated Developmental School" },
       {
         property: "og:description",
         content: "Your classes, grades, tasks and attendance at a glance.",
@@ -316,12 +316,13 @@ function StudentDashboard() {
 }
 
 function StudentAnnouncementAttachments({ announcementId }: { announcementId: string }) {
-  const { data: attachments } = useQuery({
+  const { data: attachments, isError } = useQuery({
     queryKey: ["announcement-attachments", announcementId],
     queryFn: () => listAnnouncementAttachments(announcementId),
     staleTime: 60_000,
   });
 
+  if (isError) return null;
   if (!attachments || attachments.length === 0) return null;
 
   return (

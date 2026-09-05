@@ -32,13 +32,13 @@ import { cn } from "@/lib/utils";
 export const Route = createFileRoute("/dashboard/teacher/settings")({
   head: () => ({
     meta: [
-      { title: "Teacher Settings | MIOW - MSU-IIT IDS Online Workspace" },
+      { title: "Teacher Settings | MIOW - Integrated Developmental School" },
       {
         name: "description",
         content:
           "Faculty settings: profile and identity, keycard and face enrollment, and teaching defaults for attendance and worksheet retakes.",
       },
-      { property: "og:title", content: "Teacher Settings | MIOW - MSU-IIT IDS Online Workspace" },
+      { property: "og:title", content: "Teacher Settings | MIOW - Integrated Developmental School" },
       {
         property: "og:description",
         content: "Manage your faculty profile, kiosk credentials, and classroom defaults.",

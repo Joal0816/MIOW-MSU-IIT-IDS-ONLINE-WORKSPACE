@@ -31,9 +31,9 @@ import { cn } from "@/lib/utils";
 export const Route = createFileRoute("/dashboard/student/grades")({
   head: () => ({
     meta: [
-      { title: "My Grades | MIOW - MSU-IIT IDS Online Workspace" },
+      { title: "My Grades | MIOW - Integrated Developmental School" },
       { name: "description", content: "Quarterly grades with DepEd transmutation and remarks." },
-      { property: "og:title", content: "My Grades | MIOW - MSU-IIT IDS Online Workspace" },
+      { property: "og:title", content: "My Grades | MIOW - Integrated Developmental School" },
       {
         property: "og:description",
         content: "Quarterly grades with DepEd transmutation and remarks.",

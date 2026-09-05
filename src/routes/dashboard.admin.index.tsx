@@ -7,12 +7,12 @@ import { ADMIN_NAV, AppShell, Badge, Card, useProfile } from "@/components/lms";
 export const Route = createFileRoute("/dashboard/admin/")({
   head: () => ({
     meta: [
-      { title: "Admin Dashboard | MIOW - MSU-IIT IDS Online Workspace" },
+      { title: "Admin Dashboard | MIOW - Integrated Developmental School" },
       {
         name: "description",
         content: "Campus overview: students, courses, attendance and announcements.",
       },
-      { property: "og:title", content: "Admin Dashboard | MIOW - MSU-IIT IDS Online Workspace" },
+      { property: "og:title", content: "Admin Dashboard | MIOW - Integrated Developmental School" },
       {
         property: "og:description",
         content: "Campus overview: students, courses, attendance and announcements.",

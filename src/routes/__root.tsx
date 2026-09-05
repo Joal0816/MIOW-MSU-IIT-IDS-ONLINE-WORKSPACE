@@ -78,14 +78,14 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "MIOW - MSU-IIT IDS Online Workspace" },
+      { title: "MIOW - Integrated Developmental School" },
       {
         name: "description",
         content:
-          "MSU-IIT IDS Online Workspace (MIOW): RFID kiosk attendance, courses, timed worksheets, and DepEd-compliant grading for junior and senior high school.",
+          "Integrated Developmental School (MIOW): RFID kiosk attendance, courses, timed worksheets, and DepEd-compliant grading for junior and senior high school.",
       },
       { name: "author", content: "Joseph Vergara" },
-      { property: "og:title", content: "MIOW - MSU-IIT IDS Online Workspace" },
+      { property: "og:title", content: "MIOW - Integrated Developmental School" },
       {
         property: "og:description",
         content: "RFID kiosk attendance, courses, timed worksheets, and DepEd-compliant grading.",

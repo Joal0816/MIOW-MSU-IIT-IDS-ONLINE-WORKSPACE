@@ -34,12 +34,12 @@ import { MiowMark } from "@/components/brand";
 export const Route = createFileRoute("/dashboard/admin/attendance")({
   head: () => ({
     meta: [
-      { title: "Attendance Kiosk | MIOW - MSU-IIT IDS Online Workspace" },
+      { title: "Attendance Kiosk | MIOW - Integrated Developmental School" },
       {
         name: "description",
         content: "Gate kiosk: RFID tap-in/tap-out with live feed.",
       },
-      { property: "og:title", content: "Attendance Kiosk | MIOW - MSU-IIT IDS Online Workspace" },
+      { property: "og:title", content: "Attendance Kiosk | MIOW - Integrated Developmental School" },
       {
         property: "og:description",
         content: "Gate kiosk: RFID tap-in/tap-out with live feed.",
