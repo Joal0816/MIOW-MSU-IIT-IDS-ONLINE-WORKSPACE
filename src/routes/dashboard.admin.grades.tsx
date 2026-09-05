@@ -80,6 +80,7 @@ function GradebookPage() {
   const [cells, setCells] = useState<Record<string, CellState>>({});
   const [saving, setSaving] = useState(false);
   const [published, setPublished] = useState(false);
+  const [gradeTab, setGradeTab] = useState<"grades" | "quizzes">("grades");
 
   const course = useMemo(() => (courses ?? []).find((c) => c.id === courseId), [courses, courseId]);
 
@@ -111,8 +112,6 @@ function GradebookPage() {
     queryFn: () => listQuizScoresForCourse(courseId),
     enabled: !!courseId,
   });
-  if (quizScoresError) console.error("[gradebook] quizScores error:", quizScoresError);
-  if (quizScores) console.log("[gradebook] quizScores:", quizScores.length, "quizzes");
 
   useEffect(() => {
     if (!courses?.length && courseId) return;
@@ -300,166 +299,209 @@ function GradebookPage() {
         </div>
       </div>
 
-      {!courseId || visibleRoster.length === 0 ? (
-        <EmptyState
-          title="No students on this roster"
-          sub="Enroll students or pick another course or section."
-        />
-      ) : (
-        <Card className="overflow-x-auto">
-          <table className="w-full min-w-[760px] text-sm">
-            <thead>
-              <tr className="border-b border-border text-left text-xs uppercase tracking-wide text-muted-foreground">
-                <th className="p-4">Student</th>
-                <th className="p-4 text-center">Att (10%)</th>
-                <th className="p-4 text-center">WW (20%)</th>
-                <th className="p-4 text-center">PT (40%)</th>
-                <th className="p-4 text-center">Exam (30%)</th>
-                <th className="p-4 text-center">Initial</th>
-                <th className="p-4 text-center">Transmuted</th>
-                <th className="p-4">Remarks</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-border">
-              {visibleRoster.map((s) => {
-                const c = cells[s.id] ?? { ww: "", pt: "", ex: "" };
-                const p = preview(s.id);
-                const setCell = (k: keyof CellState) => (e: React.ChangeEvent<HTMLInputElement>) =>
-                  setCells((all) => ({
-                    ...all,
-                    [s.id]: { ...c, [k]: e.target.value.replace(/[^0-9.]/g, "") },
-                  }));
-                return (
-                  <tr key={s.id}>
-                    <td className="p-4">
-                      <div className="flex items-center gap-2.5">
-                        <img src={s.avatar_url ?? ""} alt="" className="h-8 w-8 rounded-full" />
-                        <div>
-                          <p className="font-semibold">{s.full_name}</p>
-                          <p className="text-xs text-muted-foreground">
-                            {s.student_id} · {s.section}
-                          </p>
-                        </div>
-                      </div>
-                    </td>
-                    <td className="p-4 text-center text-muted-foreground">{attOf(s.id) ?? "—"}</td>
-                    {(["ww", "pt", "ex"] as const).map((k) => (
-                      <td key={k} className="p-4 text-center">
-                        <input
-                          value={c[k]}
-                          onChange={setCell(k)}
-                          inputMode="decimal"
-                          placeholder="—"
-                          className="h-9 w-20 rounded-lg border border-input bg-background text-center text-sm outline-none focus:ring-2 focus:ring-ring"
-                        />
-                      </td>
-                    ))}
-                    <td className="p-4 text-center">{p ? p.initial.toFixed(1) : "—"}</td>
-                    <td className="p-4 text-center">
-                      <span
-                        className={cn(
-                          "font-display text-base font-bold",
-                          p && p.t < 75 && "text-rose-600 dark:text-rose-400",
-                        )}
-                      >
-                        {p ? p.t : "—"}
-                      </span>
-                    </td>
-                    <td className="p-4">
-                      {p ? (
-                        <Badge
-                          tone={
-                            p.t >= 90 ? "green" : p.t >= 80 ? "indigo" : p.t >= 75 ? "amber" : "red"
-                          }
-                        >
-                          {gradeRemarks(p.t)}
-                        </Badge>
-                      ) : (
-                        "—"
-                      )}
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </Card>
+      {/* ── Tab Switcher ─────────────────────────────────────────── */}
+      {courseId && (
+        <div className="flex gap-1 rounded-xl bg-muted p-1 mb-5 w-fit">
+          <button
+            onClick={() => setGradeTab("grades")}
+            className={cn(
+              "rounded-lg px-5 py-2 text-sm font-semibold transition",
+              gradeTab === "grades"
+                ? "bg-card shadow-sm text-foreground"
+                : "text-muted-foreground hover:text-foreground",
+            )}
+          >
+            Grades (WW / PT / Exam)
+          </button>
+          <button
+            onClick={() => setGradeTab("quizzes")}
+            className={cn(
+              "rounded-lg px-5 py-2 text-sm font-semibold transition",
+              gradeTab === "quizzes"
+                ? "bg-card shadow-sm text-foreground"
+                : "text-muted-foreground hover:text-foreground",
+            )}
+          >
+            Quiz Scores {quizScores && quizScores.length > 0 ? `(${quizScores.length})` : ""}
+          </button>
+        </div>
       )}
 
-      {/* ── Quiz Scores Section ───────────────────────────────────── */}
-      {courseId && visibleRoster.length > 0 && quizScores && (
-        <div className="mt-8">
-          <h2 className="font-display text-lg font-bold mb-3">Quiz & Worksheet Scores</h2>
-          <p className="mb-4 text-xs text-muted-foreground">
-            Best score per student per worksheet. Use these scores to inform the Written Work (WW)
-            component above.
-          </p>
-          <Card className="overflow-x-auto">
-            <table className="w-full min-w-[600px] text-sm">
-              <thead>
-                <tr className="border-b border-border text-left text-xs uppercase tracking-wide text-muted-foreground">
-                  <th className="p-4">Student</th>
-                  {quizScores.map((q) => (
-                    <th
-                      key={q.quiz_id}
-                      className="p-4 text-center max-w-[140px] truncate"
-                      title={q.title}
-                    >
-                      {q.title}
-                    </th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-border">
-                {quizScores.length === 0 && (
-                  <tr>
-                    <td
-                      colSpan={quizScores.length + 1}
-                      className="p-6 text-center text-muted-foreground"
-                    >
-                      No worksheets with submissions yet for this course.
-                    </td>
+      {/* ── Grades Tab ───────────────────────────────────────────── */}
+      {gradeTab === "grades" && (
+        <>
+          {!courseId || visibleRoster.length === 0 ? (
+            <EmptyState
+              title="No students on this roster"
+              sub="Enroll students or pick another course or section."
+            />
+          ) : (
+            <Card className="overflow-x-auto">
+              <table className="w-full min-w-[760px] text-sm">
+                <thead>
+                  <tr className="border-b border-border text-left text-xs uppercase tracking-wide text-muted-foreground">
+                    <th className="p-4">Student</th>
+                    <th className="p-4 text-center">Att (10%)</th>
+                    <th className="p-4 text-center">WW (20%)</th>
+                    <th className="p-4 text-center">PT (40%)</th>
+                    <th className="p-4 text-center">Exam (30%)</th>
+                    <th className="p-4 text-center">Initial</th>
+                    <th className="p-4 text-center">Transmuted</th>
+                    <th className="p-4">Remarks</th>
                   </tr>
-                )}
-                {visibleRoster.map((s) => (
-                  <tr key={s.id}>
-                    <td className="p-4">
-                      <p className="font-semibold">{s.full_name}</p>
-                      <p className="text-xs text-muted-foreground">{s.student_id}</p>
-                    </td>
-                    {quizScores.map((q) => {
-                      const score = q.scores[s.id];
-                      if (!score)
-                        return (
-                          <td key={q.quiz_id} className="p-4 text-center text-muted-foreground">
-                            —
+                </thead>
+                <tbody className="divide-y divide-border">
+                  {visibleRoster.map((s) => {
+                    const c = cells[s.id] ?? { ww: "", pt: "", ex: "" };
+                    const p = preview(s.id);
+                    const setCell =
+                      (k: keyof CellState) => (e: React.ChangeEvent<HTMLInputElement>) =>
+                        setCells((all) => ({
+                          ...all,
+                          [s.id]: { ...c, [k]: e.target.value.replace(/[^0-9.]/g, "") },
+                        }));
+                    return (
+                      <tr key={s.id}>
+                        <td className="p-4">
+                          <div className="flex items-center gap-2.5">
+                            <img src={s.avatar_url ?? ""} alt="" className="h-8 w-8 rounded-full" />
+                            <div>
+                              <p className="font-semibold">{s.full_name}</p>
+                              <p className="text-xs text-muted-foreground">
+                                {s.student_id} · {s.section}
+                              </p>
+                            </div>
+                          </div>
+                        </td>
+                        <td className="p-4 text-center text-muted-foreground">
+                          {attOf(s.id) ?? "—"}
+                        </td>
+                        {(["ww", "pt", "ex"] as const).map((k) => (
+                          <td key={k} className="p-4 text-center">
+                            <input
+                              value={c[k]}
+                              onChange={setCell(k)}
+                              inputMode="decimal"
+                              placeholder="—"
+                              className="h-9 w-20 rounded-lg border border-input bg-background text-center text-sm outline-none focus:ring-2 focus:ring-ring"
+                            />
                           </td>
-                        );
-                      const pct =
-                        score.total > 0 ? Math.round((score.score / score.total) * 100) : 0;
-                      return (
-                        <td key={q.quiz_id} className="p-4 text-center">
+                        ))}
+                        <td className="p-4 text-center">{p ? p.initial.toFixed(1) : "—"}</td>
+                        <td className="p-4 text-center">
                           <span
                             className={cn(
-                              "font-semibold",
-                              pct >= 90
-                                ? "text-emerald-600 dark:text-emerald-400"
-                                : pct >= 75
-                                  ? "text-amber-600 dark:text-amber-400"
-                                  : "text-rose-600 dark:text-rose-400",
+                              "font-display text-base font-bold",
+                              p && p.t < 75 && "text-rose-600 dark:text-rose-400",
                             )}
                           >
-                            {score.score}/{score.total}
+                            {p ? p.t : "—"}
                           </span>
-                          <span className="ml-1 text-xs text-muted-foreground">({pct}%)</span>
                         </td>
-                      );
-                    })}
+                        <td className="p-4">
+                          {p ? (
+                            <Badge
+                              tone={
+                                p.t >= 90
+                                  ? "green"
+                                  : p.t >= 80
+                                    ? "indigo"
+                                    : p.t >= 75
+                                      ? "amber"
+                                      : "red"
+                              }
+                            >
+                              {gradeRemarks(p.t)}
+                            </Badge>
+                          ) : (
+                            "—"
+                          )}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </Card>
+          )}
+        </>
+      )}
+
+      {/* ── Quiz Scores Tab ──────────────────────────────────────── */}
+      {gradeTab === "quizzes" && courseId && (
+        <div>
+          <p className="mb-4 text-xs text-muted-foreground">
+            Best score per student per worksheet. Use these to inform the Written Work (WW)
+            component in the Grades tab.
+          </p>
+          {!quizScores || quizScores.length === 0 ? (
+            <EmptyState
+              title="No worksheet scores yet"
+              sub="Students need to submit worksheets for scores to appear here."
+            />
+          ) : visibleRoster.length === 0 ? (
+            <EmptyState
+              title="No students on this roster"
+              sub="Enroll students or pick another course or section."
+            />
+          ) : (
+            <Card className="overflow-x-auto">
+              <table className="w-full min-w-[600px] text-sm">
+                <thead>
+                  <tr className="border-b border-border text-left text-xs uppercase tracking-wide text-muted-foreground">
+                    <th className="p-4 sticky left-0 bg-card z-10">Student</th>
+                    {quizScores.map((q) => (
+                      <th
+                        key={q.quiz_id}
+                        className="p-4 text-center max-w-[140px] truncate"
+                        title={q.title}
+                      >
+                        {q.title}
+                      </th>
+                    ))}
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </Card>
+                </thead>
+                <tbody className="divide-y divide-border">
+                  {visibleRoster.map((s) => (
+                    <tr key={s.id}>
+                      <td className="p-4 sticky left-0 bg-card z-10">
+                        <p className="font-semibold">{s.full_name}</p>
+                        <p className="text-xs text-muted-foreground">{s.student_id}</p>
+                      </td>
+                      {quizScores.map((q) => {
+                        const score = q.scores[s.id];
+                        if (!score)
+                          return (
+                            <td key={q.quiz_id} className="p-4 text-center text-muted-foreground">
+                              —
+                            </td>
+                          );
+                        const pct =
+                          score.total > 0 ? Math.round((score.score / score.total) * 100) : 0;
+                        return (
+                          <td key={q.quiz_id} className="p-4 text-center">
+                            <span
+                              className={cn(
+                                "font-semibold",
+                                pct >= 90
+                                  ? "text-emerald-600 dark:text-emerald-400"
+                                  : pct >= 75
+                                    ? "text-amber-600 dark:text-amber-400"
+                                    : "text-rose-600 dark:text-rose-400",
+                              )}
+                            >
+                              {score.score}/{score.total}
+                            </span>
+                            <span className="ml-1 text-xs text-muted-foreground">({pct}%)</span>
+                          </td>
+                        );
+                      })}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </Card>
+          )}
         </div>
       )}
     </AppShell>
