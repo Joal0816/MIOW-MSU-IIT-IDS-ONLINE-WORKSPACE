@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 // Announcements — CRUD + file attachments.
 import { createHmac } from "node:crypto";
+import { extname } from "node:path";
 import { z } from "zod";
 import { db } from "@/integrations/db/client.server";
 import { unwrap, withoutToken } from "@/lib/server/utils.server";
@@ -35,6 +36,15 @@ const EXT_MAP: Record<string, string> = {
   "image/jpeg": "jpg",
   "application/zip": "zip",
   "application/x-zip-compressed": "zip",
+};
+const EXT_TO_MIME: Record<string, string> = {
+  ".pdf": "application/pdf",
+  ".doc": "application/msword",
+  ".docx": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+  ".png": "image/png",
+  ".jpg": "image/jpeg",
+  ".jpeg": "image/jpeg",
+  ".zip": "application/zip",
 };
 const MAX_MATERIAL_BYTES = 25 * 1024 * 1024;
 
@@ -91,6 +101,11 @@ export async function uploadAnnouncementMaterial(
   content_type: string,
 ): Promise<AnnouncementAttachment> {
   await requireStaff(tokenStr);
+  if (!content_type || !EXT_MAP[content_type]) {
+    const fileExt = extname(name).toLowerCase();
+    const inferred = EXT_TO_MIME[fileExt];
+    if (inferred) content_type = inferred;
+  }
   const ext = EXT_MAP[content_type];
   if (!ext) throw new Error("Unsupported file type — use PDF, DOCX, PNG, JPG, or ZIP");
   const buffer = Buffer.from(base64, "base64");
