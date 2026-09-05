@@ -1281,9 +1281,28 @@ function CoursesPage() {
                         setQuizFileName(file.name);
                         setQuizForm((f) => ({ ...f, questions: text }));
                         const { questions, dropped } = parseWorksheet(text);
-                        toast.success(
-                          `Loaded ${questions.length} question(s) from file${dropped ? ` (${dropped} skipped)` : ""}`,
-                        );
+                        if (questions.length > 0) {
+                          toast.success(
+                            `Loaded ${questions.length} question(s) from file${dropped ? ` (${dropped} skipped)` : ""}`,
+                          );
+                        } else {
+                          // Raw content (e.g. PDF lecture material) — send to ClassMate for question generation
+                          const course = (courses ?? []).find((c) => c.id === quizForm.course_id);
+                          if (course && quizForm.title.trim()) {
+                            openWorksheetChat({
+                              course: `${course.code} — ${course.title}`,
+                              title: quizForm.title.trim(),
+                              sourceMaterial: text,
+                            });
+                            toast.success(
+                              "File loaded — ClassMate is ready to generate questions from it.",
+                            );
+                          } else {
+                            toast.success(
+                              "File loaded. Select a course and title, then click 'Generate with ClassMate'.",
+                            );
+                          }
+                        }
                       })
                       .catch((err) => {
                         console.error(err);
@@ -1334,9 +1353,27 @@ function CoursesPage() {
                           setQuizFileName(file.name);
                           setQuizForm((f) => ({ ...f, questions: text }));
                           const { questions, dropped } = parseWorksheet(text);
-                          toast.success(
-                            `Loaded ${questions.length} question(s)${dropped ? ` (${dropped} skipped)` : ""}`,
-                          );
+                          if (questions.length > 0) {
+                            toast.success(
+                              `Loaded ${questions.length} question(s)${dropped ? ` (${dropped} skipped)` : ""}`,
+                            );
+                          } else {
+                            const course = (courses ?? []).find((c) => c.id === quizForm.course_id);
+                            if (course && quizForm.title.trim()) {
+                              openWorksheetChat({
+                                course: `${course.code} — ${course.title}`,
+                                title: quizForm.title.trim(),
+                                sourceMaterial: text,
+                              });
+                              toast.success(
+                                "File loaded — ClassMate is ready to generate questions from it.",
+                              );
+                            } else {
+                              toast.success(
+                                "File loaded. Select a course and title, then click 'Generate with ClassMate'.",
+                              );
+                            }
+                          }
                         })
                         .catch((err) => {
                           console.error(err);
