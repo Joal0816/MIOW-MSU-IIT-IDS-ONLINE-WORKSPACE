@@ -12,6 +12,8 @@ export interface WorksheetAssistContext {
   title: string;
   /** Uploaded file content — AI generates questions based on this material. */
   sourceMaterial?: string;
+  /** If set, auto-send this message when the chat opens (e.g. from file upload). */
+  autoMessage?: string;
 }
 
 export const WORKSHEET_CHAT_EVENT = "ids:open-worksheet-chat";

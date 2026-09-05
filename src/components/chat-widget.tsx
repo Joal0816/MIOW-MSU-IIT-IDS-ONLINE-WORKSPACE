@@ -150,6 +150,20 @@ function ChatPanel({
     }
   }, [status]);
 
+  // Auto-send message when opened from file upload (e.g. PDF/DOCX source material)
+  const autoSentRef = useRef(false);
+  useEffect(() => {
+    if (
+      assistCtx?.autoMessage &&
+      status === "ready" &&
+      !autoSentRef.current &&
+      messages.length === 0
+    ) {
+      autoSentRef.current = true;
+      sendMessage({ text: assistCtx.autoMessage });
+    }
+  }, [assistCtx?.autoMessage, status, messages.length, sendMessage]);
+
   const busy = status === "submitted" || status === "streaming";
   const prompts = profile.role === "student" ? STUDENT_PROMPTS : STAFF_PROMPTS;
   const firstName = profile.full_name.split(" ")[0] ?? profile.full_name;
