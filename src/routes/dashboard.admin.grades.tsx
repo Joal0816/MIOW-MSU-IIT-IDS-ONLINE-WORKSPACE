@@ -106,11 +106,13 @@ function GradebookPage() {
     queryFn: () => listGradesForCourse(courseId, quarter),
     enabled: !!courseId,
   });
-  const { data: quizScores } = useQuery({
+  const { data: quizScores, error: quizScoresError } = useQuery({
     queryKey: ["quiz-scores", courseId],
     queryFn: () => listQuizScoresForCourse(courseId),
     enabled: !!courseId,
   });
+  if (quizScoresError) console.error("[gradebook] quizScores error:", quizScoresError);
+  if (quizScores) console.log("[gradebook] quizScores:", quizScores.length, "quizzes");
 
   useEffect(() => {
     if (!courses?.length && courseId) return;
