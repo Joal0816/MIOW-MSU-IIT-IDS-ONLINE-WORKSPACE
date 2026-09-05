@@ -272,7 +272,7 @@ export function AppShell({
           <MiowMark className="h-8 w-8 shrink-0 rounded-lg" />
           <div className="min-w-0">
             <p className="font-display text-sm font-extrabold tracking-[0.08em]">MIOW</p>
-            <p className="truncate text-[10px] text-muted-foreground">MSU-IIT IDS</p>
+            <p className="truncate text-[10px] text-muted-foreground">IDS</p>
           </div>
           <div className="ml-auto flex items-center gap-1">
             <ThemeToggle />

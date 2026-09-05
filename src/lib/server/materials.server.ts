@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 // Course materials — upload, attach, remove + worksheet/assignment edits.
 import { createHmac } from "node:crypto";
+import { extname } from "node:path";
 import { z } from "zod";
 import { db, supabaseAdmin } from "@/integrations/db/client.server";
 import { unwrap, withoutToken } from "@/lib/server/utils.server";
@@ -17,6 +18,15 @@ const MATERIAL_EXT: Record<string, string> = {
   "image/jpeg": "jpg",
   "application/zip": "zip",
   "application/x-zip-compressed": "zip",
+};
+const EXT_TO_MIME: Record<string, string> = {
+  ".pdf": "application/pdf",
+  ".doc": "application/msword",
+  ".docx": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+  ".png": "image/png",
+  ".jpg": "image/jpeg",
+  ".jpeg": "image/jpeg",
+  ".zip": "application/zip",
 };
 const MATERIAL_ALLOWED_MIMES = new Set([
   "image/png",
@@ -88,6 +98,11 @@ export async function uploadCourseMaterial(
   content_type: string,
 ) {
   const caller = await requireCourseOwnerOrAdmin(tokenStr, course_id);
+  if (!content_type || !MATERIAL_EXT[content_type]) {
+    const fileExt = extname(name).toLowerCase();
+    const inferred = EXT_TO_MIME[fileExt];
+    if (inferred) content_type = inferred;
+  }
   const ext = MATERIAL_EXT[content_type];
   if (!ext) throw new Error("Unsupported file type — use PDF, DOCX, PNG, JPG, or ZIP");
   const buffer = Buffer.from(base64, "base64");

@@ -44,12 +44,12 @@ import { cn } from "@/lib/utils";
 export const Route = createFileRoute("/dashboard/student/settings")({
   head: () => ({
     meta: [
-      { title: "Student Settings | MIOW - MSU-IIT IDS Online Workspace" },
+      { title: "Student Settings | MIOW - Integrated Developmental School" },
       {
         name: "description",
         content: "Manage your profile, RFID card, notifications, and accessibility preferences.",
       },
-      { property: "og:title", content: "Student Settings | MIOW - MSU-IIT IDS Online Workspace" },
+      { property: "og:title", content: "Student Settings | MIOW - Integrated Developmental School" },
       {
         property: "og:description",
         content: "Manage your profile, hardware, notifications, and accessibility preferences.",

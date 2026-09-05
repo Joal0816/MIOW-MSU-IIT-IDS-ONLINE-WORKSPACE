@@ -34,9 +34,9 @@ import { cn } from "@/lib/utils";
 export const Route = createFileRoute("/dashboard/student/assignments")({
   head: () => ({
     meta: [
-      { title: "Activities | MIOW - MSU-IIT IDS Online Workspace" },
+      { title: "Activities | MIOW - Integrated Developmental School" },
       { name: "description", content: "View and submit your activities and performance tasks." },
-      { property: "og:title", content: "Activities | MIOW - MSU-IIT IDS Online Workspace" },
+      { property: "og:title", content: "Activities | MIOW - Integrated Developmental School" },
       {
         property: "og:description",
         content: "View and submit your assignments and performance tasks.",

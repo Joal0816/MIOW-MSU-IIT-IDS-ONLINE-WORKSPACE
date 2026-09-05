@@ -20,7 +20,11 @@ import {
   formatFileSize,
   listAnnouncements,
   updateAnnouncement,
+  uploadAnnouncementMaterial,
+  removeAnnouncementMaterial,
+  listAnnouncementAttachments,
   type Announcement,
+  type AnnouncementAttachment,
 } from "@/lib/lms";
 import { notifyAnnouncement } from "@/lib/notifications";
 import {
@@ -38,12 +42,12 @@ import { cn } from "@/lib/utils";
 export const Route = createFileRoute("/dashboard/admin/announcements")({
   head: () => ({
     meta: [
-      { title: "Announcements | MIOW - MSU-IIT IDS Online Workspace" },
+      { title: "Announcements | MIOW - Integrated Developmental School" },
       {
         name: "description",
         content: "Post school-wide announcements, events and urgent advisories.",
       },
-      { property: "og:title", content: "Announcements | MIOW - MSU-IIT IDS Online Workspace" },
+      { property: "og:title", content: "Announcements | MIOW - Integrated Developmental School" },
       {
         property: "og:description",
         content: "Post school-wide announcements, events and urgent advisories.",
@@ -86,6 +90,8 @@ function AnnouncementsPage() {
   const [audience, setAudience] = useState<AudienceFilter>("all");
   const [dragging, setDragging] = useState(false);
   const [pendingFiles, setPendingFiles] = useState<File[]>([]);
+  const [existingAttachments, setExistingAttachments] = useState<AnnouncementAttachment[]>([]);
+  const [uploadingAttachments, setUploadingAttachments] = useState(false);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   const ACCEPTED = ".pdf,.doc,.docx,.png,.jpg,.jpeg,.zip";
@@ -146,8 +152,12 @@ function AnnouncementsPage() {
       pinned: a.pinned,
     });
     setPendingFiles([]);
+    setExistingAttachments([]);
     setDragging(false);
     setOpen(true);
+    listAnnouncementAttachments(a.id)
+      .then(setExistingAttachments)
+      .catch(() => toast.error("Could not load existing attachments."));
   };
 
   const save = async () => {
@@ -164,23 +174,46 @@ function AnnouncementsPage() {
           content: form.content,
           target_audience: form.target_audience,
         }).catch(() => {});
-        if (pendingFiles.length)
-          toast.success(
-            `Announcement updated — ${pendingFiles.length} file(s) queued for upload (UI only).`,
-          );
-        else toast.success("Announcement updated.");
+        if (pendingFiles.length) {
+          let uploaded = 0;
+          for (const file of pendingFiles) {
+            try {
+              await uploadAnnouncementMaterial(editing.id, file);
+              uploaded++;
+            } catch (e) {
+              toast.error(
+                `Failed to upload ${file.name}: ${e instanceof Error ? e.message : "Unknown error"}`,
+              );
+            }
+          }
+          if (uploaded > 0) toast.success(`Announcement updated — ${uploaded} file(s) uploaded.`);
+        } else {
+          toast.success("Announcement updated.");
+        }
       } else {
-        await createAnnouncement({ ...form, author_id: profile.id });
+        const id = await createAnnouncement({ ...form, author_id: profile.id });
         void notifyAnnouncement({
           title: form.title,
           content: form.content,
           target_audience: form.target_audience,
         }).catch(() => {});
-        if (pendingFiles.length)
-          toast.success(
-            `Announcement posted — ${pendingFiles.length} file(s) queued for upload (UI only).`,
-          );
-        else toast.success("Announcement posted.");
+        if (pendingFiles.length) {
+          let uploaded = 0;
+          for (const file of pendingFiles) {
+            try {
+              await uploadAnnouncementMaterial(id, file);
+              uploaded++;
+            } catch (e) {
+              toast.error(
+                `Failed to upload ${file.name}: ${e instanceof Error ? e.message : "Unknown error"}`,
+              );
+            }
+          }
+          if (uploaded > 0) toast.success(`Announcement posted — ${uploaded} file(s) uploaded.`);
+          else toast.success("Announcement posted.");
+        } else {
+          toast.success("Announcement posted.");
+        }
       }
       setOpen(false);
       setEditing(null);
@@ -188,6 +221,7 @@ function AnnouncementsPage() {
       setPendingFiles([]);
       setDragging(false);
       qc.invalidateQueries({ queryKey: ["announcements"] });
+      qc.invalidateQueries({ queryKey: ["announcement-attachments"] });
     } catch {
       toast.error(editing ? "Could not update announcement." : "Could not post announcement.");
     } finally {
@@ -292,6 +326,7 @@ function AnnouncementsPage() {
                   </div>
                   <p className="mt-2 font-semibold">{a.title}</p>
                   <p className="mt-1 text-sm text-muted-foreground">{a.content}</p>
+                  <AnnouncementAttachmentsSmall announcementId={a.id} />
                 </div>
                 <div className="flex shrink-0 gap-1">
                   <button
@@ -440,8 +475,52 @@ function AnnouncementsPage() {
           {pendingFiles.length > 0 && (
             <p className="flex items-center gap-1.5 text-xs text-muted-foreground">
               <Paperclip className="h-3.5 w-3.5" /> {pendingFiles.length} file(s) pending — will be
-              attached when announcement is posted
+              attached when announcement is saved
             </p>
+          )}
+          {existingAttachments.length > 0 && (
+            <div className="rounded-xl border border-border/60 bg-muted/40 p-3">
+              <p className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wide text-muted-foreground">
+                <Paperclip className="h-3.5 w-3.5" /> Attached files
+              </p>
+              <ul className="mt-2 grid gap-1.5">
+                {existingAttachments.map((a) => (
+                  <li
+                    key={a.id}
+                    className="flex items-center gap-2 rounded-lg bg-background/70 px-2.5 py-1.5"
+                  >
+                    <FileText className="h-3.5 w-3.5 shrink-0 text-primary" />
+                    <a
+                      href={`${a.file_url}&t=${encodeURIComponent("")}`}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="min-w-0 flex-1 truncate text-xs font-medium text-primary hover:underline"
+                    >
+                      {a.file_name}
+                    </a>
+                    <span className="text-[11px] text-muted-foreground">
+                      {formatFileSize(a.file_size)}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={async () => {
+                        try {
+                          await removeAnnouncementMaterial(a.id);
+                          setExistingAttachments((prev) => prev.filter((x) => x.id !== a.id));
+                          toast.success("File removed.");
+                        } catch (e) {
+                          toast.error(e instanceof Error ? e.message : "Could not remove file.");
+                        }
+                      }}
+                      aria-label={`Remove ${a.file_name}`}
+                      className="rounded-md p-1 text-muted-foreground hover:bg-rose-50 hover:text-rose-600 dark:hover:bg-rose-500/10"
+                    >
+                      <X className="h-3.5 w-3.5" />
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            </div>
           )}
           <label className="flex cursor-pointer items-center gap-2.5 rounded-xl border border-border bg-muted/50 px-4 py-3">
             <input
@@ -464,5 +543,33 @@ function AnnouncementsPage() {
         </button>
       </Modal>
     </AppShell>
+  );
+}
+
+function AnnouncementAttachmentsSmall({ announcementId }: { announcementId: string }) {
+  const { data: attachments, isError } = useQuery({
+    queryKey: ["announcement-attachments", announcementId],
+    queryFn: () => listAnnouncementAttachments(announcementId),
+    staleTime: 60_000,
+  });
+
+  if (isError) return null;
+  if (!attachments || attachments.length === 0) return null;
+
+  return (
+    <div className="mt-2 flex flex-wrap gap-1.5">
+      {attachments.map((a) => (
+        <a
+          key={a.id}
+          href={`${a.file_url}&t=${encodeURIComponent("")}`}
+          target="_blank"
+          rel="noreferrer"
+          className="flex items-center gap-1 rounded-lg border border-border/60 bg-muted/40 px-2 py-1 text-[11px] font-medium text-primary hover:underline"
+        >
+          <Paperclip className="h-3 w-3" />
+          {a.file_name}
+        </a>
+      ))}
+    </div>
   );
 }

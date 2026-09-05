@@ -46,7 +46,11 @@ export {
   createAnnouncement,
   updateAnnouncement,
   deleteAnnouncement,
+  listAnnouncementAttachments,
+  uploadAnnouncementMaterial,
+  removeAnnouncementAttachment,
 } from "./announcements.server";
+export type { AnnouncementAttachment } from "./announcements.server";
 
 export {
   listCourses,

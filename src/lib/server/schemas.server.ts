@@ -334,6 +334,17 @@ export const schemas = {
     ...token,
   }),
   contentDelete: z.object({ id: uuid, mode: z.enum(["soft", "hard"]), ...token }),
+  announcementMaterialUpload: z.object({
+    announcement_id: uuid,
+    name: z.string().min(1).max(200),
+    data: z.string().min(1).max(21_000_000),
+    content_type: z.string().min(3).max(200),
+    ...token,
+  }),
+  announcementMaterialRemove: z.object({
+    attachment_id: uuid,
+    ...token,
+  }),
   countable: z.object({
     table: z.enum([
       "profiles",

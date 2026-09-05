@@ -1,5 +1,5 @@
 /*
- * Settings persistence for MSU-IIT IDS Online Workspace (MIOW).
+ * Settings persistence for Integrated Developmental School (MIOW).
  * UI preferences, hardware/kiosk config, and the audit trail are kept in
  * localStorage (demo "mock persistent state"); real profile fields are
  * saved through the server API in lms.ts.

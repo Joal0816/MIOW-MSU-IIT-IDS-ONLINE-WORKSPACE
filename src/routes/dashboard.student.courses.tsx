@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { ArrowRight, BookOpen, ClipboardList, FileQuestion } from "lucide-react";
+import { ArrowRight, BookOpen, ClipboardList, FileQuestion, Paperclip } from "lucide-react";
 import {
   COMPONENT_LABELS,
   daysUntil,
@@ -10,6 +10,7 @@ import {
   listCourses,
   listQuizzes,
   listSubmissionsForStudent,
+  materialHref,
   myQuizSummaries,
   formatSchedule,
   type Assignment,
@@ -30,9 +31,9 @@ import { cn } from "@/lib/utils";
 export const Route = createFileRoute("/dashboard/student/courses")({
   head: () => ({
     meta: [
-      { title: "Courses | MIOW - MSU-IIT IDS Online Workspace" },
+      { title: "Courses | MIOW - Integrated Developmental School" },
       { name: "description", content: "View your enrolled courses, assignments and worksheets." },
-      { property: "og:title", content: "Courses | MIOW - MSU-IIT IDS Online Workspace" },
+      { property: "og:title", content: "Courses | MIOW - Integrated Developmental School" },
       {
         property: "og:description",
         content: "View your enrolled courses, assignments and worksheets.",
@@ -214,6 +215,22 @@ function StudentCoursesPage() {
                             : ` · Retakes allowed (up to ${q.max_attempts})`
                           : " · Single attempt"}
                       </p>
+                      {(q.attachments ?? []).length > 0 && (
+                        <div className="mt-1.5 flex flex-wrap gap-1">
+                          {q.attachments!.map((a) => (
+                            <a
+                              key={a.path}
+                              href={materialHref(a)}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="flex items-center gap-1 rounded-md border border-border/60 bg-muted/40 px-1.5 py-0.5 text-[10px] font-medium text-primary hover:underline"
+                            >
+                              <Paperclip className="h-2.5 w-2.5" />
+                              {a.name}
+                            </a>
+                          ))}
+                        </div>
+                      )}
                     </div>
                     {summary ? (
                       <Badge tone="green">
@@ -263,6 +280,22 @@ function StudentCoursesPage() {
                         {COMPONENT_LABELS[a.component_type]} · {a.total_points} pts
                         {a.due_date ? ` · due ${fmtDate(a.due_date)}` : ""}
                       </p>
+                      {(a.attachments ?? []).length > 0 && (
+                        <div className="mt-1.5 flex flex-wrap gap-1">
+                          {a.attachments!.map((att) => (
+                            <a
+                              key={att.path}
+                              href={materialHref(att)}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="flex items-center gap-1 rounded-md border border-border/60 bg-muted/40 px-1.5 py-0.5 text-[10px] font-medium text-primary hover:underline"
+                            >
+                              <Paperclip className="h-2.5 w-2.5" />
+                              {att.name}
+                            </a>
+                          ))}
+                        </div>
+                      )}
                     </div>
                     {status === "graded" && sub?.score != null ? (
                       <Badge tone="green">

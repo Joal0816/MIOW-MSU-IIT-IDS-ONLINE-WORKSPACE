@@ -9,8 +9,8 @@ import {
 import { describe, expect, it } from "bun:test";
 
 describe("MIOW brand retained — src/lib/brand.ts is single source of truth", () => {
-  it('APP_NAME is "MSU-IIT IDS ONLINE WORKSPACE (MIOW)"', () => {
-    expect(APP_NAME).toBe("MSU-IIT IDS ONLINE WORKSPACE (MIOW)");
+  it('APP_NAME is "INTEGRATED DEVELOPMENTAL SCHOOL ONLINE WORKSPACE (MIOW)"', () => {
+    expect(APP_NAME).toBe("INTEGRATED DEVELOPMENTAL SCHOOL ONLINE WORKSPACE (MIOW)");
   });
 
   it('APP_SHORT_NAME is "MIOW"', () => {
@@ -25,12 +25,12 @@ describe("MIOW brand retained — src/lib/brand.ts is single source of truth", (
     expect(BRAND_LOGO_SRC).toBe("/miow-logo.svg");
   });
 
-  it('APP_COMPACT_NAME is "MSU-IIT IDS"', () => {
-    expect(APP_COMPACT_NAME).toBe("MSU-IIT IDS");
+  it('APP_COMPACT_NAME is "IDS"', () => {
+    expect(APP_COMPACT_NAME).toBe("IDS");
   });
 
   it("APP_DESCRIPTOR does not contain G7-College brand leakage", () => {
-    expect(APP_DESCRIPTOR).toBe("MSU-IIT IDS ONLINE WORKSPACE");
+    expect(APP_DESCRIPTOR).toBe("INTEGRATED DEVELOPMENTAL SCHOOL ONLINE WORKSPACE");
     expect(APP_NAME).toMatch(/MIOW/);
     // ensure no accidental rebrand to G7-College
     expect(APP_NAME.includes("G7")).toBe(false);

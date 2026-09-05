@@ -23,12 +23,12 @@ import { cn } from "@/lib/utils";
 export const Route = createFileRoute("/dashboard/student/attendance")({
   head: () => ({
     meta: [
-      { title: "My Attendance | MIOW - MSU-IIT IDS Online Workspace" },
+      { title: "My Attendance | MIOW - Integrated Developmental School" },
       {
         name: "description",
         content: "Your RFID tap-in and tap-out history and attendance streak.",
       },
-      { property: "og:title", content: "My Attendance | MIOW - MSU-IIT IDS Online Workspace" },
+      { property: "og:title", content: "My Attendance | MIOW - Integrated Developmental School" },
       {
         property: "og:description",
         content: "Your RFID tap-in and tap-out history and attendance streak.",

@@ -53,6 +53,9 @@ import {
   uploadCourseMaterialFn,
   attachCourseMaterialFn,
   removeCourseMaterialFn,
+  uploadAnnouncementMaterialFn,
+  removeAnnouncementMaterialFn,
+  listAnnouncementAttachmentsFn,
   updateUserRoleFn,
   uploadAvatarFn,
   upsertGradeFn,
@@ -99,6 +102,16 @@ export interface Announcement {
   target_audience: string;
   author_id: string | null;
   pinned: boolean;
+  created_at: string;
+}
+
+export interface AnnouncementAttachment {
+  id: string;
+  announcement_id: string;
+  file_url: string;
+  file_name: string;
+  file_size: number;
+  mime: string;
   created_at: string;
 }
 
@@ -675,12 +688,15 @@ export async function listAnnouncements(): Promise<Announcement[]> {
   return listAnnouncementsFn();
 }
 
-export async function createAnnouncement(input: Partial<Announcement>): Promise<void> {
-  await createAnnouncementFn({ data: { ...(input as object), token: sessionToken() } as never });
+export async function createAnnouncement(input: Partial<Announcement>): Promise<string> {
+  const id = (await createAnnouncementFn({
+    data: { ...(input as object), token: sessionToken() } as never,
+  })) as string;
   logAudit(
     "Announcement broadcast",
     `"${input.title ?? "Untitled"}" posted to ${input.target_audience ?? "all"}`,
   );
+  return id;
 }
 
 export async function updateAnnouncement(id: string, patch: Partial<Announcement>): Promise<void> {
@@ -690,6 +706,36 @@ export async function updateAnnouncement(id: string, patch: Partial<Announcement
 
 export async function deleteAnnouncement(id: string): Promise<void> {
   await deleteAnnouncementFn({ data: { id, token: sessionToken() } });
+}
+
+export async function listAnnouncementAttachments(
+  announcementId: string,
+): Promise<AnnouncementAttachment[]> {
+  return listAnnouncementAttachmentsFn({
+    data: { id: announcementId, token: sessionToken() },
+  }) as Promise<AnnouncementAttachment[]>;
+}
+
+export async function uploadAnnouncementMaterial(
+  announcementId: string,
+  file: File,
+): Promise<AnnouncementAttachment> {
+  const data = await fileToBase64(file);
+  return uploadAnnouncementMaterialFn({
+    data: {
+      announcement_id: announcementId,
+      name: file.name,
+      data,
+      content_type: file.type || "application/octet-stream",
+      token: sessionToken(),
+    },
+  }) as Promise<AnnouncementAttachment>;
+}
+
+export async function removeAnnouncementMaterial(attachmentId: string): Promise<void> {
+  await removeAnnouncementMaterialFn({
+    data: { attachment_id: attachmentId, token: sessionToken() },
+  });
 }
 
 export async function listCourses(): Promise<Course[]> {

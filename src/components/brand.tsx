@@ -74,16 +74,16 @@ export function MiowWordmark({
             tone === "sidebar" ? "text-sidebar-foreground/60" : "text-muted-foreground",
           )}
         >
-          MSU-IIT{" "}
+          INTEGRATED{" "}
           <span
             className={cn(
               "font-bold",
               tone === "sidebar" ? "text-[#FFD700]" : "text-[#800000] dark:text-[#e8b4b4]",
             )}
           >
-            I&thinsp;D&thinsp;S
+            DEVELOPMENTAL
           </span>{" "}
-          ONLINE WORKSPACE
+          SCHOOL
         </p>
       )}
     </div>

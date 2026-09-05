@@ -171,6 +171,26 @@ export const deleteAnnouncementFn = createServerFn({ method: "POST" })
     return server.deleteAnnouncement(data.id);
   });
 
+export const uploadAnnouncementMaterialFn = createServerFn({ method: "POST" })
+  .inputValidator((data) => server.schemas.announcementMaterialUpload.parse(data))
+  .handler(async ({ data }) =>
+    server.uploadAnnouncementMaterial(
+      data.token,
+      data.announcement_id,
+      data.name,
+      data.data,
+      data.content_type,
+    ),
+  );
+
+export const removeAnnouncementMaterialFn = createServerFn({ method: "POST" })
+  .inputValidator((data) => server.schemas.announcementMaterialRemove.parse(data))
+  .handler(async ({ data }) => server.removeAnnouncementAttachment(data.token, data.attachment_id));
+
+export const listAnnouncementAttachmentsFn = createServerFn({ method: "POST" })
+  .inputValidator((data) => server.schemas.id.parse(data))
+  .handler(async ({ data }) => server.listAnnouncementAttachments(data.id));
+
 /* ---------- Courses, assignments, enrollments ---------- */
 
 export const listCoursesFn = createServerFn({ method: "POST" })

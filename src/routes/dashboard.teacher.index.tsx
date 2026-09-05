@@ -7,7 +7,7 @@ import { AppShell, Card, TEACHER_NAV, useProfile } from "@/components/lms";
 export const Route = createFileRoute("/dashboard/teacher/")({
   head: () => ({
     meta: [
-      { title: "Teacher Dashboard | MIOW - MSU-IIT IDS Online Workspace" },
+      { title: "Teacher Dashboard | MIOW - Integrated Developmental School" },
       {
         name: "description",
         content: "Teacher overview — your courses, students and announcements.",
