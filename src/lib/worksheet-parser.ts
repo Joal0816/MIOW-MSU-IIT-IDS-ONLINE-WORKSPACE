@@ -34,10 +34,18 @@ export interface ParsedQuestion {
   kind: ParsedQuestionKind;
 }
 
+export interface SkippedItem {
+  num: number;
+  question: string;
+  reason: string;
+}
+
 export interface ParseResult {
   questions: ParsedQuestion[];
   /** Items that looked like questions but were unusable (missing options or key). */
   dropped: number;
+  /** Detailed info about each skipped item. */
+  skipped: SkippedItem[];
 }
 
 /** Strip markdown decoration so copied chat output parses cleanly. */
@@ -366,22 +374,27 @@ export function parseWorksheet(text: string): ParseResult {
 
   // If the body omitted item numbers, pair answer-key entries with body items
   // in worksheet order. Explicitly numbered keys always take precedence.
+  // Only pair unnumbered keys when the count matches exactly.
+  // If counts don't match, pairing would silently shift answers to wrong questions.
   const orderedItemNumbers = [
     ...mcItems.map((item) => item.num),
     ...fillItems.map((item) => item.num),
     ...premises.map((item) => item.num),
     ...essayItems.map((item) => item.num),
   ];
-  let unnumberedIndex = 0;
-  for (const num of orderedItemNumbers) {
-    if (!keyByNum.has(num) && unnumberedKeys[unnumberedIndex]) {
-      keyByNum.set(num, unnumberedKeys[unnumberedIndex]!);
-      unnumberedIndex += 1;
+  if (unnumberedKeys.length > 0 && unnumberedKeys.length === orderedItemNumbers.length) {
+    let unnumberedIndex = 0;
+    for (const num of orderedItemNumbers) {
+      if (!keyByNum.has(num) && unnumberedKeys[unnumberedIndex]) {
+        keyByNum.set(num, unnumberedKeys[unnumberedIndex]!);
+        unnumberedIndex += 1;
+      }
     }
   }
 
   const questions: ParsedQuestion[] = [];
   let dropped = 0;
+  const skipped: SkippedItem[] = [];
   const letterIdx = (letter?: string) => (letter ? letter.toUpperCase().charCodeAt(0) - 65 : -1);
 
   for (const item of mcItems) {
@@ -395,7 +408,10 @@ export function parseWorksheet(text: string): ParseResult {
         correct_answer: correct ?? "(answer not in key — set manually)",
         kind: "mc",
       });
-    } else dropped += 1;
+    } else {
+      dropped += 1;
+      skipped.push({ num: item.num, question: item.stem.slice(0, 80), reason: "no matching answer key" });
+    }
   }
 
   for (const item of fillItems) {
@@ -422,7 +438,10 @@ export function parseWorksheet(text: string): ParseResult {
         correct_answer: correct ?? "(answer not in key — set manually)",
         kind: "matching",
       });
-    } else dropped += 1;
+    } else {
+      dropped += 1;
+      skipped.push({ num: premise.num, question: premise.text.slice(0, 80), reason: "not enough Column B options" });
+    }
   }
 
   for (const item of essayItems) {
@@ -448,9 +467,12 @@ export function parseWorksheet(text: string): ParseResult {
         .filter(Boolean);
       if (question && options.length >= 2 && correct) {
         questions.push({ question, options, correct_answer: correct, kind: "mc" });
-      } else if (question) dropped += 1;
+      } else if (question) {
+        dropped += 1;
+        skipped.push({ num: questions.length + dropped, question: (question ?? "").slice(0, 80), reason: "missing options or answer in legacy format" });
+      }
     }
   }
 
-  return { questions, dropped };
+  return { questions, dropped, skipped };
 }

@@ -114,11 +114,14 @@ export function systemPromptFor(
     "Section III: Matching Type — an 'Instructions:' line, then 'Column A:' with numbered premises continuing the same sequence, " +
       "then 'Column B:' with lettered options ('A. ', 'B. ', 'C. ', ...) including exactly one extra distractor that matches nothing.",
     "Section IV: Essay / Short Answer — an 'Instructions:' line, then each item as 'N. [prompt answerable in 2-3 complete sentences]'.",
-    "End the entire assessment with 'Answer Key:' listing every number: 'N. [Letter] - [brief explanation]' for multiple choice, " +
+    "CRITICAL — Answer Key Numbering: EVERY answer key entry MUST be prefixed with its item number (e.g. '1. B', '9. Photosynthesis'). " +
+      "Never output unnumbered answer key entries like just 'B' or 'C' — the parser requires item numbers to map answers to questions. " +
+      "End the entire assessment with 'Answer Key:' listing every number: 'N. [Letter] — [brief explanation]' for multiple choice, " +
       "'N. [Primary answer] (Acceptable: [Synonym 1], [Synonym 2])' for fill in the blank, 'N. [Letter]' for matching, and for essays " +
       "'N. Rubric/Key Points: PASS requires two elements: 1) [coherent explanation of the WHY/concept] AND 2) [identification of the " +
       "specific technique/evidence]. FAIL on gibberish, single-word, or incomplete responses. | Keywords: [category1] = k1, k2, k3; " +
-      "[category2] = k4, k5, k6'.",
+      "[category2] = k4, k5, k6'. " +
+      "If any item number is missing from the answer key, the worksheet will be rejected. Double-check that answer key entries cover ALL items.",
     // Auto-grader contract — essays are scored deterministically, not leniently
     "ESSAY AUTO-GRADER (strict, deterministic): every rubric you write MUST end with a '| Keywords: ...' block declaring at least " +
       "TWO keyword categories separated by semicolons (e.g. 'why = accessibility, mobile, user experience; technique = media queries, " +
@@ -175,7 +178,7 @@ export function buildChatTools(profile: ChatCaller): ToolSet {
       }),
       execute: async ({ limit }) => {
         const rows = await lms.listAnnouncements();
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
         return (rows as any[]).slice(0, limit ?? 5).map((a: any) => ({
           title: a.title,
           content: a.content,
@@ -224,7 +227,7 @@ export function buildChatTools(profile: ChatCaller): ToolSet {
           lms.listGradesForStudent(profile.id),
           courseMap(),
         ]);
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
         return (grades as any[]).map((g) => gradeRow(g, cmap));
       },
     }),
@@ -244,7 +247,6 @@ export function buildChatTools(profile: ChatCaller): ToolSet {
         const mine = all.filter((a) => courseIds.includes(a.course_id));
         let subs = new Map<string, any>();
         if (isStudent) {
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           const rows = (await lms.listSubmissionsForStudent(profile.id)) as any[];
           subs = new Map(rows.map((s) => [s.assignment_id, s]));
         }
@@ -287,7 +289,7 @@ export function buildChatTools(profile: ChatCaller): ToolSet {
           return {
             error: "Staff accounts should use get_student_attendance with a student id instead.",
           };
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
         const rows = (await lms.listAttendance(profile.id)) as any[];
         return rows.slice(0, limit ?? 20).map((l) => ({
           timestamp: l.timestamp,
@@ -304,7 +306,6 @@ export function buildChatTools(profile: ChatCaller): ToolSet {
         description: "List all students with their student number, grade level, and section.",
         inputSchema: z.object({}),
         execute: async () => {
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           const rows = (await lms.listStudents()) as any[];
           return rows.map((p) => ({
             id: p.id,
@@ -327,7 +328,7 @@ export function buildChatTools(profile: ChatCaller): ToolSet {
             lms.listGradesForStudent(student_id),
             courseMap(),
           ]);
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
           return (grades as any[]).map((g) => gradeRow(g, cmap));
         },
       }),
@@ -346,7 +347,6 @@ export function buildChatTools(profile: ChatCaller): ToolSet {
             .describe("Max log entries (default 20)."),
         }),
         execute: async ({ student_id, limit }) => {
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           const rows = (await lms.listAttendance(student_id)) as any[];
           return rows.slice(0, limit ?? 20).map((l) => ({
             timestamp: l.timestamp,
@@ -369,9 +369,9 @@ export function buildChatTools(profile: ChatCaller): ToolSet {
             courseMap(),
             lms.listStudents(),
           ]);
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
           const names = new Map((students as any[]).map((s) => [s.id, s.full_name]));
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
           const rows = (grades as any[]).map((g) => ({
             student: names.get(g.student_id) ?? "Unknown",
             final_grade_transmuted: g.transmuted_final_grade,

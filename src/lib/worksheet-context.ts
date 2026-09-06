@@ -18,6 +18,16 @@ export interface WorksheetAssistContext {
 
 export const WORKSHEET_CHAT_EVENT = "ids:open-worksheet-chat";
 
+/** Event dispatched by the chat widget when AI generates worksheet content. */
+export const WORKSHEET_CONTENT_EVENT = "ids:worksheet-content-generated";
+
+/** Dispatch worksheet content from chat → form for auto-fill. */
+export function pushWorksheetContent(text: string) {
+  window.dispatchEvent(
+    new CustomEvent<string>(WORKSHEET_CONTENT_EVENT, { detail: text }),
+  );
+}
+
 /** Open the chat widget scoped to the active Create Worksheet form. */
 export function openWorksheetChat(ctx: WorksheetAssistContext) {
   window.dispatchEvent(

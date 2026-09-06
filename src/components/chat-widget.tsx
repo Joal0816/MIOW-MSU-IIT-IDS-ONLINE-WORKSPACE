@@ -33,7 +33,7 @@ import {
 } from "@/components/ai-elements/tool";
 import { useAssessmentMode } from "@/lib/assessment-mode";
 import type { Profile } from "@/lib/lms";
-import { WORKSHEET_CHAT_EVENT, type WorksheetAssistContext } from "@/lib/worksheet-context";
+import { WORKSHEET_CHAT_EVENT, WORKSHEET_CONTENT_EVENT, type WorksheetAssistContext } from "@/lib/worksheet-context";
 
 const TOOL_LABELS: Record<string, string> = {
   list_announcements: "Reading announcements",
@@ -158,6 +158,22 @@ function ChatPanel({
       sendMessage({ text: assistCtx.autoMessage });
     }
   }, [assistCtx?.autoMessage, status, sendMessage]);
+
+  // Auto-fill: when the assistant generates a worksheet (has Section I: / Answer Key),
+  // push the content to the Create Worksheet form's textarea.
+  useEffect(() => {
+    if (status !== "ready" || !assistCtx) return;
+    const lastAssistant = [...messages].reverse().find((m) => m.role === "assistant");
+    if (!lastAssistant) return;
+    const text = lastAssistant.parts
+      .filter((p) => p.type === "text")
+      .map((p) => p.text)
+      .join("\n");
+    // Detect worksheet format: has "Section I:" or "Answer Key"
+    if (/section\s+i[\s:]/i.test(text) || /answer\s+key/i.test(text)) {
+      window.dispatchEvent(new CustomEvent(WORKSHEET_CONTENT_EVENT, { detail: text }));
+    }
+  }, [messages, status, assistCtx]);
 
   const busy = status === "submitted" || status === "streaming";
   const prompts = profile.role === "student" ? STUDENT_PROMPTS : STAFF_PROMPTS;

@@ -1,11 +1,11 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { CloudUpload, FileText, Plus, Sparkles, Trash2, X } from "lucide-react";
 import { type Course, createQuizWithQuestions } from "@/lib/lms";
 import { extractTextFromFile, isWorksheetAcceptedFile } from "@/lib/extract-text";
 import { parseWorksheet } from "@/lib/worksheet-parser";
-import { openWorksheetChat } from "@/lib/worksheet-context";
+import { openWorksheetChat, WORKSHEET_CONTENT_EVENT } from "@/lib/worksheet-context";
 import { Modal } from "@/components/lms";
 import { PolicyFields } from "@/components/courses/policy-fields";
 import {
@@ -41,6 +41,19 @@ export function CreateQuizModal({ open, onClose, courses, onSaved }: CreateQuizM
   const [quizFileDrag, setQuizFileDrag] = useState(false);
   const [quizFileName, setQuizFileName] = useState<string | null>(null);
 
+  // Auto-fill textarea when the chat widget pushes generated worksheet content.
+  useEffect(() => {
+    const onContent = (e: Event) => {
+      const text = (e as CustomEvent<string>).detail;
+      if (typeof text === "string" && text.trim()) {
+        setQuizForm((f) => ({ ...f, questions: text.trim() }));
+        setQuizMode("classmate");
+      }
+    };
+    window.addEventListener(WORKSHEET_CONTENT_EVENT, onContent);
+    return () => window.removeEventListener(WORKSHEET_CONTENT_EVENT, onContent);
+  }, []);
+
   const handleClose = () => {
     onClose();
     setQuizMode("classmate");
@@ -73,7 +86,7 @@ export function CreateQuizModal({ open, onClose, courses, onSaved }: CreateQuizM
               course: `${course.code} — ${course.title}`,
               title: quizForm.title.trim(),
               sourceMaterial: text,
-              autoMessage: `Generate ${quizForm.duration_minutes || 15} parser-ready multiple-choice and fill-in-the-blank questions based on the uploaded material for "${quizForm.title.trim()}". Follow the strict 4-section format with Answer Key.`,
+              autoMessage: `Generate ${quizForm.question_count || 10} parser-ready multiple-choice and fill-in-the-blank questions based on the uploaded material for "${quizForm.title.trim()}". Follow the strict 4-section format with Answer Key.`,
             });
             toast.success("File loaded — ClassMate is generating questions now.");
           } else {
@@ -119,8 +132,12 @@ export function CreateQuizModal({ open, onClose, courses, onSaved }: CreateQuizM
         return;
       }
       if (parsed.dropped > 0) {
+        const detail = parsed.skipped?.length
+          ? `\n${parsed.skipped.map((s) => `Q${s.num}: ${s.reason}`).join("; ")}`
+          : "";
         toast.warning(
-          `${parsed.dropped} item${parsed.dropped > 1 ? "s were" : " was"} skipped — check their numbering against the Answer Key.`,
+          `${parsed.dropped} item${parsed.dropped > 1 ? "s were" : " was"} skipped${detail ? ` — ${detail.slice(2)}` : ""}`,
+          { duration: 8000 },
         );
       }
       questions = parsed.questions;
@@ -174,13 +191,16 @@ export function CreateQuizModal({ open, onClose, courses, onSaved }: CreateQuizM
               </option>
             ))}
           </select>
-          <input
-            value={quizForm.duration_minutes}
-            onChange={(e) => setQuizForm((f) => ({ ...f, duration_minutes: e.target.value }))}
-            placeholder="Minutes"
-            inputMode="numeric"
-            className="h-11 rounded-xl border border-input bg-background px-3 text-sm outline-none focus:ring-2 focus:ring-ring"
-          />
+          <label className="flex flex-col gap-1">
+            <span className="text-[11px] font-semibold text-muted-foreground">Duration (min)</span>
+            <input
+              value={quizForm.duration_minutes}
+              onChange={(e) => setQuizForm((f) => ({ ...f, duration_minutes: e.target.value }))}
+              placeholder="15"
+              inputMode="numeric"
+              className="h-11 rounded-xl border border-input bg-background px-3 text-sm outline-none focus:ring-2 focus:ring-ring"
+            />
+          </label>
         </div>
         <input
           value={quizForm.title}
