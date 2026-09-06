@@ -54,7 +54,6 @@ export function CourseCardGrid({
               </div>
               <p className="mt-1.5 flex items-center gap-2 font-semibold leading-snug">
                 <span>{c.title}</span>
-                <Badge tone="indigo">{levelLabel(c.grade_level)}</Badge>
               </p>
               <p className="mt-1 text-xs text-muted-foreground">
                 {c.teacher_name ?? "No teacher assigned"}

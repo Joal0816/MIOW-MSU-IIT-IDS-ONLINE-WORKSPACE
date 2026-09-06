@@ -34,8 +34,8 @@ export const storage = {
             try {
               await fs.access(full);
               return { data: null, error: { message: "File already exists" } };
-            } catch (e) {
-              console.error("[storage]", e);
+            } catch {
+              // File doesn't exist — proceed with write
             }
           }
           const buf = Buffer.isBuffer(data) ? data : Buffer.from(data);
