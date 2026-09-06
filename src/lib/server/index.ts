@@ -85,6 +85,7 @@ export {
   gradeEssay,
   parseKeywordCategories,
   listQuizScoresForCourse,
+  getQuizAnswerKey,
 } from "./quizzes.server";
 
 export { listGradesForStudent, listGradesForCourse, upsertGrade } from "./grades.server";

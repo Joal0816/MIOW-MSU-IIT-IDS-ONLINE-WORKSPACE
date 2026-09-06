@@ -290,8 +290,9 @@ export const listQuizzesFn = createServerFn({ method: "POST" })
 export const getQuizFn = createServerFn({ method: "POST" })
   .validator((data) => server.schemas.id.parse(data))
   .handler(async ({ data }) => {
-    await server.requireSession(data.token);
-    return server.getQuizPublic(data.id);
+    const caller = await server.requireSession(data.token);
+    // Pass student_id for deterministic per-student randomization
+    return server.getQuizPublic(data.id, caller.role === "student" ? caller.id : undefined);
   });
 
 // Submit a worksheet attempt. The server enforces the worksheet's retake
@@ -339,6 +340,10 @@ export const grantQuizRetakeFn = createServerFn({ method: "POST" })
 export const resetQuizAttemptsFn = createServerFn({ method: "POST" })
   .validator((data) => server.schemas.retakeGrant.parse(data))
   .handler(async ({ data }) => server.resetQuizAttempts(data.quiz_id, data.student_id, data.token));
+
+export const quizAnswerKeyFn = createServerFn({ method: "POST" })
+  .validator((data) => server.schemas.quizScoped.parse(data))
+  .handler(async ({ data }) => server.getQuizAnswerKey(data.quiz_id, data.token));
 
 export const createQuizWithQuestionsFn = createServerFn({ method: "POST" })
   .validator((data) => server.schemas.quizBundle.parse(data))

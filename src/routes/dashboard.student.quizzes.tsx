@@ -358,7 +358,11 @@ function QuizzesPage() {
                         <XCircle className="mt-0.5 h-4 w-4 shrink-0 text-rose-500" />
                       )}
                       <p className="text-sm font-semibold">
-                        {i + 1}. {r.question}
+                        {i + 1}.{" "}
+                        <span className="text-xs text-muted-foreground font-mono">
+                          [{r.bank_id}]
+                        </span>{" "}
+                        {r.question}
                       </p>
                     </div>
                     {r.options.length === 0 ? (
@@ -487,7 +491,11 @@ function QuizzesPage() {
             {current && (
               <div>
                 <p className="mb-3 text-sm font-semibold">
-                  {idx + 1}. {current.question}
+                  {idx + 1}.{" "}
+                  <span className="ml-1 text-xs text-muted-foreground font-mono">
+                    [{current.bank_id}]
+                  </span>{" "}
+                  {current.question}
                 </p>
                 {current.options.length === 0 ? (
                   // Fill-in-the-blank and essay items have no options — free text.

@@ -35,6 +35,10 @@ import { Route as DashboardStudentGradesRouteImport } from './routes/dashboard.s
 import { Route as DashboardStudentQuizzesRouteImport } from './routes/dashboard.student.quizzes'
 import { Route as DashboardStudentSettingsRouteImport } from './routes/dashboard.student.settings'
 import { Route as DashboardTeacherIndexRouteImport } from './routes/dashboard.teacher.index'
+import { Route as DashboardTeacherAnnouncementsRouteImport } from './routes/dashboard.teacher.announcements'
+import { Route as DashboardTeacherAttendanceRouteImport } from './routes/dashboard.teacher.attendance'
+import { Route as DashboardTeacherCoursesRouteImport } from './routes/dashboard.teacher.courses'
+import { Route as DashboardTeacherGradesRouteImport } from './routes/dashboard.teacher.grades'
 import { Route as DashboardTeacherSettingsRouteImport } from './routes/dashboard.teacher.settings'
 import { Route as DashboardTeacherStudentsRouteImport } from './routes/dashboard.teacher.students'
 import { Route as ApiPublicHardwareAttendanceRouteImport } from './routes/api/public/hardware/attendance'
@@ -175,6 +179,28 @@ const DashboardTeacherIndexRoute = DashboardTeacherIndexRouteImport.update({
   path: '/',
   getParentRoute: () => DashboardTeacherRoute,
 } as any)
+const DashboardTeacherAnnouncementsRoute =
+  DashboardTeacherAnnouncementsRouteImport.update({
+    id: '/announcements',
+    path: '/announcements',
+    getParentRoute: () => DashboardTeacherRoute,
+  } as any)
+const DashboardTeacherAttendanceRoute =
+  DashboardTeacherAttendanceRouteImport.update({
+    id: '/attendance',
+    path: '/attendance',
+    getParentRoute: () => DashboardTeacherRoute,
+  } as any)
+const DashboardTeacherCoursesRoute = DashboardTeacherCoursesRouteImport.update({
+  id: '/courses',
+  path: '/courses',
+  getParentRoute: () => DashboardTeacherRoute,
+} as any)
+const DashboardTeacherGradesRoute = DashboardTeacherGradesRouteImport.update({
+  id: '/grades',
+  path: '/grades',
+  getParentRoute: () => DashboardTeacherRoute,
+} as any)
 const DashboardTeacherSettingsRoute =
   DashboardTeacherSettingsRouteImport.update({
     id: '/settings',
@@ -224,6 +250,10 @@ export interface FileRoutesByFullPath {
   '/dashboard/student/grades': typeof DashboardStudentGradesRoute
   '/dashboard/student/quizzes': typeof DashboardStudentQuizzesRoute
   '/dashboard/student/settings': typeof DashboardStudentSettingsRoute
+  '/dashboard/teacher/announcements': typeof DashboardTeacherAnnouncementsRoute
+  '/dashboard/teacher/attendance': typeof DashboardTeacherAttendanceRoute
+  '/dashboard/teacher/courses': typeof DashboardTeacherCoursesRoute
+  '/dashboard/teacher/grades': typeof DashboardTeacherGradesRoute
   '/dashboard/teacher/settings': typeof DashboardTeacherSettingsRoute
   '/dashboard/teacher/students': typeof DashboardTeacherStudentsRoute
   '/dashboard/admin/': typeof DashboardAdminIndexRoute
@@ -253,6 +283,10 @@ export interface FileRoutesByTo {
   '/dashboard/student/grades': typeof DashboardStudentGradesRoute
   '/dashboard/student/quizzes': typeof DashboardStudentQuizzesRoute
   '/dashboard/student/settings': typeof DashboardStudentSettingsRoute
+  '/dashboard/teacher/announcements': typeof DashboardTeacherAnnouncementsRoute
+  '/dashboard/teacher/attendance': typeof DashboardTeacherAttendanceRoute
+  '/dashboard/teacher/courses': typeof DashboardTeacherCoursesRoute
+  '/dashboard/teacher/grades': typeof DashboardTeacherGradesRoute
   '/dashboard/teacher/settings': typeof DashboardTeacherSettingsRoute
   '/dashboard/teacher/students': typeof DashboardTeacherStudentsRoute
   '/dashboard/admin': typeof DashboardAdminIndexRoute
@@ -286,6 +320,10 @@ export interface FileRoutesById {
   '/dashboard/student/grades': typeof DashboardStudentGradesRoute
   '/dashboard/student/quizzes': typeof DashboardStudentQuizzesRoute
   '/dashboard/student/settings': typeof DashboardStudentSettingsRoute
+  '/dashboard/teacher/announcements': typeof DashboardTeacherAnnouncementsRoute
+  '/dashboard/teacher/attendance': typeof DashboardTeacherAttendanceRoute
+  '/dashboard/teacher/courses': typeof DashboardTeacherCoursesRoute
+  '/dashboard/teacher/grades': typeof DashboardTeacherGradesRoute
   '/dashboard/teacher/settings': typeof DashboardTeacherSettingsRoute
   '/dashboard/teacher/students': typeof DashboardTeacherStudentsRoute
   '/dashboard/admin/': typeof DashboardAdminIndexRoute
@@ -320,6 +358,10 @@ export interface FileRouteTypes {
     | '/dashboard/student/grades'
     | '/dashboard/student/quizzes'
     | '/dashboard/student/settings'
+    | '/dashboard/teacher/announcements'
+    | '/dashboard/teacher/attendance'
+    | '/dashboard/teacher/courses'
+    | '/dashboard/teacher/grades'
     | '/dashboard/teacher/settings'
     | '/dashboard/teacher/students'
     | '/dashboard/admin/'
@@ -349,6 +391,10 @@ export interface FileRouteTypes {
     | '/dashboard/student/grades'
     | '/dashboard/student/quizzes'
     | '/dashboard/student/settings'
+    | '/dashboard/teacher/announcements'
+    | '/dashboard/teacher/attendance'
+    | '/dashboard/teacher/courses'
+    | '/dashboard/teacher/grades'
     | '/dashboard/teacher/settings'
     | '/dashboard/teacher/students'
     | '/dashboard/admin'
@@ -381,6 +427,10 @@ export interface FileRouteTypes {
     | '/dashboard/student/grades'
     | '/dashboard/student/quizzes'
     | '/dashboard/student/settings'
+    | '/dashboard/teacher/announcements'
+    | '/dashboard/teacher/attendance'
+    | '/dashboard/teacher/courses'
+    | '/dashboard/teacher/grades'
     | '/dashboard/teacher/settings'
     | '/dashboard/teacher/students'
     | '/dashboard/admin/'
@@ -589,6 +639,34 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DashboardTeacherIndexRouteImport
       parentRoute: typeof DashboardTeacherRoute
     }
+    '/dashboard/teacher/announcements': {
+      id: '/dashboard/teacher/announcements'
+      path: '/announcements'
+      fullPath: '/dashboard/teacher/announcements'
+      preLoaderRoute: typeof DashboardTeacherAnnouncementsRouteImport
+      parentRoute: typeof DashboardTeacherRoute
+    }
+    '/dashboard/teacher/attendance': {
+      id: '/dashboard/teacher/attendance'
+      path: '/attendance'
+      fullPath: '/dashboard/teacher/attendance'
+      preLoaderRoute: typeof DashboardTeacherAttendanceRouteImport
+      parentRoute: typeof DashboardTeacherRoute
+    }
+    '/dashboard/teacher/courses': {
+      id: '/dashboard/teacher/courses'
+      path: '/courses'
+      fullPath: '/dashboard/teacher/courses'
+      preLoaderRoute: typeof DashboardTeacherCoursesRouteImport
+      parentRoute: typeof DashboardTeacherRoute
+    }
+    '/dashboard/teacher/grades': {
+      id: '/dashboard/teacher/grades'
+      path: '/grades'
+      fullPath: '/dashboard/teacher/grades'
+      preLoaderRoute: typeof DashboardTeacherGradesRouteImport
+      parentRoute: typeof DashboardTeacherRoute
+    }
     '/dashboard/teacher/settings': {
       id: '/dashboard/teacher/settings'
       path: '/settings'
@@ -670,12 +748,20 @@ const DashboardStudentRouteWithChildren =
   DashboardStudentRoute._addFileChildren(DashboardStudentRouteChildren)
 
 interface DashboardTeacherRouteChildren {
+  DashboardTeacherAnnouncementsRoute: typeof DashboardTeacherAnnouncementsRoute
+  DashboardTeacherAttendanceRoute: typeof DashboardTeacherAttendanceRoute
+  DashboardTeacherCoursesRoute: typeof DashboardTeacherCoursesRoute
+  DashboardTeacherGradesRoute: typeof DashboardTeacherGradesRoute
   DashboardTeacherSettingsRoute: typeof DashboardTeacherSettingsRoute
   DashboardTeacherStudentsRoute: typeof DashboardTeacherStudentsRoute
   DashboardTeacherIndexRoute: typeof DashboardTeacherIndexRoute
 }
 
 const DashboardTeacherRouteChildren: DashboardTeacherRouteChildren = {
+  DashboardTeacherAnnouncementsRoute: DashboardTeacherAnnouncementsRoute,
+  DashboardTeacherAttendanceRoute: DashboardTeacherAttendanceRoute,
+  DashboardTeacherCoursesRoute: DashboardTeacherCoursesRoute,
+  DashboardTeacherGradesRoute: DashboardTeacherGradesRoute,
   DashboardTeacherSettingsRoute: DashboardTeacherSettingsRoute,
   DashboardTeacherStudentsRoute: DashboardTeacherStudentsRoute,
   DashboardTeacherIndexRoute: DashboardTeacherIndexRoute,

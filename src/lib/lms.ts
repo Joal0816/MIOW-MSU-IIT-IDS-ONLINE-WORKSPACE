@@ -36,6 +36,7 @@ import {
   logAttendanceFn,
   myQuizSummariesFn,
   quizAttemptInfoFn,
+  quizAnswerKeyFn,
   recordTapFn,
   refreshSessionFn,
   resetQuizAttemptsFn,
@@ -250,6 +251,7 @@ export interface QuizQuestion {
   options: string[];
   correct_answer: string;
   position: number;
+  bank_id: string;
 }
 
 /** Quiz question as served to students — the answer key stays on the server. */
@@ -284,6 +286,7 @@ export interface QuizResultItem {
   chosen: string | null;
   correct_answer: string;
   correct: boolean;
+  bank_id: string;
 }
 
 /** Attempt state for one worksheet, for the signed-in student. */
@@ -818,6 +821,19 @@ export async function myQuizSummaries(): Promise<QuizAttemptSummary[]> {
 
 export async function getQuizAttemptInfo(quizId: string): Promise<QuizAttemptInfo> {
   return quizAttemptInfoFn({ data: { quiz_id: quizId, token: sessionToken() } });
+}
+
+export type QuizAnswerKeyItem = {
+  bank_id: string;
+  position: number;
+  question: string;
+  correct_answer: string;
+  letter: string;
+  is_essay: boolean;
+};
+
+export async function getQuizAnswerKey(quizId: string): Promise<QuizAnswerKeyItem[]> {
+  return quizAnswerKeyFn({ data: { quiz_id: quizId, token: sessionToken() } });
 }
 
 /* ---------- Retake policy management (staff) ---------- */

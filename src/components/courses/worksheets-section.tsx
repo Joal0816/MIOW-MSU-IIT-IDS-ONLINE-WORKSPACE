@@ -1,4 +1,4 @@
-import { Settings2, Users, Pencil, Trash2 } from "lucide-react";
+import { Settings2, Users, Pencil, Trash2, Key } from "lucide-react";
 import { type Course, type Quiz } from "@/lib/lms";
 import { MotionCard, courseStyle } from "@/components/lms";
 import { POLICY_LABELS } from "@/components/courses/constants";
@@ -12,6 +12,7 @@ interface WorksheetsSectionProps {
   onEdit: (quiz: Quiz) => void;
   onRemove: (quiz: Quiz) => void;
   onRoster: (quiz: Quiz) => void;
+  onAnswerKey: (quiz: Quiz) => void;
 }
 
 export function WorksheetsSection({
@@ -21,6 +22,7 @@ export function WorksheetsSection({
   onEdit,
   onRemove,
   onRoster,
+  onAnswerKey,
 }: WorksheetsSectionProps) {
   return (
     <section className="mt-10">
@@ -60,6 +62,12 @@ export function WorksheetsSection({
                 className="flex h-9 items-center gap-1.5 rounded-lg bg-primary/10 px-3 text-xs font-semibold text-primary hover:bg-primary/15"
               >
                 <Users className="h-3.5 w-3.5" /> Attempts
+              </button>
+              <button
+                onClick={() => onAnswerKey(q)}
+                className="flex h-9 items-center gap-1.5 rounded-lg border border-border px-3 text-xs font-semibold hover:bg-muted"
+              >
+                <Key className="h-3.5 w-3.5" /> Answer Key
               </button>
               <button
                 onClick={() => onEdit(q)}

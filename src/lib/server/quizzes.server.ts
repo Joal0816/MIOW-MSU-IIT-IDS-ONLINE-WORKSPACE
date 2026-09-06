@@ -6,33 +6,82 @@ import { unwrap, withoutToken } from "@/lib/server/utils.server";
 import { requireSession, requireStaff } from "@/lib/server/auth.server";
 import { schemas } from "@/lib/server/schemas.server";
 
+/* ---------- Seeded PRNG for per-student randomization ---------- */
+
+/** Deterministic PRNG — mulberry32. Same seed always produces the same sequence. */
+function mulberry32(seed: number): () => number {
+  let s = seed | 0;
+  return () => {
+    s = (s + 0x6d2b79f5) | 0;
+    let t = Math.imul(s ^ (s >>> 15), 1 | s);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
+/** Hash a string into a 32-bit integer for use as a seed. */
+function hashSeed(str: string): number {
+  let hash = 0;
+  for (let i = 0; i < str.length; i++) {
+    hash = ((hash << 5) - hash + str.charCodeAt(i)) | 0;
+  }
+  return hash;
+}
+
+/** Seeded Fisher-Yates shuffle — produces the same permutation for the same seed. */
+function seededShuffle<T>(arr: T[], rng: () => number): T[] {
+  const result = [...arr];
+  for (let i = result.length - 1; i > 0; i--) {
+    const j = Math.floor(rng() * (i + 1));
+    [result[i], result[j]] = [result[j]!, result[i]!];
+  }
+  return result;
+}
+
 export async function listQuizzes() {
   return unwrap<any[]>(db.from("quizzes").select("*").is("deleted_at", null));
 }
 
-export async function getQuizPublic(id: string) {
+export async function getQuizPublic(id: string, studentId?: string) {
   const quiz = await unwrap<any>(
     db.from("quizzes").select("*").eq("id", id).is("deleted_at", null).single(),
   );
   let questions = await unwrap<any[]>(
     db
       .from("quiz_questions")
-      .select("id, quiz_id, question, options, position")
+      .select("id, quiz_id, question, options, position, bank_id")
       .eq("quiz_id", id)
       .order("position"),
   );
-  // Question bank: if question_count > 0, shuffle and take a random subset
+  // Question bank: if question_count > 0, take a deterministic random subset
   const questionCount = quiz.question_count ?? 0;
   if (questionCount > 0 && questions.length > questionCount) {
-    // Fisher-Yates shuffle
-    for (let i = questions.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [questions[i], questions[j]] = [questions[j]!, questions[i]!];
-    }
-    questions = questions.slice(0, questionCount);
-    // Re-assign positions after shuffle
+    // Deterministic subset: seed = hash(studentId:quizId) so same student always gets same subset
+    const seed = studentId
+      ? hashSeed(`${studentId}:${id}`)
+      : Math.floor(Math.random() * 2147483647);
+    const rng = mulberry32(seed);
+
+    // Shuffle all questions, then take the first N
+    questions = seededShuffle(questions, rng).slice(0, questionCount);
+    // Re-assign display positions (1-indexed) for the student's view
     questions = questions.map((q, i) => ({ ...q, position: i + 1 }));
   }
+
+  // Shuffle choices for MC questions (deterministic per student+quiz)
+  if (studentId) {
+    const choiceSeed = hashSeed(`choices:${studentId}:${id}`);
+    const choiceRng = mulberry32(choiceSeed);
+
+    questions = questions.map((q) => {
+      const options = (Array.isArray(q.options) ? q.options : []) as string[];
+      if (options.length > 1) {
+        return { ...q, options: seededShuffle(options, choiceRng) };
+      }
+      return q;
+    });
+  }
+
   return { quiz, questions };
 }
 
@@ -110,17 +159,22 @@ export function gradeEssay(answer: string, rubric: string): boolean {
 async function scoreQuiz(quiz_id: string, answers: Record<string, string>, questionIds?: string[]) {
   let query = db
     .from("quiz_questions")
-    .select("id, question, options, correct_answer")
+    .select("id, question, options, correct_answer, bank_id")
     .eq("quiz_id", quiz_id)
     .order("position");
   // If question_ids provided (question bank), only score those questions
   if (questionIds && questionIds.length > 0) {
     query = query.in("id", questionIds);
   }
-  const questions =
-    await unwrap<Array<{ id: string; question: string; options: unknown; correct_answer: string }>>(
-      query,
-    );
+  const questions = await unwrap<
+    Array<{
+      id: string;
+      question: string;
+      options: unknown;
+      correct_answer: string;
+      bank_id: string;
+    }>
+  >(query);
   const norm = (s: string) =>
     s
       .trim()
@@ -143,6 +197,7 @@ async function scoreQuiz(quiz_id: string, answers: Record<string, string>, quest
       chosen,
       correct_answer: key,
       correct,
+      bank_id: q.bank_id as string,
     };
   });
   const score = results.filter((r) => r.correct).length;
@@ -489,9 +544,14 @@ export async function createQuizWithQuestions(
 ) {
   const created = await unwrap<any>(db.from("quizzes").insert(quiz).select().single());
   await unwrap(
-    db
-      .from("quiz_questions")
-      .insert(questions.map((q, i) => ({ ...q, quiz_id: created.id, position: i + 1 }))),
+    db.from("quiz_questions").insert(
+      questions.map((q, i) => ({
+        ...q,
+        quiz_id: created.id,
+        position: i + 1,
+        bank_id: `QB_${String(i + 1).padStart(3, "0")}`,
+      })),
+    ),
   );
 }
 
@@ -547,9 +607,14 @@ export async function updateQuiz(
     await unwrap(db.from("quiz_attempts").delete().eq("quiz_id", id));
     await unwrap(db.from("quiz_questions").delete().eq("quiz_id", id));
     await unwrap(
-      db
-        .from("quiz_questions")
-        .insert(questions.map((q, i) => ({ ...q, quiz_id: id, position: i + 1 }))),
+      db.from("quiz_questions").insert(
+        questions.map((q, i) => ({
+          ...q,
+          quiz_id: id,
+          position: i + 1,
+          bank_id: `QB_${String(i + 1).padStart(3, "0")}`,
+        })),
+      ),
     );
   }
 }
@@ -583,4 +648,39 @@ export async function deleteQuiz(tokenStr: string, id: string, mode: "soft" | "h
     }
   }
   return { mode };
+}
+
+/* ---------- Answer Key ---------- */
+
+export async function getQuizAnswerKey(quizId: string, token: string) {
+  await requireQuizOwnerOrAdmin(token, quizId);
+
+  const questions = await unwrap<any[]>(
+    db
+      .from("quiz_questions")
+      .select("id, question, options, correct_answer, position, bank_id")
+      .eq("quiz_id", quizId)
+      .order("position"),
+  );
+
+  return questions.map((q) => {
+    const options = (Array.isArray(q.options) ? q.options : []) as string[];
+    const correctAnswer = q.correct_answer as string;
+
+    // For MC: find which letter corresponds to the correct answer
+    let letter = "";
+    if (options.length > 0) {
+      const idx = options.indexOf(correctAnswer);
+      letter = idx >= 0 ? String.fromCharCode(65 + idx) : "?";
+    }
+
+    return {
+      bank_id: q.bank_id as string,
+      position: q.position as number,
+      question: q.question as string,
+      correct_answer: correctAnswer,
+      letter, // A, B, C, D for MC
+      is_essay: options.length === 0 && correctAnswer.startsWith("Rubric:"),
+    };
+  });
 }

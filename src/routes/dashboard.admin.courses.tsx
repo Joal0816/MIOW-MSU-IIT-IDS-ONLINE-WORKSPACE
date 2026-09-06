@@ -29,6 +29,7 @@ import { CreateQuizModal } from "@/components/courses/create-quiz-modal";
 import { EditQuizModal } from "@/components/courses/edit-quiz-modal";
 import { EditAssignmentModal } from "@/components/courses/edit-assignment-modal";
 import { ConfirmRemoveModal } from "@/components/courses/confirm-remove-modal";
+import { AnswerKeyModal } from "@/components/courses/answer-key-modal";
 
 export const Route = createFileRoute("/dashboard/admin/courses")({
   head: () => ({
@@ -72,6 +73,7 @@ export function CoursesPage() {
   const [policyForm, setPolicyForm] = useState(EMPTY_POLICY);
   const [rosterQuiz, setRosterQuiz] = useState<Quiz | null>(null);
   const [editQuiz, setEditQuiz] = useState<Quiz | null>(null);
+  const [answerKeyQuiz, setAnswerKeyQuiz] = useState<Quiz | null>(null);
   const [editAssign, setEditAssign] = useState<Assignment | null>(null);
   const [removeTarget, setRemoveTarget] = useState<{
     kind: "quiz" | "assignment";
@@ -219,6 +221,7 @@ export function CoursesPage() {
           onEdit={setEditQuiz}
           onRemove={(q) => setRemoveTarget({ kind: "quiz", id: q.id, title: q.title })}
           onRoster={setRosterQuiz}
+          onAnswerKey={setAnswerKeyQuiz}
         />
       )}
 
@@ -281,6 +284,12 @@ export function CoursesPage() {
         assignment={editAssign}
         onClose={() => setEditAssign(null)}
         onSaved={invalidateAll}
+      />
+
+      <AnswerKeyModal
+        quizId={answerKeyQuiz?.id ?? null}
+        quizTitle={answerKeyQuiz?.title ?? ""}
+        onClose={() => setAnswerKeyQuiz(null)}
       />
 
       <ConfirmRemoveModal
