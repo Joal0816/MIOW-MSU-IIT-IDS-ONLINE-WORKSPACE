@@ -109,18 +109,60 @@ export function looksLikeWorksheet(text: string): boolean {
   return text.split("\n").some((raw) => detectSection(clean(raw)) !== null);
 }
 
+/**
+ * Pre-process worksheet text to normalize formatting from PDF extraction
+ * or messy copy-paste. Handles:
+ * - Multiple MC questions concatenated on one line
+ * - Answer key entries on one line
+ * - Missing line breaks between sections
+ */
+function preprocessWorksheetText(text: string): string {
+  return (
+    text
+      // Split concatenated MC questions: "D. text Which/What/How..." → new line before the question word.
+      // Negative lookbehind (?<!\d) prevents matching numbered items like "2. What".
+      .replace(
+        /(?<!\d)([.!?])\s+((?:Which|What|How|Where|When|Who|Why|The following|The best|The correct|The primary|A robot|Which of|In the|It is|There is|This is|These are|Those are)\s)/gi,
+        "$1\n$2",
+      )
+      // Split on "Answer Key" when followed by entries on the same line
+      .replace(/^(Answer Key\s*:?\s*)(\d)/im, "$1\n$2")
+  );
+}
+
 export function parseWorksheet(text: string): ParseResult {
-  const lines = text.split("\n").map(clean);
+  const lines = preprocessWorksheetText(text).split("\n").map(clean);
 
   // Split body vs answer key.
   const keyStart = lines.findIndex((l) => /^answer key\b/i.test(l));
   const bodyLines = keyStart >= 0 ? lines.slice(0, keyStart) : lines;
   const keyLines = keyStart >= 0 ? lines.slice(keyStart + 1) : [];
 
+  // If the "Answer Key:" line itself contains entries (e.g. "Answer Key: 1. B 2. A"),
+  // include the rest of that line as a key line too.
+  const keyHeaderLine = keyStart >= 0 ? lines[keyStart]! : null;
+  if (keyHeaderLine) {
+    const afterHeader = keyHeaderLine.replace(/^answer key\s*:?\s*/i, "").trim();
+    if (afterHeader) keyLines.unshift(afterHeader);
+  }
+
   // Answer key entries by item number.
   const keyByNum = new Map<number, KeyEntry>();
   const unnumberedKeys: KeyEntry[] = [];
+
+  // Pre-split lines that contain multiple concatenated key entries (e.g. "1. B 2. A 3. C").
+  const expandedKeyLines: string[] = [];
   for (const line of keyLines) {
+    // Split on patterns like "N. " that indicate a new key entry, but only when
+    // preceded by whitespace or another key entry text (not at the start of the line).
+    const split = line.replace(/(\s+)(\d{1,3}[.)]\s+)/g, "$1\n$2").split("\n");
+    for (const part of split) {
+      const trimmed = part.trim();
+      if (trimmed) expandedKeyLines.push(trimmed);
+    }
+  }
+
+  for (const line of expandedKeyLines) {
     const m = line.match(ITEM_RE);
     if (m) keyByNum.set(parseInt(m[1]!, 10), parseKeyEntry(m[2]!));
     else if (line) unnumberedKeys.push(parseKeyEntry(line));
@@ -195,8 +237,43 @@ export function parseWorksheet(text: string): ParseResult {
     if (item) {
       const num = reserveNumber(parseInt(item[1]!, 10));
       if (section === "mc") {
-        currentMc = { num, stem: item[2]!.trim(), options: [] };
-        mcItems.push(currentMc);
+        const stemText = item[2]!.trim();
+        // Check if the stem contains inline options (e.g. "1. Question? A. X B. Y C. Z D. W")
+        const inlineOpts = splitInlineOptions(stemText);
+        if (inlineOpts.length >= 2) {
+          const firstOptPos = stemText.search(/(?:^|\s)[A-Z][.)]\s+/);
+          const cleanStem = firstOptPos > 0 ? stemText.slice(0, firstOptPos).trim() : stemText;
+
+          if (inlineOpts.length <= 4) {
+            // Single question with inline options
+            currentMc = { num, stem: cleanStem, options: inlineOpts.map((o) => o.text) };
+            mcItems.push(currentMc);
+          } else {
+            // Multiple questions concatenated — split into groups of 4
+            let prevStem = cleanStem;
+            for (let g = 0; g < inlineOpts.length; g += 4) {
+              const group = inlineOpts.slice(g, g + 4);
+              if (group.length < 2) continue;
+              if (g > 0) {
+                const prevDText = inlineOpts[g - 1]?.text ?? "";
+                const stemMatch = prevDText.match(
+                  /(.+?)\s+((?:Which|What|How|Where|When|Who|Why|The |A |An |In |It |There |This |These |Those ).+)/i,
+                );
+                if (stemMatch?.[2]) prevStem = stemMatch[2]!;
+              }
+              // First group uses the original number; subsequent groups auto-number
+              currentMc = {
+                num: g === 0 ? num : reserveNumber(),
+                stem: prevStem,
+                options: group.map((o) => o.text),
+              };
+              mcItems.push(currentMc);
+            }
+          }
+        } else {
+          currentMc = { num, stem: stemText, options: [] };
+          mcItems.push(currentMc);
+        }
         lastStem = null;
       } else {
         const entry = { num, stem: item[2]!.trim() };
@@ -214,9 +291,49 @@ export function parseWorksheet(text: string): ParseResult {
       if (options.length >= 2) {
         const firstOption = line.search(/(?:^|\s)[A-Z][.)]\s+/);
         const stem = line.slice(0, firstOption).trim();
-        if (stem) {
-          currentMc = { num: reserveNumber(), stem, options: options.map((option) => option.text) };
-          mcItems.push(currentMc);
+
+        if (options.length <= 4) {
+          // Single question with inline options
+          if (stem) {
+            currentMc = {
+              num: reserveNumber(),
+              stem,
+              options: options.map((option) => option.text),
+            };
+            mcItems.push(currentMc);
+            continue;
+          }
+        } else {
+          // Multiple MC questions concatenated on one line (e.g. from PDF extraction).
+          // Split into groups of 4 options each.
+          let prevStem = stem;
+          for (let g = 0; g < options.length; g += 4) {
+            const group = options.slice(g, g + 4);
+            if (group.length < 2) continue;
+
+            if (g > 0) {
+              // Try to extract the next question's stem from the previous group's
+              // last option (D) text. Look for common sentence starters that
+              // indicate a new question begins.
+              const prevDText = options[g - 1]?.text ?? "";
+              const stemMatch = prevDText.match(
+                /(.+?)\s+((?:Which|What|How|Where|When|Who|Why|The |A |An |In |It |There |This |These |Those ).+)/i,
+              );
+              if (stemMatch?.[2]) {
+                prevStem = stemMatch[2]!;
+              }
+              // If no match, keep the previous stem (best effort).
+            }
+
+            if (prevStem) {
+              currentMc = {
+                num: reserveNumber(),
+                stem: prevStem,
+                options: group.map((option) => option.text),
+              };
+              mcItems.push(currentMc);
+            }
+          }
           continue;
         }
       }
@@ -271,11 +388,11 @@ export function parseWorksheet(text: string): ParseResult {
     const key = keyByNum.get(item.num);
     const idx = letterIdx(key?.letter);
     const correct = idx >= 0 ? item.options[idx] : undefined;
-    if (item.options.length >= 2 && correct) {
+    if (item.options.length >= 2) {
       questions.push({
         question: item.stem,
         options: item.options,
-        correct_answer: correct,
+        correct_answer: correct ?? "(answer not in key — set manually)",
         kind: "mc",
       });
     } else dropped += 1;
@@ -283,26 +400,26 @@ export function parseWorksheet(text: string): ParseResult {
 
   for (const item of fillItems) {
     const key = keyByNum.get(item.num);
-    if (key?.primary) {
-      const variants = [key.primary, ...key.acceptable].filter(Boolean);
-      questions.push({
-        question: item.stem,
-        options: [],
-        correct_answer: variants.join("||"),
-        kind: "fill",
-      });
-    } else dropped += 1;
+    const variants = key?.primary
+      ? [key.primary, ...key.acceptable].filter(Boolean)
+      : ["(answer not in key — set manually)"];
+    questions.push({
+      question: item.stem,
+      options: [],
+      correct_answer: variants.join("||"),
+      kind: "fill",
+    });
   }
 
   for (const premise of premises) {
     const key = keyByNum.get(premise.num);
     const idx = letterIdx(key?.letter);
     const correct = idx >= 0 ? columnB[idx]?.text : undefined;
-    if (columnB.length >= 2 && correct) {
+    if (columnB.length >= 2) {
       questions.push({
         question: premise.text,
         options: columnB.map((o) => o.text),
-        correct_answer: correct,
+        correct_answer: correct ?? "(answer not in key — set manually)",
         kind: "matching",
       });
     } else dropped += 1;

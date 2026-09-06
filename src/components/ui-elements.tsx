@@ -338,21 +338,24 @@ export function Modal({
   title,
   children,
   wide,
+  allowClose = true,
 }: {
   open: boolean;
   onClose: () => void;
   title: string;
   children: ReactNode;
   wide?: boolean;
+  /** When false, Escape / backdrop / X button are disabled (e.g. during a timed quiz). */
+  allowClose?: boolean;
 }) {
   useEffect(() => {
-    if (!open) return;
+    if (!open || !allowClose) return;
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") onClose();
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [open, onClose]);
+  }, [open, onClose, allowClose]);
 
   return (
     <AnimatePresence>
@@ -363,7 +366,7 @@ export function Modal({
           exit={{ opacity: 0 }}
           transition={{ duration: 0.18 }}
           className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/50 p-4 backdrop-blur-sm"
-          onClick={onClose}
+          onClick={allowClose ? onClose : undefined}
         >
           <motion.div
             initial={{ opacity: 0, scale: 0.95, y: 16 }}
@@ -381,13 +384,15 @@ export function Modal({
           >
             <div className="mb-4 flex items-center justify-between">
               <h3 className="text-lg font-bold">{title}</h3>
-              <button
-                onClick={onClose}
-                aria-label="Close dialog"
-                className="rounded-lg px-2 py-1 text-sm text-muted-foreground hover:bg-muted"
-              >
-                ✕
-              </button>
+              {allowClose && (
+                <button
+                  onClick={onClose}
+                  aria-label="Close dialog"
+                  className="rounded-lg px-2 py-1 text-sm text-muted-foreground hover:bg-muted"
+                >
+                  ✕
+                </button>
+              )}
             </div>
             {children}
           </motion.div>

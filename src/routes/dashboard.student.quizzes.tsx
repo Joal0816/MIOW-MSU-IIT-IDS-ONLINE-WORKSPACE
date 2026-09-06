@@ -108,6 +108,16 @@ function QuizzesPage() {
     return () => setAssessmentMode(false);
   }, [taking]);
 
+  // Prevent accidentally leaving the page while a quiz is in progress.
+  useEffect(() => {
+    if (!taking) return;
+    const handler = (e: BeforeUnloadEvent) => {
+      e.preventDefault();
+    };
+    window.addEventListener("beforeunload", handler);
+    return () => window.removeEventListener("beforeunload", handler);
+  }, [taking]);
+
   // Resume or start attempt: restore saved timer/answers if the student
   // closed and reopened the same worksheet within this session.
   const beginAttempt = async (id: string) => {
@@ -285,6 +295,7 @@ function QuizzesPage() {
         onClose={() => setActiveId(null)}
         title={activeQuiz?.title ?? "Worksheet"}
         wide
+        allowClose={!taking}
       >
         {result ? (
           // Teacher-gated release: server gates score/answer_key; client mirrors via result.score_released

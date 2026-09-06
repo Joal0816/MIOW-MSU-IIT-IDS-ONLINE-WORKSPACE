@@ -79,7 +79,7 @@ Answer Key:
     expect(result.dropped).toBe(1);
   });
 
-  it("drops MC questions with no matching answer key", () => {
+  it("keeps MC questions even with no matching answer key", () => {
     const text = `
 Section I: Multiple Choice
 1. Unanswered?
@@ -89,8 +89,9 @@ B. Y
 Answer Key:
 `;
     const result = parseWorksheet(text);
-    expect(result.questions).toHaveLength(0);
-    expect(result.dropped).toBe(1);
+    expect(result.questions).toHaveLength(1);
+    expect(result.questions[0]!.correct_answer).toBe("(answer not in key — set manually)");
+    expect(result.dropped).toBe(0);
   });
 });
 
@@ -111,7 +112,7 @@ Answer Key:
     expect(result.questions[0]!.correct_answer).toBe("Photosynthesis||carbon assimilation");
   });
 
-  it("drops fill items with no answer key", () => {
+  it("keeps fill items even with no answer key", () => {
     const text = `
 Section II: Fill in the Blank
 5. The answer is ______.
@@ -119,8 +120,9 @@ Section II: Fill in the Blank
 Answer Key:
 `;
     const result = parseWorksheet(text);
-    expect(result.questions).toHaveLength(0);
-    expect(result.dropped).toBe(1);
+    expect(result.questions).toHaveLength(1);
+    expect(result.questions[0]!.correct_answer).toBe("(answer not in key — set manually)");
+    expect(result.dropped).toBe(0);
   });
 });
 
@@ -350,5 +352,131 @@ Answer Key:
 `;
     const result = parseWorksheet(text);
     expect(result.questions).toHaveLength(1);
+  });
+});
+
+// ── parseWorksheet — Inline multi-question lines ────────────────────
+
+describe("parseWorksheet — inline multi-question lines", () => {
+  it("splits 8 inline options into 2 MC questions", () => {
+    const text = `
+Section I: Multiple Choice
+A robot is defined as a reprogrammable device. A. Battery-powered B. Sensible for environment C. Human-controlled D. Wirelessly connected Which of the following is NOT a robot classification? A. Wheeled Robot B. Legged Robot C. Swimming Robot D. Unmanned Aerial Vehicle
+
+Answer Key:
+1. B
+2. C
+`;
+    const result = parseWorksheet(text);
+    expect(result.questions).toHaveLength(2);
+    expect(result.questions[0]!.kind).toBe("mc");
+    expect(result.questions[0]!.options).toHaveLength(4);
+    expect(result.questions[1]!.kind).toBe("mc");
+    expect(result.questions[1]!.options).toHaveLength(4);
+  });
+
+  it("handles 12 inline options as 3 questions", () => {
+    const text = `
+Section I: Multiple Choice
+Q1 about math? A. 1 B. 2 C. 3 D. 4 Q2 about science? A. Physics B. Chemistry C. Biology D. History Q3 about arts? A. Painting B. Sculpture C. Music D. Dance
+
+Answer Key:
+1. B
+2. A
+3. C
+`;
+    const result = parseWorksheet(text);
+    expect(result.questions).toHaveLength(3);
+    expect(result.dropped).toBe(0);
+  });
+});
+
+// ── parseWorksheet — Concatenated answer key entries ────────────────
+
+describe("parseWorksheet — concatenated answer key entries", () => {
+  it("splits answer key entries on one line", () => {
+    const text = `
+Section I: Multiple Choice
+1. What is 2 + 2?
+A. 3
+B. 4
+C. 5
+D. 6
+
+2. What is the capital of France?
+A. London
+B. Berlin
+C. Paris
+D. Madrid
+
+Answer Key:
+1. B 2. C
+`;
+    const result = parseWorksheet(text);
+    expect(result.questions).toHaveLength(2);
+    expect(result.questions[0]!.correct_answer).toBe("4");
+    expect(result.questions[1]!.correct_answer).toBe("Paris");
+  });
+
+  it("handles answer key entries on the same line as Answer Key:", () => {
+    const text = `
+Section I: Multiple Choice
+1. Q1?
+A. X
+B. Y
+
+2. Q2?
+A. P
+B. Q
+
+Answer Key: 1. B 2. A
+`;
+    const result = parseWorksheet(text);
+    expect(result.questions).toHaveLength(2);
+    expect(result.questions[0]!.correct_answer).toBe("Y");
+    expect(result.questions[1]!.correct_answer).toBe("P");
+  });
+
+  it("handles mixed numbered and unnumbered key entries", () => {
+    const text = `
+Section I: Multiple Choice
+1. Q1?
+A. X
+B. Y
+
+2. Q2?
+A. P
+B. Q
+
+Answer Key: 1. B
+2. A
+`;
+    const result = parseWorksheet(text);
+    expect(result.questions).toHaveLength(2);
+    expect(result.questions[0]!.correct_answer).toBe("Y");
+    expect(result.questions[1]!.correct_answer).toBe("P");
+  });
+});
+
+// ── parseWorksheet — PDF-style formatting ───────────────────────────
+
+describe("parseWorksheet — PDF-style formatting", () => {
+  it("handles PDF-extracted text with questions on separate lines but options inline", () => {
+    const text = `
+Section I: Multiple Choice
+Instructions: Choose the letter of the correct answer.
+
+1. A robot is defined as an electromechanical device. A. Battery-powered B. Sensible for environment C. Human-controlled D. Wirelessly connected
+
+2. Which of the following is NOT a robot classification? A. Wheeled Robot B. Legged Robot C. Swimming Robot D. Unmanned Aerial Vehicle
+
+Answer Key:
+1. B
+2. C
+`;
+    const result = parseWorksheet(text);
+    expect(result.questions).toHaveLength(2);
+    expect(result.questions[0]!.correct_answer).toBe("Sensible for environment");
+    expect(result.questions[1]!.correct_answer).toBe("Swimming Robot");
   });
 });
