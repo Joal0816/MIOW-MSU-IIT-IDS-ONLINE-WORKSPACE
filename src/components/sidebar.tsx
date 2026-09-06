@@ -67,15 +67,15 @@ export const ADMIN_NAV: NavItem[] = [
 export const TEACHER_NAV: NavItem[] = [
   { to: "/dashboard/teacher", label: "Dashboard", icon: <LayoutDashboard className="h-4 w-4" /> },
   { to: "/dashboard/teacher/students", label: "Students", icon: <Users className="h-4 w-4" /> },
-  { to: "/dashboard/admin/courses", label: "Courses", icon: <BookOpen className="h-4 w-4" /> },
+  { to: "/dashboard/teacher/courses", label: "Courses", icon: <BookOpen className="h-4 w-4" /> },
   {
-    to: "/dashboard/admin/announcements",
+    to: "/dashboard/teacher/announcements",
     label: "Announcements",
     icon: <Megaphone className="h-4 w-4" />,
   },
-  { to: "/dashboard/admin/grades", label: "Gradebook", icon: <Layers className="h-4 w-4" /> },
+  { to: "/dashboard/teacher/grades", label: "Gradebook", icon: <Layers className="h-4 w-4" /> },
   {
-    to: "/dashboard/admin/attendance",
+    to: "/dashboard/teacher/attendance",
     label: "Attendance",
     icon: <CalendarCheck className="h-4 w-4" />,
   },
@@ -260,7 +260,7 @@ export function AppShell({
             >
               <img
                 src={profile.avatar_url || undefined}
-                alt=""
+                alt={profile.full_name}
                 className="h-7 w-7 rounded-full object-cover ring-1 ring-primary/30"
               />
               <span className="max-w-[10rem] truncate">{profile.full_name}</span>

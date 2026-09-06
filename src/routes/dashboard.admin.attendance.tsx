@@ -84,7 +84,7 @@ function playTone(ok: boolean, muted: boolean) {
   }
 }
 
-function AttendanceKiosk() {
+export function AttendanceKiosk() {
   const profile = useProfile(["admin", "teacher"]);
   const qc = useQueryClient();
   const { data: logs } = useQuery({
@@ -282,7 +282,7 @@ function AttendanceKiosk() {
 
       <div className="grid gap-6 lg:grid-cols-2">
         <div className="space-y-4">
-          <Card className="flex aspect-[4/3] w-full flex-col items-center justify-center gap-2 rounded-2xl border border-border bg-slate-900 p-8 text-center text-slate-400">
+          <Card className="flex aspect-[4/3] w-full flex-col items-center justify-center gap-2 rounded-2xl border border-border bg-card p-8 text-center text-muted-foreground">
             <Nfc className="h-10 w-10" />
             <p className="text-sm font-semibold">RFID Kiosk</p>
             <p className="text-xs">Tap a card or enter a UID below</p>

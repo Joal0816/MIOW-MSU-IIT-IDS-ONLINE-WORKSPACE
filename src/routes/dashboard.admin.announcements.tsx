@@ -75,7 +75,7 @@ const EMPTY_FORM: FormState = {
 
 type AudienceFilter = "all" | "students" | "teachers";
 
-function AnnouncementsPage() {
+export function AnnouncementsPage() {
   const profile = useProfile(["admin", "teacher"]);
   const qc = useQueryClient();
   const { data: announcements } = useQuery({
@@ -173,7 +173,7 @@ function AnnouncementsPage() {
           title: form.title,
           content: form.content,
           target_audience: form.target_audience,
-        }).catch(() => {});
+        }).catch((e) => console.error("[announcements-page]", e));
         if (pendingFiles.length) {
           let uploaded = 0;
           for (const file of pendingFiles) {
@@ -196,7 +196,7 @@ function AnnouncementsPage() {
           title: form.title,
           content: form.content,
           target_audience: form.target_audience,
-        }).catch(() => {});
+        }).catch((e) => console.error("[announcements-page]", e));
         if (pendingFiles.length) {
           let uploaded = 0;
           for (const file of pendingFiles) {

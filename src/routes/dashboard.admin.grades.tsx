@@ -54,7 +54,7 @@ interface CellState {
   ex: string;
 }
 
-function GradebookPage() {
+export function GradebookPage() {
   const profile = useProfile(["admin", "teacher"]);
   const qc = useQueryClient();
   const { data: courses } = useQuery({
@@ -392,7 +392,11 @@ function GradebookPage() {
                       <tr key={s.id}>
                         <td className="p-4">
                           <div className="flex items-center gap-2.5">
-                            <img src={s.avatar_url ?? ""} alt="" className="h-8 w-8 rounded-full" />
+                            <img
+                              src={s.avatar_url ?? ""}
+                              alt={s.full_name}
+                              className="h-8 w-8 rounded-full"
+                            />
                             <div>
                               <p className="font-semibold">{s.full_name}</p>
                               <p className="text-xs text-muted-foreground">

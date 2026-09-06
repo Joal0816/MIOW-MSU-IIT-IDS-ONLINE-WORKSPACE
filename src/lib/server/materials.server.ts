@@ -58,8 +58,8 @@ async function removeMaterialObjects(items: Attachment[]) {
   if (!paths.length) return;
   try {
     await supabaseAdmin.storage.from(MATERIAL_BUCKET).remove(paths);
-  } catch {
-    /* storage cleanup is best-effort */
+  } catch (e) {
+    console.error("[materials]", e);
   }
 }
 
@@ -84,8 +84,8 @@ async function sniffMime(buffer: Buffer): Promise<string | null> {
       const ft = await fn(buffer);
       if (ft?.mime) return ft.mime as string;
     }
-  } catch {
-    /* file-type unavailable */
+  } catch (e) {
+    console.error("[materials]", e);
   }
   return detectMimeByMagic(buffer);
 }

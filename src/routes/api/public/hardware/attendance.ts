@@ -26,7 +26,8 @@ export const Route = createFileRoute("/api/public/hardware/attendance")({
         let body: z.infer<typeof Body>;
         try {
           body = Body.parse(await request.json());
-        } catch {
+        } catch (e) {
+          console.error("[hw-attendance]", e);
           return Response.json({ ok: false, error: "Invalid payload" }, { status: 400 });
         }
         if (body.confidence != null && body.confidence < MIN_CONFIDENCE) {

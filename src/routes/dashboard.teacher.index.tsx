@@ -67,7 +67,7 @@ function TeacherDashboard() {
               {courses?.length ?? 0} total in campus
             </p>
             <Link
-              to="/dashboard/admin/courses"
+              to="/dashboard/teacher/courses"
               className="mt-3 flex items-center gap-1 text-xs font-semibold text-primary hover:underline"
             >
               Manage courses <ArrowRight className="h-3 w-3" />
@@ -98,7 +98,7 @@ function TeacherDashboard() {
             </div>
             <p className="mt-2 font-display text-3xl font-bold">{announcementCount ?? "—"}</p>
             <Link
-              to="/dashboard/admin/announcements"
+              to="/dashboard/teacher/announcements"
               className="mt-3 flex items-center gap-1 text-xs font-semibold text-primary hover:underline"
             >
               Post announcement <ArrowRight className="h-3 w-3" />
@@ -117,7 +117,7 @@ function TeacherDashboard() {
             Encode grades and track submissions for your courses.
           </p>
           <Link
-            to="/dashboard/admin/grades"
+            to="/dashboard/teacher/grades"
             className="mt-3 inline-flex items-center gap-1 text-xs font-semibold text-primary hover:underline"
           >
             Open Gradebook <ArrowRight className="h-3 w-3" />
@@ -132,7 +132,7 @@ function TeacherDashboard() {
             View taps and manage the gate attendance log.
           </p>
           <Link
-            to="/dashboard/admin/attendance"
+            to="/dashboard/teacher/attendance"
             className="mt-3 inline-flex items-center gap-1 text-xs font-semibold text-primary hover:underline"
           >
             Open Attendance <ArrowRight className="h-3 w-3" />

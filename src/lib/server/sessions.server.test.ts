@@ -22,9 +22,15 @@ describe("sessions.server edge cases", () => {
       expect(sessionSecret()).toBe("my-secret-32-hex-1234567890abcdef");
     });
 
-    it("throws when both SESSION_SECRET and SUPABASE_SERVICE_ROLE_KEY are missing", async () => {
+    it("throws when SESSION_SECRET is missing", async () => {
       delete process.env["SESSION_SECRET"];
-      delete process.env["SUPABASE_SERVICE_ROLE_KEY"];
+      const { sessionSecret } = await import("./sessions.server");
+      expect(() => sessionSecret()).toThrow("Missing SESSION_SECRET");
+    });
+
+    it("does not fall back to SUPABASE_SERVICE_ROLE_KEY", async () => {
+      delete process.env["SESSION_SECRET"];
+      process.env["SUPABASE_SERVICE_ROLE_KEY"] = "service-key-1234567890abcdef1234";
       const { sessionSecret } = await import("./sessions.server");
       expect(() => sessionSecret()).toThrow("Missing SESSION_SECRET");
     });

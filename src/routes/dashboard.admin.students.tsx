@@ -240,7 +240,11 @@ function StudentsPage() {
                 >
                   <td className="p-4">
                     <div className="flex items-center gap-2.5">
-                      <img src={s.avatar_url ?? ""} alt="" className="h-8 w-8 rounded-full" />
+                      <img
+                        src={s.avatar_url ?? ""}
+                        alt={s.full_name}
+                        className="h-8 w-8 rounded-full"
+                      />
                       <div>
                         <p className="font-semibold">{s.full_name}</p>
                         <p className="text-xs text-muted-foreground">{s.email}</p>
@@ -411,7 +415,7 @@ function StudentProfileModal({
       <div className="mb-4 flex items-center gap-3">
         <img
           src={student.avatar_url ?? ""}
-          alt=""
+          alt={student.full_name}
           className="h-14 w-14 rounded-full ring-2 ring-primary/30"
         />
         <div>

@@ -88,7 +88,8 @@ export const Route = createFileRoute("/api/chat")({
         const ctx = parseWorksheetContext(body.worksheetContext);
         const oaMessages = toOpenAIMessages(messages, systemPromptFor(profile, ctx));
 
-        const apiRes = await fetch("https://opencode.ai/zen/go/v1/chat/completions", {
+        const { AI_BASE_URL } = await import("@/lib/ai-gateway.server");
+        const apiRes = await fetch(`${AI_BASE_URL}/chat/completions`, {
           method: "POST",
           headers: {
             Authorization: `Bearer ${apiKey}`,
@@ -155,8 +156,8 @@ export const Route = createFileRoute("/api/chat")({
                     `data: ${JSON.stringify({ type: "text-delta", id: `txt-${textId}`, delta: delta.content })}\n\n`,
                   ),
                 );
-              } catch {
-                /* skip malformed SSE lines */
+              } catch (e) {
+                console.error("[chat-api]", e);
               }
             }
           },

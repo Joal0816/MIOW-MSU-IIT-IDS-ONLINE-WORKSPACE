@@ -37,7 +37,7 @@ function getSupabase(): SupabaseClient {
   _supabase = createClient(SUPABASE_URL, SUPABASE_KEY, {
     auth: { persistSession: false, autoRefreshToken: false },
   });
-  console.log(`[db] Using Supabase backend (${SUPABASE_URL})`);
+  if (process.env["DEBUG_LOGS"]) console.log(`[db] Using Supabase backend (${SUPABASE_URL})`);
   return _supabase;
 }
 
@@ -50,7 +50,8 @@ function getPool(): Pool {
   if (!USE_PG) throw new Error("[db] Postgres not configured (missing DATABASE_URL)");
   _pool = new Pool({ connectionString: DATABASE_URL });
   _pool.on("error", (err) => console.error("[db] pool error", err));
-  console.log(`[db] Using local Postgres (${DATABASE_URL.replace(/:.*@/, ":***@")})`);
+  if (process.env["DEBUG_LOGS"])
+    console.log(`[db] Using local Postgres (${DATABASE_URL.replace(/:.*@/, ":***@")})`);
   return _pool;
 }
 

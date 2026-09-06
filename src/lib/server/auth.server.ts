@@ -25,11 +25,8 @@ export async function requireSession(token: string) {
     }
   } catch (e: any) {
     if (e?.message === "Unauthorized") throw e;
-    if (e?.message === "Database request failed") {
-      // swallow DB errors in test env without real Supabase/sessions table
-    } else {
-      // JSON parse or other non-auth errors — ignore for compat
-    }
+    // DB unavailable — log but allow through to avoid total lockout
+    console.error("[auth] JTI revocation check failed (DB may be down):", e?.message ?? e);
   }
   const profile = await getProfileById(id);
   if (!profile) throw new Error("Unauthorized");

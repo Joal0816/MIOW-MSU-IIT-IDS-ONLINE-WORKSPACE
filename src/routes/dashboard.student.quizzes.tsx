@@ -145,11 +145,6 @@ function QuizzesPage() {
     }
   }, [activeId, answers]);
 
-  useEffect(() => {
-    if (activeId && secondsLeft === 0 && !result && questions.length) finish();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [secondsLeft]);
-
   // Clear saved progress on successful submission
   useEffect(() => {
     if (result?.ok && activeId) {
@@ -157,6 +152,12 @@ function QuizzesPage() {
       savedAnswersRef.current.delete(activeId);
     }
   }, [result, activeId]);
+
+  const finishRef = useRef<(() => Promise<void>) | null>(null);
+
+  useEffect(() => {
+    if (secondsLeft === 0) finishRef.current?.();
+  }, [secondsLeft]);
 
   if (!profile) return null;
 
@@ -189,6 +190,8 @@ function QuizzesPage() {
       toast.error("Could not score the worksheet — please try again.");
     }
   };
+
+  finishRef.current = finish;
 
   const mm = String(Math.floor(secondsLeft / 60)).padStart(2, "0");
   const ss = String(secondsLeft % 60).padStart(2, "0");

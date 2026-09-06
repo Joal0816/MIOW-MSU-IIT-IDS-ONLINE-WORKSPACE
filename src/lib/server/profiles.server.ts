@@ -103,7 +103,7 @@ export async function verifyPinLogin(login: string, secret: string) {
     if (process.env["DEBUG_LOGS"] === "true") console.debug(`[auth:server] ${msg}`, data ?? "");
   };
   dbgS("verifyPinLogin called", { login: login.trim() });
-  const identifier = login.trim().replace(/[*%]/g, "");
+  const identifier = login.trim().replace(/[*%_]/g, "");
   if (!identifier || !secret) return { ok: false as const, reason: "invalid" as const };
 
   const identBucket = getBucket(`login:ident:${identifier.toLowerCase()}`);

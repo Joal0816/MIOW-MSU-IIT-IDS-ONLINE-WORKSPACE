@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useCallback, useEffect, useRef, useState, type InputHTMLAttributes } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { AVATAR_MAX_BYTES } from "@/components/courses/constants";
 import {
@@ -15,7 +15,16 @@ import {
   X,
 } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
-import { AppShell, Badge, Card, TEACHER_NAV, useProfile, useRfidScanner } from "@/components/lms";
+import {
+  AppShell,
+  Badge,
+  Card,
+  Field,
+  TEACHER_NAV,
+  Toggle,
+  useProfile,
+  useRfidScanner,
+} from "@/components/lms";
 import {
   findProfileByCredential,
   updateSessionProfile,
@@ -29,6 +38,7 @@ import {
   type TeacherSettings,
 } from "@/lib/settings";
 import { cn } from "@/lib/utils";
+import { PREFIXES } from "@/lib/course-levels";
 
 export const Route = createFileRoute("/dashboard/teacher/settings")({
   head: () => ({
@@ -65,62 +75,6 @@ const TABS: Array<{ value: Tab; label: string; icon: React.ReactNode }> = [
     icon: <SlidersHorizontal className="h-4 w-4" />,
   },
 ];
-
-const PREFIXES = ["", "Dr.", "Prof.", "Mr.", "Ms.", "Mrs.", "Engr."];
-
-function Field({ label, ...props }: { label: string } & InputHTMLAttributes<HTMLInputElement>) {
-  return (
-    <label className="block">
-      <span className="mb-1 block text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-        {label}
-      </span>
-      <input
-        {...props}
-        className="w-full rounded-xl border border-input bg-background/70 px-3 py-2 text-sm outline-none backdrop-blur-sm transition-shadow focus:ring-2 focus:ring-ring disabled:opacity-60"
-      />
-    </label>
-  );
-}
-
-function Toggle({
-  checked,
-  onChange,
-  label,
-  description,
-}: {
-  checked: boolean;
-  onChange: (v: boolean) => void;
-  label: string;
-  description?: string;
-}) {
-  return (
-    <button
-      type="button"
-      role="switch"
-      aria-checked={checked}
-      onClick={() => onChange(!checked)}
-      className="flex w-full items-center justify-between gap-4 rounded-xl border border-border/60 bg-card/60 px-4 py-3 text-left transition-colors hover:bg-muted/50"
-    >
-      <span className="min-w-0">
-        <span className="block text-sm font-semibold">{label}</span>
-        {description && <span className="block text-xs text-muted-foreground">{description}</span>}
-      </span>
-      <span
-        className={cn(
-          "relative h-6 w-11 shrink-0 rounded-full transition-colors",
-          checked ? "bg-primary" : "bg-muted-foreground/30",
-        )}
-      >
-        <span
-          className={cn(
-            "absolute top-0.5 h-5 w-5 rounded-full bg-white shadow transition-all",
-            checked ? "left-[22px]" : "left-0.5",
-          )}
-        />
-      </span>
-    </button>
-  );
-}
 
 function TeacherSettingsPage() {
   const profile = useProfile(["teacher"]);

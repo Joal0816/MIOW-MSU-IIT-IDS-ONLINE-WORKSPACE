@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useEffect, useState, type InputHTMLAttributes } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { ATTENDANCE_LIMIT_PURGE } from "@/components/courses/constants";
 import {
@@ -20,7 +20,16 @@ import {
   Users,
   Volume2,
 } from "lucide-react";
-import { ADMIN_NAV, AppShell, Badge, Card, Modal, useProfile } from "@/components/lms";
+import {
+  ADMIN_NAV,
+  AppShell,
+  Badge,
+  Card,
+  Field,
+  Modal,
+  Toggle,
+  useProfile,
+} from "@/components/lms";
 import {
   fmtDate,
   fmtTime,
@@ -94,60 +103,6 @@ CREATE TABLE quiz_questions (id uuid PRIMARY KEY, quiz_id uuid REFERENCES quizze
 CREATE TABLE grades (id uuid PRIMARY KEY, student_id uuid REFERENCES profiles(id), course_id uuid REFERENCES courses(id), quarter int NOT NULL, written_work_score numeric, performance_task_score numeric, exam_score numeric, transmuted_final_grade numeric);
 CREATE TABLE attendance_logs (id uuid PRIMARY KEY, student_id uuid REFERENCES profiles(id), timestamp timestamptz DEFAULT now(), scan_type text NOT NULL, status text NOT NULL);
 -- Row Level Security: default-deny on all tables; access via signed-token server functions.`;
-
-function Field({ label, ...props }: { label: string } & InputHTMLAttributes<HTMLInputElement>) {
-  return (
-    <label className="block">
-      <span className="mb-1 block text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-        {label}
-      </span>
-      <input
-        {...props}
-        className="w-full rounded-xl border border-input bg-background/70 px-3 py-2 text-sm outline-none backdrop-blur-sm transition-shadow focus:ring-2 focus:ring-ring"
-      />
-    </label>
-  );
-}
-
-function Toggle({
-  checked,
-  onChange,
-  label,
-  description,
-}: {
-  checked: boolean;
-  onChange: (v: boolean) => void;
-  label: string;
-  description?: string;
-}) {
-  return (
-    <button
-      type="button"
-      role="switch"
-      aria-checked={checked}
-      onClick={() => onChange(!checked)}
-      className="flex w-full items-center justify-between gap-4 rounded-xl border border-border/60 bg-card/60 px-4 py-3 text-left transition-colors hover:bg-muted/50"
-    >
-      <span className="min-w-0">
-        <span className="block text-sm font-semibold">{label}</span>
-        {description && <span className="block text-xs text-muted-foreground">{description}</span>}
-      </span>
-      <span
-        className={cn(
-          "relative h-6 w-11 shrink-0 rounded-full transition-colors",
-          checked ? "bg-primary" : "bg-muted-foreground/30",
-        )}
-      >
-        <span
-          className={cn(
-            "absolute top-0.5 h-5 w-5 rounded-full bg-white shadow transition-all",
-            checked ? "left-[22px]" : "left-0.5",
-          )}
-        />
-      </span>
-    </button>
-  );
-}
 
 const ROLE_LABEL: Record<Role, string> = { student: "Student", teacher: "Teacher", admin: "Admin" };
 
@@ -863,7 +818,7 @@ function AdminSettings() {
                               {u.avatar_url ? (
                                 <img
                                   src={u.avatar_url}
-                                  alt=""
+                                  alt={u.full_name}
                                   className="h-8 w-8 shrink-0 rounded-full object-cover"
                                 />
                               ) : (

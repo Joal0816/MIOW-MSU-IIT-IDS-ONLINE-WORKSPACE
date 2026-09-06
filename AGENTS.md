@@ -19,10 +19,11 @@ MIOW (MSU-IIT IDS Online Workspace) is a Learning Management System for Junior a
 src/
   routes/           File-based routing (TanStack Router)
   components/       React components
-    ui/             shadcn/ui components (49)
-    ui-elements.tsx Shared UI primitives (Badge, Card, Modal, etc.)
+    ui/             shadcn/ui components (~20 active)
+    ui-elements.tsx Shared UI primitives (Badge, Card, Modal, Field, Toggle, etc.)
+    courses/        Course management sub-components (wizard, modals, sections)
     sidebar.tsx     AppShell, navigation, sidebar
-  hooks/            Custom React hooks
+  hooks/            Custom React hooks (useProfile, useTheme, useRfidScanner)
   lib/              Utilities and business logic
     server/         Server-only domain modules (decomposed from lms.server.ts)
     lms.ts          Client API layer (server function wrappers)
@@ -66,7 +67,9 @@ bun run db:reset     # Teardown + recreate + migrate
 
 ## Security
 
+- SESSION_SECRET env var required (no fallback to Supabase service key)
 - HMAC-SHA256 session tokens with JTI revocation
+- Configurable session TTL via SESSION_TTL_MS env var (default 12h)
 - bcrypt-hashed PINs (legacy plaintext auto-upgraded on login)
 - Rate limiting: 5 attempts per 15 minutes
 - CSP headers with Google APIs whitelisted

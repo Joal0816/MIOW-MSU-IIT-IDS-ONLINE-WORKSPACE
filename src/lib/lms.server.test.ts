@@ -63,23 +63,23 @@ describe("lms.server session HMAC — SESSION_SECRET isolation with compat", () 
     const sigOld = createHmac("sha256", oldKey).update(payload).digest("base64url");
     const oldToken = `${payload}.${sigOld}`;
 
-    // New module's verify should accept oldToken via fallback key loop
-    const sub = verifySessionToken(oldToken);
-    expect(sub).toBe(profileId);
+    // New module no longer accepts tokens signed with the service role key
+    expect(() => verifySessionToken(oldToken)).toThrow("Unauthorized");
 
-    // Also new tokens still verify
+    // New tokens still verify
     const { createSessionToken } = mod;
     const newToken = createSessionToken(profileId);
     expect(verifySessionToken(newToken)).toBe(profileId);
   });
 
-  it("falls back to SUPABASE_SERVICE_ROLE_KEY when SESSION_SECRET is unset", async () => {
+  it("throws when SESSION_SECRET is unset (no fallback to service key)", async () => {
     delete process.env["SESSION_SECRET"];
     process.env["SUPABASE_SERVICE_ROLE_KEY"] = "fallback-service-key-1234567890abcdef";
 
-    const { createSessionToken, verifySessionToken } = await import("./server");
-    const token = createSessionToken("00000000-0000-4000-a000-000000000003");
-    expect(verifySessionToken(token)).toBe("00000000-0000-4000-a000-000000000003");
+    const { createSessionToken } = await import("./server");
+    expect(() => createSessionToken("00000000-0000-4000-a000-000000000003")).toThrow(
+      "Missing SESSION_SECRET",
+    );
   });
 
   it("rejects tampered or expired tokens", async () => {

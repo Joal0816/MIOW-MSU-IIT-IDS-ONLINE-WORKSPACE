@@ -4,13 +4,11 @@ import { createHmac, timingSafeEqual, randomUUID } from "node:crypto";
 import { db } from "@/integrations/db/client.server";
 import { unwrap } from "@/lib/server/utils.server";
 
-const SESSION_TTL_MS = 12 * 60 * 60 * 1000;
+const SESSION_TTL_MS = Number(process.env["SESSION_TTL_MS"]) || 12 * 60 * 60 * 1000;
 
 export function sessionSecret(): string {
-  const key = process.env["SESSION_SECRET"] ?? process.env["SUPABASE_SERVICE_ROLE_KEY"];
-  if (!key) throw new Error("Missing SESSION_SECRET");
-  if (process.env["SESSION_SECRET"] && key === process.env["SUPABASE_SERVICE_ROLE_KEY"])
-    console.warn("[security] SESSION_SECRET equals service key");
+  const key = process.env["SESSION_SECRET"];
+  if (!key) throw new Error("Missing SESSION_SECRET env var. Set it in .env");
   return key;
 }
 
@@ -27,8 +25,8 @@ export function createSessionToken(profileId: string, jti: string = randomUUID()
         () => {},
       );
     else void pending;
-  } catch {
-    // ignore sync errors (e.g., sessions table not yet migrated in tests)
+  } catch (e) {
+    console.error("[sessions] JTI insert failed:", e);
   }
   const sig = createHmac("sha256", sessionSecret()).update(payload).digest("base64url");
   return `${payload}.${sig}`;
@@ -37,9 +35,7 @@ export function createSessionToken(profileId: string, jti: string = randomUUID()
 export function verifySessionToken(token: string): string {
   const [payload, sig] = token.split(".");
   if (!payload || !sig) throw new Error("Unauthorized");
-  const tryKeys = [process.env["SESSION_SECRET"], process.env["SUPABASE_SERVICE_ROLE_KEY"]].filter(
-    Boolean,
-  ) as string[];
+  const tryKeys = [process.env["SESSION_SECRET"]].filter(Boolean) as string[];
   const useKeys = tryKeys.length ? tryKeys : [sessionSecret()];
   let ok = false;
   for (const k of useKeys) {
@@ -73,7 +69,7 @@ export async function revokeSessions(profileId: string): Promise<void> {
       .update({ revoked_at: new Date().toISOString() })
       .eq("profile_id", profileId)
       .is("revoked_at", null) as any);
-  } catch {
-    // ignore — sessions table may not exist in test env
+  } catch (e) {
+    console.error("[sessions] JTI revoke failed:", e);
   }
 }

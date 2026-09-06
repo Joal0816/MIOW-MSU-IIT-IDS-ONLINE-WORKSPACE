@@ -34,8 +34,8 @@ export const storage = {
             try {
               await fs.access(full);
               return { data: null, error: { message: "File already exists" } };
-            } catch {
-              // not exists → ok
+            } catch (e) {
+              console.error("[storage]", e);
             }
           }
           const buf = Buffer.isBuffer(data) ? data : Buffer.from(data);
@@ -47,8 +47,8 @@ export const storage = {
                 full + ".meta.json",
                 JSON.stringify({ contentType: opts.contentType }),
               );
-            } catch {
-              // ignore
+            } catch (e) {
+              console.error("[storage]", e);
             }
           }
           return { data: { path: filePath }, error: null };
@@ -87,8 +87,8 @@ export const storage = {
               // also remove sidecar
               try {
                 await fs.unlink(full + ".meta.json");
-              } catch {
-                // ignore
+              } catch (e) {
+                console.error("[storage]", e);
               }
             } catch {
               // best-effort: file may not exist

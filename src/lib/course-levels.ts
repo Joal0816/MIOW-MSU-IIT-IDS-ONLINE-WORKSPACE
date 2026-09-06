@@ -1,3 +1,5 @@
+export const PREFIXES = ["", "Dr.", "Prof.", "Mr.", "Ms.", "Mrs.", "Engr."];
+
 export const COURSE_LEVELS = [
   { value: 7 as const, label: "Grade 7 (G7)" },
   { value: 8 as const, label: "Grade 8 (G8)" },

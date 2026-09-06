@@ -3,7 +3,7 @@
 // create/edit/remove actions. All mutations route through the signed-token
 // server functions in lms.functions.ts (tables are default-deny), and the
 // role is forced to 'teacher' server-side.
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { BookOpen, GraduationCap, KeyRound, Nfc, Plus, Search, Trash2 } from "lucide-react";
@@ -16,6 +16,7 @@ import {
   updateProfile,
   type TeacherRecord,
 } from "@/lib/lms";
+import { PREFIXES } from "@/lib/course-levels";
 import {
   ADMIN_NAV,
   AppShell,
@@ -47,8 +48,6 @@ export const Route = createFileRoute("/dashboard/admin/teachers")({
   }),
   component: TeachersPage,
 });
-
-const PREFIXES = ["", "Dr.", "Prof.", "Mr.", "Ms.", "Mrs.", "Engr."];
 
 const EMPTY_FORM = {
   prefix: "",
@@ -259,7 +258,11 @@ function TeachersPage() {
                   <td className="p-4">
                     <div className="flex items-center gap-2.5">
                       {t.avatar_url ? (
-                        <img src={t.avatar_url} alt="" className="h-8 w-8 rounded-full" />
+                        <img
+                          src={t.avatar_url}
+                          alt={t.full_name}
+                          className="h-8 w-8 rounded-full"
+                        />
                       ) : (
                         <span className="grid h-8 w-8 place-items-center rounded-full bg-primary/10 text-primary">
                           <GraduationCap className="h-4 w-4" />
@@ -426,15 +429,17 @@ function TeacherDetailModal({
   const [hydrated, setHydrated] = useState<string | null>(null);
 
   // Seed the editable fields the first time a given faculty row is opened.
-  if (teacher && hydrated !== teacher.id) {
-    setHydrated(teacher.id);
-    setPrefix(teacher.prefix ?? "");
-    setName(teacher.full_name);
-    setDept(teacher.department ?? "");
-    setEmployeeId(teacher.employee_id ?? "");
-    setNewRfid("");
-    setNewPin("");
-  }
+  useEffect(() => {
+    if (teacher && hydrated !== teacher.id) {
+      setHydrated(teacher.id);
+      setPrefix(teacher.prefix ?? "");
+      setName(teacher.full_name);
+      setDept(teacher.department ?? "");
+      setEmployeeId(teacher.employee_id ?? "");
+      setNewRfid("");
+      setNewPin("");
+    }
+  }, [teacher, hydrated]);
 
   if (!teacher) return null;
 
@@ -496,7 +501,7 @@ function TeacherDetailModal({
         {teacher.avatar_url ? (
           <img
             src={teacher.avatar_url}
-            alt=""
+            alt={teacher.full_name}
             className="h-14 w-14 rounded-full ring-2 ring-primary/30"
           />
         ) : (

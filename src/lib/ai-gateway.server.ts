@@ -4,6 +4,8 @@ import { createOpenAICompatible } from "@ai-sdk/openai-compatible";
 
 const AI_GATEWAY_RUN_ID_HEADER = "X-AI-Gateway-Run-ID";
 
+export const AI_BASE_URL = process.env["AI_BASE_URL"] ?? "https://opencode.ai/zen/go/v1";
+
 export function createAiGatewayRunIdFetch(initialRunId?: string) {
   let runId = initialRunId?.trim() || undefined;
   let resolveRunId: (value: string | undefined) => void = () => {};
@@ -53,7 +55,7 @@ export function createAiGatewayProvider(
 
   const provider = createOpenAICompatible({
     name: "opencode-go",
-    baseURL: "https://opencode.ai/zen/go/v1",
+    baseURL: AI_BASE_URL,
     supportsStructuredOutputs: options?.structuredOutputs ?? false,
     headers: {
       Authorization: `Bearer ${apiKey}`,

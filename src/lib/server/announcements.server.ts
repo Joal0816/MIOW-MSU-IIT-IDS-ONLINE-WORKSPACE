@@ -157,7 +157,8 @@ async function removeAnnouncementAttachmentObjects(items: AnnouncementAttachment
       try {
         const u = new URL(url, "http://localhost");
         return u.searchParams.get("p") ?? "";
-      } catch {
+      } catch (e) {
+        console.error("[announcements]", e);
         const match = url.match(/[?&]p=([^&]+)/);
         return match?.[1] ? decodeURIComponent(match[1]) : "";
       }
@@ -166,8 +167,8 @@ async function removeAnnouncementAttachmentObjects(items: AnnouncementAttachment
   if (!paths.length) return;
   try {
     await db.storage.from(ANNOUNCEMENT_BUCKET).remove(paths);
-  } catch {
-    /* storage cleanup is best-effort */
+  } catch (e) {
+    console.error("[announcements]", e);
   }
 }
 
