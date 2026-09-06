@@ -178,19 +178,22 @@ export function CreateQuizModal({ open, onClose, courses, onSaved }: CreateQuizM
   return (
     <Modal open={open} onClose={handleClose} title="Create worksheet" wide>
       <div className="grid gap-3">
-        <div className="grid gap-3 sm:grid-cols-3">
-          <select
-            value={quizForm.course_id}
-            onChange={(e) => setQuizForm((f) => ({ ...f, course_id: e.target.value }))}
-            className="h-11 rounded-xl border border-input bg-background px-3 text-sm outline-none focus:ring-2 focus:ring-ring sm:col-span-2"
-          >
-            <option value="">Select course *</option>
-            {courses.map((c) => (
-              <option key={c.id} value={c.id}>
-                {c.code} — {c.title}
-              </option>
-            ))}
-          </select>
+        <div className="grid grid-cols-[1fr_auto] gap-3">
+          <label className="flex flex-col gap-1">
+            <span className="text-[11px] font-semibold text-muted-foreground">Course *</span>
+            <select
+              value={quizForm.course_id}
+              onChange={(e) => setQuizForm((f) => ({ ...f, course_id: e.target.value }))}
+              className="h-11 rounded-xl border border-input bg-background px-3 text-sm outline-none focus:ring-2 focus:ring-ring"
+            >
+              <option value="">Select course</option>
+              {courses.map((c) => (
+                <option key={c.id} value={c.id}>
+                  {c.code} — {c.title}
+                </option>
+              ))}
+            </select>
+          </label>
           <label className="flex flex-col gap-1">
             <span className="text-[11px] font-semibold text-muted-foreground">Duration (min)</span>
             <input
@@ -198,7 +201,7 @@ export function CreateQuizModal({ open, onClose, courses, onSaved }: CreateQuizM
               onChange={(e) => setQuizForm((f) => ({ ...f, duration_minutes: e.target.value }))}
               placeholder="15"
               inputMode="numeric"
-              className="h-11 rounded-xl border border-input bg-background px-3 text-sm outline-none focus:ring-2 focus:ring-ring"
+              className="h-11 w-24 rounded-xl border border-input bg-background px-3 text-sm outline-none focus:ring-2 focus:ring-ring"
             />
           </label>
         </div>
