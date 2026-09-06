@@ -105,7 +105,8 @@ export function systemPromptFor(
       "(Bloom's: Remembering, Understanding, Applying, Analyzing, Evaluating, Creating). Keep the TOS outside the assessment body.",
     "PARSER-COMPATIBLE OUTPUT (strict): the assessment body must contain NO metadata brackets, internal IDs, or labels such as " +
       "'[WS-SCI10-001]' or 'Question 1: Multiple Choice'. Every item starts directly with its sequential number, a period, and " +
-      "a space ('1. ', '2. '), numbered continuously across all four sections.",
+      "a space ('1. ', '2. '), numbered continuously across all four sections. Do NOT skip any items — every section must contain " +
+      "the exact number of items requested.",
     "Use these exact section headings and syntax:",
     "Section I: Multiple Choice — an 'Instructions:' line, then each item as 'N. [stem]' followed by options 'A. ', 'B. ', 'C. ', " +
       "'D. ' (exactly 4 options, exactly one correct answer, plausible distractors).",
@@ -114,14 +115,20 @@ export function systemPromptFor(
     "Section III: Matching Type — an 'Instructions:' line, then 'Column A:' with numbered premises continuing the same sequence, " +
       "then 'Column B:' with lettered options ('A. ', 'B. ', 'C. ', ...) including exactly one extra distractor that matches nothing.",
     "Section IV: Essay / Short Answer — an 'Instructions:' line, then each item as 'N. [prompt answerable in 2-3 complete sentences]'.",
-    "CRITICAL — Answer Key Numbering: EVERY answer key entry MUST be prefixed with its item number (e.g. '1. B', '9. Photosynthesis'). " +
-      "Never output unnumbered answer key entries like just 'B' or 'C' — the parser requires item numbers to map answers to questions. " +
-      "End the entire assessment with 'Answer Key:' listing every number: 'N. [Letter] — [brief explanation]' for multiple choice, " +
-      "'N. [Primary answer] (Acceptable: [Synonym 1], [Synonym 2])' for fill in the blank, 'N. [Letter]' for matching, and for essays " +
-      "'N. Rubric/Key Points: PASS requires two elements: 1) [coherent explanation of the WHY/concept] AND 2) [identification of the " +
-      "specific technique/evidence]. FAIL on gibberish, single-word, or incomplete responses. | Keywords: [category1] = k1, k2, k3; " +
-      "[category2] = k4, k5, k6'. " +
-      "If any item number is missing from the answer key, the worksheet will be rejected. Double-check that answer key entries cover ALL items.",
+    "MANDATORY — ANSWER KEY RULES (the parser WILL reject your output if these are violated):",
+    "  1. The Answer Key MUST list EVERY item number from the assessment body — no exceptions.",
+    "  2. EVERY entry MUST be prefixed with its item number: '1. B', '9. electromechanical', '17. A'.",
+    "  3. NEVER output bare letters like 'B' or 'C' without a number — this breaks the parser.",
+    "  4. Format: 'Answer Key' on its own line, then one entry per line.",
+    "  5. After generating, COUNT your answer key entries. If the count doesn't match your item count, FIX IT before finishing.",
+    "Answer Key format per type:",
+    "  MC: 'N. [Letter] — [brief explanation]' (e.g. '1. B — Electromechanical devices are...')",
+    "  Fill: 'N. [Primary answer] (Acceptable: [Synonym 1], [Synonym 2])' (e.g. '9. electromechanical (Acceptable: electric, motorized)')",
+    "  Matching: 'N. [Letter]' (e.g. '17. A')",
+    "  Essay: 'N. Rubric/Key Points: PASS requires two elements: 1) [concept explanation] AND 2) [specific evidence]. " +
+      "FAIL on gibberish, single-word, or incomplete responses. | Keywords: [cat1] = k1, k2; [cat2] = k3, k4'.",
+    "VERIFICATION STEP: Before finishing your response, verify: (a) every item number in the body has a matching entry in the Answer Key, " +
+      "(b) no answer key entry is missing its item number, (c) the total item count matches what was requested.",
     // Auto-grader contract — essays are scored deterministically, not leniently
     "ESSAY AUTO-GRADER (strict, deterministic): every rubric you write MUST end with a '| Keywords: ...' block declaring at least " +
       "TWO keyword categories separated by semicolons (e.g. 'why = accessibility, mobile, user experience; technique = media queries, " +

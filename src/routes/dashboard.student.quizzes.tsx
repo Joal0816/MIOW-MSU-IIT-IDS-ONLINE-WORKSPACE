@@ -35,6 +35,8 @@ import {
 } from "@/components/lms";
 import { cn } from "@/lib/utils";
 
+const QUIZ_STATE_KEY = "miow-active-quiz";
+
 export const Route = createFileRoute("/dashboard/student/quizzes")({
   head: () => ({
     meta: [
@@ -81,11 +83,32 @@ function QuizzesPage() {
     enabled: !!profile,
   });
 
-  const [activeId, setActiveId] = useState<string | null>(null);
+  // Restore active quiz state from sessionStorage (survives page refresh)
+  const [activeId, setActiveId] = useState<string | null>(() => {
+    try {
+      const saved = JSON.parse(sessionStorage.getItem(QUIZ_STATE_KEY) ?? "null");
+      return saved?.activeId ?? null;
+    } catch { return null; }
+  });
   const [questions, setQuestions] = useState<QuizQuestionPublic[]>([]);
-  const [answers, setAnswers] = useState<Record<string, string>>({});
-  const [idx, setIdx] = useState(0);
-  const [secondsLeft, setSecondsLeft] = useState(0);
+  const [answers, setAnswers] = useState<Record<string, string>>(() => {
+    try {
+      const saved = JSON.parse(sessionStorage.getItem(QUIZ_STATE_KEY) ?? "null");
+      return saved?.answers ?? {};
+    } catch { return {}; }
+  });
+  const [idx, setIdx] = useState(() => {
+    try {
+      const saved = JSON.parse(sessionStorage.getItem(QUIZ_STATE_KEY) ?? "null");
+      return saved?.idx ?? 0;
+    } catch { return 0; }
+  });
+  const [secondsLeft, setSecondsLeft] = useState(() => {
+    try {
+      const saved = JSON.parse(sessionStorage.getItem(QUIZ_STATE_KEY) ?? "null");
+      return saved?.secondsLeft ?? 0;
+    } catch { return 0; }
+  });
   const [result, setResult] = useState<QuizSuccess | null>(null);
   // Persist timer + answers per quiz so closing/reopening doesn't reset progress
   const savedTimerRef = useRef<Map<string, number>>(new Map());
@@ -124,13 +147,27 @@ function QuizzesPage() {
     const { quiz, questions } = await getQuiz(id);
     setQuestions(questions);
     setResult(null);
-    // Restore saved answers if they exist for this quiz
-    setAnswers(savedAnswersRef.current.get(id) ?? {});
+    // Restore saved answers — prefer sessionStorage (survives refresh) over ref
+    let savedAnswers: Record<string, string> = {};
+    try {
+      const saved = JSON.parse(sessionStorage.getItem(QUIZ_STATE_KEY) ?? "null");
+      if (saved?.activeId === id && saved?.answers) savedAnswers = saved.answers;
+    } catch { /* ignore */ }
+    if (Object.keys(savedAnswers).length === 0) {
+      savedAnswers = savedAnswersRef.current.get(id) ?? {};
+    }
+    setAnswers(savedAnswers);
     setIdx(0);
-    // Restore saved timer or start fresh
-    const saved = savedTimerRef.current.get(id);
-    if (saved != null && saved > 0) {
-      setSecondsLeft(saved);
+    // Restore saved timer — prefer sessionStorage over ref
+    let savedSeconds = savedTimerRef.current.get(id) ?? 0;
+    try {
+      const saved = JSON.parse(sessionStorage.getItem(QUIZ_STATE_KEY) ?? "null");
+      if (saved?.activeId === id && typeof saved?.secondsLeft === "number") {
+        savedSeconds = saved.secondsLeft;
+      }
+    } catch { /* ignore */ }
+    if (savedSeconds > 0) {
+      setSecondsLeft(savedSeconds);
     } else {
       setSecondsLeft(quiz.duration_minutes * 60);
     }
@@ -144,7 +181,7 @@ function QuizzesPage() {
     if (!activeId || result || secondsLeft <= 0) return;
     // Persist remaining time so closing/reopening preserves it
     savedTimerRef.current.set(activeId, secondsLeft);
-    const t = setTimeout(() => setSecondsLeft((s) => s - 1), 1000);
+    const t = setTimeout(() => setSecondsLeft((s: number) => s - 1), 1000);
     return () => clearTimeout(t);
   }, [activeId, secondsLeft, result]);
 
@@ -154,6 +191,18 @@ function QuizzesPage() {
       savedAnswersRef.current.set(activeId, answers);
     }
   }, [activeId, answers]);
+
+  // Persist quiz state to sessionStorage so page refresh restores it.
+  useEffect(() => {
+    if (activeId && !result) {
+      sessionStorage.setItem(
+        QUIZ_STATE_KEY,
+        JSON.stringify({ activeId, answers, secondsLeft, idx }),
+      );
+    } else if (result) {
+      sessionStorage.removeItem(QUIZ_STATE_KEY);
+    }
+  }, [activeId, answers, secondsLeft, idx, result]);
 
   // Clear saved progress on successful submission
   useEffect(() => {
@@ -542,7 +591,7 @@ function QuizzesPage() {
 
             <div className="mt-6 flex items-center gap-2">
               <button
-                onClick={() => setIdx((i) => Math.max(0, i - 1))}
+                onClick={() => setIdx((i: number) => Math.max(0, i - 1))}
                 disabled={idx === 0}
                 className="flex h-11 items-center gap-1 rounded-xl border border-border px-4 text-sm font-semibold hover:bg-muted disabled:opacity-40"
               >
@@ -550,7 +599,7 @@ function QuizzesPage() {
               </button>
               {idx < questions.length - 1 ? (
                 <button
-                  onClick={() => setIdx((i) => Math.min(questions.length - 1, i + 1))}
+                  onClick={() => setIdx((i: number) => Math.min(questions.length - 1, i + 1))}
                   className="flex h-11 flex-1 items-center justify-center gap-1 rounded-xl bg-primary text-sm font-semibold text-primary-foreground hover:opacity-90"
                 >
                   Next <ChevronRight className="h-4 w-4" />
