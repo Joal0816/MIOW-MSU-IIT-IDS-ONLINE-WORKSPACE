@@ -288,6 +288,7 @@ export async function submitQuizAttempt(
   answers: Record<string, string>,
   token: string,
   questionIds?: string[],
+  violations?: Array<{ count: number; reason: string; timestamp: string }>,
 ) {
   const caller = await requireSession(token);
   const quiz = await getQuizConfig(quiz_id);
@@ -309,6 +310,7 @@ export async function submitQuizAttempt(
   // questionIds passed from client for question bank scoring
   const { score, total, results } = await scoreQuiz(quiz_id, answers, questionIds);
   const attempt_number = attempts.reduce((m, a) => Math.max(m, a.attempt_number), 0) + 1;
+  const integrity_metadata = violations && violations.length > 0 ? { violations } : null;
   await unwrap(
     db.from("quiz_attempts").insert({
       quiz_id,
@@ -316,7 +318,7 @@ export async function submitQuizAttempt(
       attempt_number,
       score,
       total,
-      results,
+      results: integrity_metadata ? { items: results, integrity: integrity_metadata } : results,
       question_ids: questionIds ?? [],
     }),
   );
@@ -449,7 +451,7 @@ export async function listQuizAttemptsForQuiz(quiz_id: string, token: string) {
     unwrap<any[]>(
       db
         .from("quiz_attempts")
-        .select("student_id, attempt_number, score, total, created_at")
+        .select("student_id, attempt_number, score, total, results, created_at")
         .eq("quiz_id", quiz_id)
         .order("attempt_number"),
     ),
@@ -467,10 +469,22 @@ export async function listQuizAttemptsForQuiz(quiz_id: string, token: string) {
   const extraOf = new Map<string, number>(
     (grants ?? []).map((g: any) => [g.student_id as string, (g.extra_attempts as number) ?? 0]),
   );
-  const byStudent = new Map<string, AttemptRow[]>();
+  const byStudent = new Map<
+    string,
+    Array<AttemptRow & { violations?: Array<{ count: number; reason: string; timestamp: string }> }>
+  >();
   for (const a of attempts ?? []) {
     const arr = byStudent.get(a.student_id) ?? [];
-    arr.push({ attempt_number: a.attempt_number, score: a.score, total: a.total });
+    const violations =
+      a.results && typeof a.results === "object" && !Array.isArray(a.results)
+        ? (a.results.integrity?.violations ?? [])
+        : [];
+    arr.push({
+      attempt_number: a.attempt_number,
+      score: a.score,
+      total: a.total,
+      violations: violations.length > 0 ? violations : undefined,
+    });
     byStudent.set(a.student_id, arr);
   }
   const students = studentIds.map((sid) => {

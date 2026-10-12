@@ -86,3 +86,6 @@ export function useRfidScanner(onScan: (uid: string) => void, enabled = true) {
     return () => window.removeEventListener("keydown", handler);
   }, [onScan, enabled]);
 }
+
+export { useAssessmentLockdown, type AssessmentViolation } from "./use-assessment-lockdown";
+

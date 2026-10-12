@@ -2,17 +2,21 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
+  AlertTriangle,
   CheckCircle2,
   ChevronLeft,
   ChevronRight,
+  Maximize,
   Paperclip,
   RotateCcw,
+  ShieldAlert,
   ShieldCheck,
   Timer,
   XCircle,
 } from "lucide-react";
 import { toast } from "sonner";
 import { setAssessmentMode } from "@/lib/assessment-mode";
+import { useAssessmentLockdown } from "@/hooks";
 import {
   getQuiz,
   listCourses,
@@ -131,6 +135,23 @@ function QuizzesPage() {
     return () => setAssessmentMode(false);
   }, [taking]);
 
+  // Assessment Lockdown (Phase 1 proctoring hardlock)
+  const lockdown = useAssessmentLockdown({
+    enabled: taking,
+    maxViolations: 3,
+    onViolation: (count, reason) => {
+      toast.warning(`Security violation #${count}: ${reason}`, {
+        description: "Focus must remain on the assessment window.",
+      });
+    },
+    onMaxViolationsReached: () => {
+      toast.error("Maximum violations reached. Auto-submitting assessment...", {
+        duration: 5000,
+      });
+      finishRef.current?.();
+    },
+  });
+
   // Prevent accidentally leaving the page while a quiz is in progress.
   useEffect(() => {
     if (!taking) return;
@@ -233,6 +254,7 @@ function QuizzesPage() {
         activeId,
         answers,
         questions.map((q) => q.id),
+        lockdown.violationLogs,
       );
       await queryClient.invalidateQueries({ queryKey: ["quiz-summaries"] });
       if (!res.ok) {
@@ -510,18 +532,50 @@ function QuizzesPage() {
           <>
             <div className="mb-2 flex items-center justify-between rounded-xl bg-muted px-4 py-2.5">
               <Badge tone="indigo">{questions.length} questions</Badge>
-              <p
-                className={cn(
-                  "flex items-center gap-1.5 font-display text-lg font-bold tabular-nums",
-                  secondsLeft < 60 && "text-rose-600",
+              <div className="flex items-center gap-2">
+                {lockdown.violations > 0 && (
+                  <Badge tone={lockdown.violations >= 2 ? "red" : "amber"}>
+                    <ShieldAlert className="mr-1 h-3 w-3 inline" />
+                    {lockdown.violations}/3 violations
+                  </Badge>
                 )}
-              >
-                <Timer className="h-4 w-4" /> {mm}:{ss}
-              </p>
+                {!lockdown.isFullscreen && (
+                  <button
+                    type="button"
+                    onClick={lockdown.enterFullscreen}
+                    className="flex items-center gap-1 text-xs font-semibold text-primary hover:underline"
+                  >
+                    <Maximize className="h-3 w-3" /> Fullscreen
+                  </button>
+                )}
+                <p
+                  className={cn(
+                    "flex items-center gap-1.5 font-display text-lg font-bold tabular-nums",
+                    secondsLeft < 60 && "text-rose-600",
+                  )}
+                >
+                  <Timer className="h-4 w-4" /> {mm}:{ss}
+                </p>
+              </div>
             </div>
+            {lockdown.lastWarning && (
+              <div className="mb-3 flex items-center justify-between gap-2 rounded-xl border border-rose-500/30 bg-rose-500/10 px-3 py-2 text-xs text-rose-700 dark:text-rose-300">
+                <span className="flex items-center gap-1.5">
+                  <AlertTriangle className="h-4 w-4 shrink-0 text-rose-500" />
+                  Warning: {lockdown.lastWarning} (Total: {lockdown.violations}/3)
+                </span>
+                <button
+                  type="button"
+                  onClick={lockdown.clearWarning}
+                  className="font-semibold underline hover:opacity-80"
+                >
+                  Dismiss
+                </button>
+              </div>
+            )}
             <p className="mb-4 flex items-center gap-1.5 rounded-xl border border-border/60 bg-muted/60 px-3 py-2 text-xs text-muted-foreground">
               <ShieldCheck className="h-3.5 w-3.5 shrink-0 text-emerald-500" />
-              Assessment integrity: the ClassMate Assistant is disabled until you submit.
+              Assessment lockdown active: tab switches, window blur, and dev tools are monitored.
             </p>
 
             {/* Stepper dots */}

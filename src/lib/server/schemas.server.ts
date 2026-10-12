@@ -264,6 +264,15 @@ export const schemas = {
     quiz_id: uuid,
     answers: z.record(z.string().uuid(), z.string().max(500)),
     question_ids: z.array(uuid).optional(),
+    violations: z
+      .array(
+        z.object({
+          count: z.number(),
+          reason: z.string().max(200),
+          timestamp: z.string().max(50),
+        }),
+      )
+      .optional(),
     ...token,
   }),
   quizScoped: z.object({ quiz_id: uuid, ...token }),

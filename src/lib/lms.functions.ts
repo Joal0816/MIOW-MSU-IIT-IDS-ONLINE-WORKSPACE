@@ -301,7 +301,13 @@ export const getQuizFn = createServerFn({ method: "POST" })
 export const submitQuizAttemptFn = createServerFn({ method: "POST" })
   .validator((data) => server.schemas.quizGrade.parse(data))
   .handler(async ({ data }) =>
-    server.submitQuizAttempt(data.quiz_id, data.answers, data.token, data.question_ids),
+    server.submitQuizAttempt(
+      data.quiz_id,
+      data.answers,
+      data.token,
+      data.question_ids,
+      data.violations,
+    ),
   );
 
 // Attempt summaries for every worksheet, for the signed-in student.

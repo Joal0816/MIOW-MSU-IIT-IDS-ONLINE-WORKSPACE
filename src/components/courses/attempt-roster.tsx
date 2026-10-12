@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { Eraser, RotateCcw } from "lucide-react";
+import { Eraser, RotateCcw, ShieldAlert, ShieldCheck } from "lucide-react";
 import { listQuizAttempts, grantQuizRetake, resetQuizAttempts } from "@/lib/lms";
 import { Badge, EmptyState } from "@/components/lms";
 
@@ -74,14 +74,27 @@ export function AttemptRoster({ quizId }: { quizId: string }) {
             </div>
           </div>
           <div className="mt-2 flex flex-wrap gap-1.5">
-            {s.attempts.map((a) => (
-              <span
-                key={a.attempt_number}
-                className="rounded-lg bg-muted px-2 py-1 text-[11px] font-semibold"
-              >
-                #{a.attempt_number}: {a.score}/{a.total}
-              </span>
-            ))}
+            {s.attempts.map((a) => {
+              const violationCount = a.violations?.length ?? 0;
+              return (
+                <div key={a.attempt_number} className="inline-flex items-center gap-1 rounded-lg bg-muted px-2 py-1 text-[11px] font-semibold">
+                  <span>#{a.attempt_number}: {a.score}/{a.total}</span>
+                  {violationCount > 0 ? (
+                    <span
+                      title={a.violations?.map((v) => `[${v.timestamp}] ${v.reason}`).join("\n")}
+                      className="inline-flex items-center gap-0.5 text-rose-600 dark:text-rose-400 cursor-help"
+                    >
+                      <ShieldAlert className="h-3 w-3" />
+                      {violationCount}
+                    </span>
+                  ) : (
+                    <span title="No focus violations detected" className="text-emerald-600 dark:text-emerald-400">
+                      <ShieldCheck className="h-3 w-3" />
+                    </span>
+                  )}
+                </div>
+              );
+            })}
           </div>
           <div className="mt-3 flex flex-wrap gap-2">
             <button

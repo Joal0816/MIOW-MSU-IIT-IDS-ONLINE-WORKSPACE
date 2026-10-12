@@ -344,7 +344,12 @@ export interface QuizAttemptRosterEntry {
   full_name: string;
   student_no: string | null;
   section: string | null;
-  attempts: Array<{ attempt_number: number; score: number; total: number }>;
+  attempts: Array<{
+    attempt_number: number;
+    score: number;
+    total: number;
+    violations?: Array<{ count: number; reason: string; timestamp: string }>;
+  }>;
   attempts_used: number;
   extra_attempts: number;
   effective_score: number | null;
@@ -808,9 +813,16 @@ export async function submitQuizAnswers(
   quizId: string,
   answers: Record<string, string>,
   questionIds?: string[],
+  violations?: Array<{ count: number; reason: string; timestamp: string }>,
 ): Promise<SubmitQuizResult> {
   return submitQuizAttemptFn({
-    data: { quiz_id: quizId, answers, token: sessionToken(), question_ids: questionIds },
+    data: {
+      quiz_id: quizId,
+      answers,
+      token: sessionToken(),
+      question_ids: questionIds,
+      violations,
+    },
   });
 }
 
