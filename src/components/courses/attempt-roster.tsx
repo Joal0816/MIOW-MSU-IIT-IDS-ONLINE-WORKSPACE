@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { Eraser, Eye, EyeOff, RotateCcw, Search } from "lucide-react";
+import { Eraser, Eye, EyeOff, Radio, RotateCcw, Search } from "lucide-react";
 import { listQuizAttempts, grantQuizRetake, resetQuizAttempts } from "@/lib/lms";
 import { Badge, EmptyState } from "@/components/lms";
 import { switchSeverity } from "@/lib/anti-cheat";
@@ -20,11 +20,13 @@ export function AttemptRoster({ quizId }: { quizId: string }) {
   const { data, isLoading } = useQuery({
     queryKey: ["quiz-attempts", quizId],
     queryFn: () => listQuizAttempts(quizId),
+    refetchInterval: liveMonitoring ? 5000 : false,
   });
   const [busy, setBusy] = useState<string | null>(null);
   const [search, setSearch] = useState("");
   const [sectionFilter, setSectionFilter] = useState("all");
   const [inspectId, setInspectId] = useState<string | null>(null);
+  const [liveMonitoring, setLiveMonitoring] = useState(true);
   const refresh = () => qc.invalidateQueries({ queryKey: ["quiz-attempts", quizId] });
 
   const sections = useMemo(() => {
@@ -112,6 +114,19 @@ export function AttemptRoster({ quizId }: { quizId: string }) {
             ))}
           </SelectContent>
         </Select>
+        <button
+          type="button"
+          onClick={() => setLiveMonitoring((m) => !m)}
+          className={cn(
+            "flex h-10 items-center gap-1.5 rounded-xl border px-3 text-xs font-semibold transition-colors",
+            liveMonitoring
+              ? "border-emerald-500/40 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300"
+              : "border-border text-muted-foreground hover:bg-muted",
+          )}
+        >
+          <Radio className={cn("h-3.5 w-3.5", liveMonitoring && "animate-pulse text-emerald-500")} />
+          {liveMonitoring ? "Live Proctoring On (5s)" : "Live Off"}
+        </button>
       </div>
 
       <p className="text-xs text-muted-foreground">

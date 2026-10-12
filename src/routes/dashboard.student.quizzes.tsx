@@ -126,6 +126,8 @@ function QuizzesPage() {
   const [secondsLeft, setSecondsLeft] = useState(0);
   const [result, setResult] = useState<QuizSuccess | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const [proctorPinInput, setProctorPinInput] = useState("");
+  const [proctorPinError, setProctorPinError] = useState(false);
   // Persist timer + answers per quiz so closing/reopening or accidental reload doesn't reset progress
   const getStoredTimer = (id: string): number | null => {
     try {
@@ -468,16 +470,51 @@ function QuizzesPage() {
                 Attempt {result.attempts_used} of {result.attempts_allowed ?? "∞"} recorded — score
                 hidden until release.
               </p>
-              <div className="mt-5 flex flex-col gap-2 w-full">
+              <div className="mt-5 flex flex-col gap-3 w-full">
                 <p className="rounded-xl border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-center text-xs text-amber-800 dark:text-amber-200">
-                  🔒 Session Locked: Please wait for your teacher or proctor's instructions before leaving your station.
+                  🔒 Session Locked: Station remains locked. Please call your teacher or proctor to enter their release PIN to unlock your station.
                 </p>
-                <button
-                  onClick={() => setActiveId(null)}
-                  className="h-11 w-full rounded-xl bg-primary text-sm font-semibold text-primary-foreground hover:opacity-90"
-                >
-                  Return to Dashboard
-                </button>
+                <div className="flex flex-col gap-2 rounded-xl border border-border/80 bg-muted/40 p-3">
+                  <label htmlFor="proctor-pin" className="text-xs font-semibold text-muted-foreground text-left">
+                    Proctor Release PIN:
+                  </label>
+                  <div className="flex gap-2">
+                    <input
+                      id="proctor-pin"
+                      type="password"
+                      maxLength={6}
+                      value={proctorPinInput}
+                      onChange={(e) => {
+                        setProctorPinInput(e.target.value);
+                        setProctorPinError(false);
+                      }}
+                      placeholder="Enter 4-digit PIN"
+                      className="h-10 flex-1 rounded-lg border border-input bg-background px-3 text-center font-mono text-sm tracking-widest outline-none focus:ring-2 focus:ring-ring"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => {
+                        // Standard proctor release pin is 1234 or 0000
+                        if (proctorPinInput === "1234" || proctorPinInput === "0000") {
+                          toast.success("Station unlocked by proctor.");
+                          setProctorPinInput("");
+                          setActiveId(null);
+                        } else {
+                          setProctorPinError(true);
+                          toast.error("Invalid proctor PIN.");
+                        }
+                      }}
+                      className="h-10 rounded-lg bg-primary px-4 text-xs font-semibold text-primary-foreground hover:opacity-90"
+                    >
+                      Unlock Station
+                    </button>
+                  </div>
+                  {proctorPinError && (
+                    <p className="text-[11px] text-rose-600 dark:text-rose-400 text-left">
+                      Incorrect PIN. Ask your teacher or proctor to enter their security code.
+                    </p>
+                  )}
+                </div>
               </div>
             </div>
           ) : (
