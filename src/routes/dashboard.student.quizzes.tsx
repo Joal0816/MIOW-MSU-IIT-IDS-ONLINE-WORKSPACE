@@ -6,6 +6,7 @@ import {
   CheckCircle2,
   ChevronLeft,
   ChevronRight,
+  Lock,
   Maximize,
   Paperclip,
   RotateCcw,
@@ -152,15 +153,17 @@ function QuizzesPage() {
     },
   });
 
-  // Prevent accidentally leaving the page while a quiz is in progress.
+  // Prevent accidentally leaving the page while a quiz is in progress,
+  // or while completion hardlock is active.
+  const isPostAssessmentLocked = !!result;
   useEffect(() => {
-    if (!taking) return;
+    if (!taking && !isPostAssessmentLocked) return;
     const handler = (e: BeforeUnloadEvent) => {
       e.preventDefault();
     };
     window.addEventListener("beforeunload", handler);
     return () => window.removeEventListener("beforeunload", handler);
-  }, [taking]);
+  }, [taking, isPostAssessmentLocked]);
 
   // Resume or start attempt: restore saved timer/answers if the student
   // closed and reopened the same worksheet within this session.
@@ -366,32 +369,33 @@ function QuizzesPage() {
         onClose={() => setActiveId(null)}
         title={activeQuiz?.title ?? "Worksheet"}
         wide
-        allowClose={!taking}
+        allowClose={!taking && !result}
       >
         {result ? (
           // Teacher-gated release: server gates score/answer_key; client mirrors via result.score_released
           result.score == null ||
           (result as unknown as { score_released?: boolean })?.score_released === false ? (
             <div className="flex flex-col items-center py-8 text-center">
-              <ShieldCheck className="h-12 w-12 text-amber-500" />
-              <p className="mt-3 text-base font-semibold">Awaiting teacher release</p>
+              <div className="relative mb-2">
+                <ShieldCheck className="h-14 w-14 text-emerald-500" />
+                <Lock className="absolute -bottom-1 -right-1 h-5 w-5 rounded-full bg-background p-0.5 text-amber-500" />
+              </div>
+              <p className="mt-3 text-lg font-bold">Assessment Complete & Hardlocked</p>
               <p className="mt-1 text-sm text-muted-foreground">
-                Your worksheet has been submitted. Your teacher will release your score soon.
+                Your answers have been securely recorded. You cannot retake or exit this assessment until released by your teacher.
               </p>
               <p className="mt-2 text-xs text-muted-foreground">
-                Attempt {result.attempts_used} of {result.attempts_allowed ?? "∞"} recorded — score
-                hidden until release.
+                Attempt {result.attempts_used} of {result.attempts_allowed ?? "∞"} recorded.
               </p>
-              <div className="mt-4 flex flex-col gap-2 w-full">
+              <div className="mt-5 flex flex-col gap-2 w-full">
                 <p className="rounded-xl border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-center text-xs text-amber-800 dark:text-amber-200">
-                  Awaiting teacher release — submitted. You&apos;ll see your score and review once
-                  your teacher releases it.
+                  🔒 Session Locked: Please wait for your teacher or proctor's instructions before leaving your station.
                 </p>
                 <button
                   onClick={() => setActiveId(null)}
                   className="h-11 w-full rounded-xl bg-primary text-sm font-semibold text-primary-foreground hover:opacity-90"
                 >
-                  Done
+                  Return to Dashboard
                 </button>
               </div>
             </div>

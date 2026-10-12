@@ -4,10 +4,13 @@
   "description": "MIOW LMS Hardlock Kiosk Companion Application",
   "main": "main.js",
   "scripts": {
-    "start": "electron ."
+    "start": "electron .",
+    "dist:linux": "electron-packager . miow-kiosk --platform=linux --arch=x64 --out=dist --overwrite",
+    "dist:win": "electron-packager . miow-kiosk --platform=win32 --arch=x64 --out=dist --overwrite"
   },
   "dependencies": {},
   "devDependencies": {
-    "electron": "^33.0.0"
+    "electron": "^33.0.0",
+    "electron-packager": "^17.1.2"
   }
 }
