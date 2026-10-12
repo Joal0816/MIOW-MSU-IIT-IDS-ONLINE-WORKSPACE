@@ -625,15 +625,15 @@ function QuizzesPage() {
                 until the student returns to fullscreen (tap = new gesture). */}
             {examLock.lockLost && (
               <div className="fixed inset-0 z-[100] flex flex-col items-center justify-center gap-4 bg-background/95 p-8 text-center backdrop-blur">
-                <ShieldCheck className="h-10 w-10 text-primary" />
-                <p className="text-lg font-semibold">Exam lockdown active</p>
-                <p className="max-w-sm text-sm text-muted-foreground">
-                  This exam runs in fullscreen. Return to fullscreen to keep answering — your timer
-                  is still running.
+                <ShieldCheck className="h-12 w-12 text-primary" />
+                <p className="text-xl font-bold">Exam lockdown active</p>
+                <p className="max-w-md text-sm text-muted-foreground">
+                  This assessment runs in secure fullscreen mode. You must return to fullscreen to keep answering — your exam timer is still running.
                 </p>
                 <button
+                  type="button"
                   onClick={() => examLock.lock()}
-                  className="flex h-11 items-center gap-2 rounded-xl bg-primary px-6 text-sm font-semibold text-primary-foreground hover:opacity-90"
+                  className="flex h-11 items-center gap-2 rounded-xl bg-primary px-6 text-sm font-semibold text-primary-foreground hover:opacity-90 shadow-lift"
                 >
                   Return to fullscreen
                 </button>
